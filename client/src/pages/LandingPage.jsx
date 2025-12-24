@@ -3,23 +3,26 @@ import { ArrowRight, Sparkles, Target, FileText, MessageSquare, Users, Zap, BarC
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-blue-50/30">
+    <div className="min-h-screen bg-gradient-to-br from-[#0a0a0a] via-purple-900/30 to-[#0a0a0a] relative overflow-hidden">
+      {/* Background Grid Pattern */}
+      <div className="absolute inset-0 bg-grid-pattern opacity-10"></div>
+      
       {/* Header */}
-      <header className="border-b border-gray-200/80 bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
+      <header className="relative z-50 border-b border-white/10 bg-white/5 backdrop-blur-md sticky top-0">
         <nav className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <Link to="/" className="flex items-center space-x-2 group">
               <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg blur opacity-75 group-hover:opacity-100 transition-opacity"></div>
-                <Sparkles className="w-8 h-8 text-blue-600 relative z-10" />
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg blur opacity-75 group-hover:opacity-100 transition-opacity"></div>
+                <Sparkles className="w-8 h-8 text-purple-400 relative z-10" />
               </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent">
                 CareerPilot
               </span>
             </Link>
             <Link
               to="/dashboard"
-              className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg transition-all font-medium shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+              className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg transition-all font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
             >
               Get Started
             </Link>
@@ -27,63 +30,54 @@ export default function LandingPage() {
         </nav>
       </header>
 
-      <main>
+      <main className="relative z-10">
         {/* Hero Section */}
         <section className="container mx-auto px-6 py-20 md:py-28">
           <div className="max-w-6xl mx-auto">
             <div className="grid md:grid-cols-2 gap-12 items-center">
               <div>
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 rounded-full text-sm font-semibold mb-6 border border-blue-100 shadow-sm">
-                  <Zap className="w-4 h-4 text-yellow-500" />
+                <div className="inline-flex items-center gap-2 px-4 py-2 glass-card text-purple-300 rounded-full text-sm font-semibold mb-6">
+                  <Zap className="w-4 h-4 text-yellow-400" />
                   AI-Powered Interview Practice
                 </div>
-                <h1 className="text-5xl md:text-6xl font-extrabold text-gray-900 mb-6 leading-tight">
+                <h1 className="text-5xl md:text-6xl font-extrabold text-white mb-6 leading-tight">
                   Master Your Interview Skills{' '}
-                  <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                  <span className="bg-gradient-to-r from-purple-400 via-indigo-400 to-pink-400 bg-clip-text text-transparent">
                     with AI
                   </span>
                 </h1>
-                <p className="text-xl text-gray-600 mb-8 leading-relaxed">
+                <p className="text-xl text-gray-300 mb-8 leading-relaxed">
                   Get interview-ready with our AI-powered platform. Practice technical and behavioral interviews, receive instant feedback, and improve your skills at your own pace.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 mb-8">
                   <Link
                     to="/dashboard"
-                    className="group px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-lg font-semibold transition-all flex items-center justify-center gap-2 shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
+                    className="group px-8 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl text-lg font-semibold transition-all flex items-center justify-center gap-2 shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
                   >
                     Start Practicing Now
                     <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                   </Link>
                 </div>
-                <div className="flex items-center gap-4">
-                  <div className="flex -space-x-2">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 border-2 border-white shadow-md"></div>
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 border-2 border-white shadow-md"></div>
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-green-600 border-2 border-white shadow-md"></div>
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 border-2 border-white shadow-md"></div>
-                  </div>
-                  <p className="text-sm text-gray-600 font-medium">Join our community of aspiring professionals</p>
-                </div>
               </div>
               <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-400/20 to-indigo-600/20 rounded-3xl blur-3xl"></div>
-                <div className="relative bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 rounded-2xl p-8 shadow-2xl border border-blue-100/50">
-                  <div className="bg-white rounded-xl p-6 shadow-xl border border-gray-100">
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-indigo-600/20 rounded-3xl blur-3xl"></div>
+                <div className="relative glass-card rounded-2xl p-8 shadow-2xl">
+                  <div className="glass-card rounded-xl p-6">
                     <div className="flex items-center gap-3 mb-4">
-                      <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center shadow-lg">
+                      <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center shadow-lg">
                         <Brain className="w-6 h-6 text-white" />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-gray-900">AI Interview Assistant</h3>
-                        <p className="text-sm text-gray-500">Ready to help</p>
+                        <h3 className="font-semibold text-white">AI Interview Assistant</h3>
+                        <p className="text-sm text-gray-400">Ready to help</p>
                       </div>
                     </div>
                     <div className="space-y-3">
-                      <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-4 border border-gray-200">
-                        <p className="text-gray-700">Can you tell me about a challenging project you worked on?</p>
+                      <div className="glass-card rounded-lg p-4">
+                        <p className="text-gray-300">Can you tell me about a challenging project you worked on?</p>
                       </div>
-                      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 ml-8 border border-blue-100">
-                        <p className="text-gray-700">I worked on a distributed system that handled 1M+ requests...</p>
+                      <div className="glass-card bg-purple-500/10 rounded-lg p-4 ml-8 border border-purple-500/20">
+                        <p className="text-gray-300">I worked on a distributed system that handled 1M+ requests...</p>
                       </div>
                     </div>
                   </div>
@@ -94,13 +88,13 @@ export default function LandingPage() {
         </section>
 
         {/* Why Choose CareerPilot */}
-        <section className="bg-gradient-to-b from-white via-blue-50/30 to-white py-20">
+        <section className="py-20">
           <div className="container mx-auto px-6">
             <div className="max-w-3xl mx-auto text-center mb-16">
-              <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4">
-                Why Choose <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">CareerPilot</span>
+              <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-4">
+                Why Choose <span className="bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent">CareerPilot</span>
               </h2>
-              <p className="text-xl text-gray-600">
+              <p className="text-xl text-gray-300">
                 Our AI-powered platform helps you prepare for interviews with personalized feedback and real-world scenarios.
               </p>
             </div>
@@ -134,11 +128,11 @@ export default function LandingPage() {
         </section>
 
         {/* How It Works */}
-        <section className="py-20 bg-white">
+        <section className="py-20 bg-[#0a0a0a]/40">
           <div className="container mx-auto px-6">
             <div className="max-w-3xl mx-auto text-center mb-16">
-              <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4">How It Works</h2>
-              <p className="text-xl text-gray-600">
+              <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-4">How It Works</h2>
+              <p className="text-xl text-gray-300">
                 Get started with CareerPilot in three simple steps.
               </p>
             </div>
@@ -148,32 +142,32 @@ export default function LandingPage() {
                 icon={<Target className="w-6 h-6" />}
                 title="Choose Your Interview"
                 description="Select from a variety of interview types, difficulty levels, and tech stacks."
-                gradient="from-blue-500 to-indigo-500"
+                gradient="from-purple-500 to-indigo-500"
               />
               <StepCard
                 number="2"
                 icon={<Brain className="w-6 h-6" />}
                 title="Practice with AI"
                 description="Engage in realistic conversations with our AI interviewer that adapts to your responses."
-                gradient="from-purple-500 to-pink-500"
+                gradient="from-indigo-500 to-pink-500"
               />
               <StepCard
                 number="3"
                 icon={<Award className="w-6 h-6" />}
                 title="Get Detailed Feedback"
                 description="Receive comprehensive feedback on your performance and areas for improvement."
-                gradient="from-green-500 to-emerald-500"
+                gradient="from-pink-500 to-purple-500"
               />
             </div>
           </div>
         </section>
 
         {/* Key Benefits */}
-        <section className="bg-gradient-to-b from-gray-50 to-white py-20">
+        <section className="py-20">
           <div className="container mx-auto px-6">
             <div className="max-w-3xl mx-auto text-center mb-16">
-              <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4">Key Benefits</h2>
-              <p className="text-xl text-gray-600">
+              <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-4">Key Benefits</h2>
+              <p className="text-xl text-gray-300">
                 Why our platform is the best choice for interview preparation.
               </p>
             </div>
@@ -201,9 +195,8 @@ export default function LandingPage() {
         </section>
 
         {/* Stats Section */}
-        <section className="py-20 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 text-white relative overflow-hidden">
-          <div className="absolute inset-0 bg-grid-pattern opacity-10"></div>
-          <div className="container mx-auto px-6 relative z-10">
+        <section className="py-20 bg-[#0a0a0a]/40">
+          <div className="container mx-auto px-6">
             <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
               <StatCard
                 icon={<FileText className="w-8 h-8" />}
@@ -228,12 +221,15 @@ export default function LandingPage() {
         </section>
 
         {/* Early Adopters */}
-        <section className="bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 py-20 text-white relative overflow-hidden">
-          <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.05"%3E%3Cpath d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-20"></div>
+        <section className="py-20 bg-gradient-to-br from-purple-900/50 via-indigo-900/50 to-pink-900/50 relative overflow-hidden">
+          <div className="absolute inset-0 opacity-20" style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+            backgroundSize: '60px 60px'
+          }}></div>
           <div className="container mx-auto px-6 relative z-10">
             <div className="max-w-3xl mx-auto text-center mb-12">
-              <h2 className="text-4xl md:text-5xl font-extrabold mb-4">Join Our Early Adopters</h2>
-              <p className="text-xl text-indigo-100">
+              <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-4">Join Our Early Adopters</h2>
+              <p className="text-xl text-purple-200">
                 Be among the first to experience our AI-powered interview practice platform
               </p>
             </div>
@@ -261,21 +257,21 @@ export default function LandingPage() {
         </section>
 
         {/* Final CTA */}
-        <section className="py-20 bg-white">
+        <section className="py-20">
           <div className="container mx-auto px-6">
-            <div className="max-w-4xl mx-auto text-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 rounded-3xl p-12 md:p-16 border border-blue-100/50 shadow-2xl relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-400/20 to-purple-400/20 rounded-full blur-3xl"></div>
-              <div className="absolute bottom-0 left-0 w-64 h-64 bg-gradient-to-tr from-indigo-400/20 to-pink-400/20 rounded-full blur-3xl"></div>
+            <div className="max-w-4xl mx-auto text-center glass-card rounded-3xl p-12 md:p-16 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-full blur-3xl"></div>
+              <div className="absolute bottom-0 left-0 w-64 h-64 bg-gradient-to-tr from-indigo-500/20 to-purple-500/20 rounded-full blur-3xl"></div>
               <div className="relative z-10">
-                <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4">
+                <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-4">
                   Ready to Improve Your Interview Skills?
                 </h2>
-                <p className="text-xl text-gray-600 mb-8">
+                <p className="text-xl text-gray-300 mb-8">
                   Join our community of early adopters and start practicing with our AI-powered interview platform today.
                 </p>
                 <Link
                   to="/dashboard"
-                  className="inline-flex items-center gap-2 px-10 py-5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-lg font-semibold transition-all shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
+                  className="inline-flex items-center gap-2 px-10 py-5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl text-lg font-semibold transition-all shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
                 >
                   Get Started Now
                   <ArrowRight className="w-5 h-5" />
@@ -287,12 +283,12 @@ export default function LandingPage() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-gray-200 bg-gradient-to-b from-white to-gray-50 py-8">
+      <footer className="border-t border-white/10 bg-[#0a0a0a]/40 backdrop-blur-md py-8 relative z-10">
         <div className="container mx-auto px-6">
-          <div className="text-center text-gray-600">
+          <div className="text-center text-gray-400">
             <p>
-              Built with <span className="text-red-500">❤️</span> by{' '}
-              <a href="https://github.com/anuragthippani1" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-indigo-600 font-semibold transition-colors">
+              Built with <span className="text-red-400">❤️</span> by{' '}
+              <a href="https://github.com/anuragthippani1" target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:text-purple-300 font-semibold transition-colors">
                 Anurag Thippani
               </a>
             </p>
@@ -305,12 +301,12 @@ export default function LandingPage() {
 
 function FeatureCard({ icon, title, description, gradient }) {
   return (
-    <div className="group bg-white rounded-2xl p-6 shadow-md hover:shadow-2xl transition-all border border-gray-100 hover:border-blue-200 transform hover:-translate-y-1">
+    <div className="group glass-card rounded-2xl p-6 hover:scale-105 transition-all">
       <div className={`inline-flex p-3 bg-gradient-to-br ${gradient} rounded-xl text-white mb-4 shadow-lg group-hover:scale-110 transition-transform`}>
         {icon}
       </div>
-      <h3 className="text-xl font-bold text-gray-900 mb-2">{title}</h3>
-      <p className="text-gray-600 leading-relaxed">{description}</p>
+      <h3 className="text-xl font-bold text-white mb-2">{title}</h3>
+      <p className="text-gray-300 leading-relaxed">{description}</p>
     </div>
   );
 }
@@ -327,44 +323,44 @@ function StepCard({ number, icon, title, description, gradient }) {
       <div className={`inline-flex p-3 bg-gradient-to-br ${gradient} rounded-xl text-white mb-4 shadow-lg`}>
         {icon}
       </div>
-      <h3 className="text-xl font-bold text-gray-900 mb-2">{title}</h3>
-      <p className="text-gray-600 leading-relaxed">{description}</p>
+      <h3 className="text-xl font-bold text-white mb-2">{title}</h3>
+      <p className="text-gray-300 leading-relaxed">{description}</p>
     </div>
   );
 }
 
 function BenefitCard({ icon, title, description, gradient }) {
   return (
-    <div className="group bg-white rounded-2xl p-6 shadow-md hover:shadow-2xl transition-all border border-gray-100 hover:border-blue-200 transform hover:-translate-y-1">
+    <div className="group glass-card rounded-2xl p-6 hover:scale-105 transition-all">
       <div className={`inline-flex p-3 bg-gradient-to-br ${gradient} rounded-xl text-white mb-4 shadow-lg group-hover:scale-110 transition-transform`}>
         {icon}
       </div>
-      <h3 className="text-xl font-bold text-gray-900 mb-2">{title}</h3>
-      <p className="text-gray-600 leading-relaxed">{description}</p>
+      <h3 className="text-xl font-bold text-white mb-2">{title}</h3>
+      <p className="text-gray-300 leading-relaxed">{description}</p>
     </div>
   );
 }
 
 function StatCard({ icon, number, label, gradient }) {
   return (
-    <div className="text-center group">
+    <div className="text-center group glass-card rounded-2xl p-8">
       <div className={`inline-flex p-4 bg-gradient-to-br ${gradient} rounded-2xl text-white mb-4 shadow-xl`}>
         {icon}
       </div>
-      <h3 className="text-5xl font-extrabold mb-2">{number}</h3>
-      <p className="text-indigo-100 text-lg font-medium">{label}</p>
+      <h3 className="text-5xl font-extrabold text-white mb-2">{number}</h3>
+      <p className="text-gray-300 text-lg font-medium">{label}</p>
     </div>
   );
 }
 
 function EarlyAdopterCard({ icon, title, description, gradient }) {
   return (
-    <div className="group bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 hover:bg-white/20 transition-all shadow-xl hover:shadow-2xl transform hover:-translate-y-1">
+    <div className="group glass-card rounded-2xl p-6 hover:scale-105 transition-all">
       <div className={`inline-flex p-3 bg-gradient-to-br ${gradient} rounded-xl text-white mb-4 shadow-lg group-hover:scale-110 transition-transform`}>
         {icon}
       </div>
       <h3 className="text-xl font-bold text-white mb-2">{title}</h3>
-      <p className="text-indigo-100 leading-relaxed">{description}</p>
+      <p className="text-purple-200 leading-relaxed">{description}</p>
     </div>
   );
 }
