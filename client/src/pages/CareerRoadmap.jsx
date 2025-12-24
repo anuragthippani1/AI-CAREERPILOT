@@ -34,19 +34,42 @@ export default function CareerRoadmap() {
       setLoading(true);
       setError(null);
       
-      // Get skill gap first
-      const skillGapRes = await skillsAPI.analyze({ userId });
-      const skillGap = skillGapRes.data.data;
+      // Try to get skill gap, but don't fail if it doesn't exist
+      let skillGap = null;
+      try {
+        const skillGapRes = await skillsAPI.analyze({ userId });
+        skillGap = skillGapRes.data.data;
+      } catch (err) {
+        console.warn('Skill gap not available, generating roadmap without it');
+      }
 
-      // Generate roadmap
+      // Generate roadmap (will work even without skill gap)
       const response = await roadmapAPI.generate({
         userId,
         skillGap,
+        targetRole: 'Software Engineer', // Default if no goal set
       });
 
-      setRoadmap(response.data.data);
+      // Handle nested response structure
+      if (response.data.success) {
+        const agentResult = response.data.data;
+        if (agentResult.success && agentResult.data) {
+          setRoadmap(agentResult.data);
+        } else {
+          setError(agentResult.error || 'Failed to generate roadmap');
+        }
+      } else {
+        setError('Failed to generate roadmap');
+      }
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to generate roadmap');
+      const errorMsg = err.response?.data?.error || err.response?.data?.data?.error || err.message || 'Failed to generate roadmap';
+      if (errorMsg.includes('quota') || errorMsg.includes('Quota')) {
+        setError('API quota exceeded. Roadmap will use fallback data.');
+        // Try to generate with fallback
+        setTimeout(() => generateRoadmap(), 2000);
+      } else {
+        setError(errorMsg);
+      }
     } finally {
       setLoading(false);
     }

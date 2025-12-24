@@ -36,9 +36,11 @@ router.post('/generate', async (req, res, next) => {
   try {
     const userId = req.body.userId || 1;
     const skillGap = req.body.skillGap;
+    const targetRole = req.body.targetRole;
 
     const result = await orchestrator.orchestrate(userId, 'generate_roadmap', {
-      skillGap
+      skillGap,
+      targetRole
     });
 
     if (result.success) {

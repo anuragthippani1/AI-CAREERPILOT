@@ -112,6 +112,7 @@ class AgentOrchestrator {
 
         case 'generate_roadmap':
           result = await this.agents.careerRoadmap.generate(context, inputData);
+          // Don't chain further - roadmap is the end of the chain
           break;
 
         case 'start_interview':
