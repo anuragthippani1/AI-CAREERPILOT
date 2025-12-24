@@ -1,0 +1,44 @@
+═══════════════════════════════════════════════════════════════
+  QUICK MYSQL SETUP - COPY AND PASTE THESE COMMANDS
+═══════════════════════════════════════════════════════════════
+
+STEP 1: Install MySQL (if not installed)
+─────────────────────────────────────────
+brew install mysql
+brew services start mysql
+
+STEP 2: Create Database
+─────────────────────────────────────────
+cd "/Users/anuragthippani/Documents/programs/AI CareerPilot"
+mysql -u root -p < database/schema.sql
+
+(Enter your MySQL password when prompted, or just press Enter if no password)
+
+STEP 3: Verify Database
+─────────────────────────────────────────
+mysql -u root -p -e "USE careerpilot; SHOW TABLES;"
+
+(Should show 7 tables: users, resumes, skills, career_goals, roadmaps, interview_sessions, agent_logs)
+
+STEP 4: Update .env File
+─────────────────────────────────────────
+Edit .env file and add your MySQL password:
+DB_PASSWORD=your_mysql_password_here
+
+(If you don't have a password, leave it empty: DB_PASSWORD=)
+
+STEP 5: Restart Backend
+─────────────────────────────────────────
+# Stop current server (Ctrl+C)
+npm run dev
+
+Check console for: "✅ Database connected successfully"
+
+═══════════════════════════════════════════════════════════════
+  OR USE THE AUTOMATED SCRIPT:
+═══════════════════════════════════════════════════════════════
+
+./install_mysql.sh
+
+═══════════════════════════════════════════════════════════════
+
