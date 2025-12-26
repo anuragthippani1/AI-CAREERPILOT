@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, Target, Map, MessageSquare, Plus, TrendingUp, Calendar, Clock, Sparkles, Code, Trophy, History, Terminal } from 'lucide-react';
+import { FileText, Target, Map, MessageSquare, Plus, TrendingUp, Calendar, Clock, Sparkles, Code, Trophy, History, Terminal, ArrowRight } from 'lucide-react';
 import { userAPI, resumeAPI, roadmapAPI, interviewAPI } from '../services/api';
 
 export default function Dashboard() {
@@ -52,61 +52,63 @@ export default function Dashboard() {
     const hour = new Date().getHours();
     if (hour < 12) return 'Good morning';
     if (hour < 18) return 'Good afternoon';
-    return 'Good night';
+    return 'Good evening';
   };
 
   const progress = roadmap?.progress_percentage || 0;
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#0a0a0a] via-purple-900/30 to-[#0a0a0a] flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-400 mx-auto"></div>
-          <p className="mt-4 text-gray-300">Loading your career dashboard...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading your career dashboard...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0a0a0a] via-purple-900/30 to-[#0a0a0a] relative overflow-hidden">
-      {/* Background Grid Pattern */}
-      <div className="absolute inset-0 bg-grid-pattern opacity-10"></div>
-      
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="relative z-10 border-b border-white/10 bg-white/5 backdrop-blur-md">
-        <div className="container mx-auto px-6 py-4">
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-white">CareerPilot Dashboard</h1>
-            <div className="text-sm text-gray-300">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
+                <Sparkles className="w-5 h-5 text-white" />
+              </div>
+              <h1 className="text-xl font-bold text-gray-900">CareerPilot Dashboard</h1>
+            </div>
+            <div className="text-sm text-gray-600">
               {user ? `${getGreeting()}, ${user.name || 'User'}!` : 'Welcome'}
             </div>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-6 py-8 relative z-10">
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Top Section */}
         <div className="grid md:grid-cols-3 gap-6 mb-8">
           {/* Greeting Card */}
-          <div className="md:col-span-2 glass-card p-6 rounded-2xl">
+          <div className="md:col-span-2 bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
             <div className="flex items-center gap-3 mb-4">
-              <Sparkles className="w-6 h-6 text-purple-400" />
-              <h2 className="text-2xl font-bold text-white">
+              <Sparkles className="w-5 h-5 text-blue-600" />
+              <h2 className="text-2xl font-bold text-gray-900">
                 {getGreeting()}, {user?.name || 'anurag'}!
               </h2>
             </div>
-            <p className="text-gray-300 mb-6">
+            <p className="text-gray-600 mb-6">
               Start your interview preparation journey with our AI-powered platform.
             </p>
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-gray-400">Your Progress</span>
-                <span className="text-sm font-semibold text-white">{isNaN(progress) ? '0' : Math.round(progress)}%</span>
+                <span className="text-sm text-gray-600">Your Progress</span>
+                <span className="text-sm font-semibold text-gray-900">{isNaN(progress) ? '0' : Math.round(progress)}%</span>
               </div>
-              <div className="w-full bg-gray-700/50 rounded-full h-2.5">
+              <div className="w-full bg-gray-100 rounded-full h-2.5">
                 <div
-                  className="bg-gradient-to-r from-purple-500 to-indigo-500 h-2.5 rounded-full transition-all duration-500"
+                  className="bg-gradient-to-r from-blue-600 to-indigo-600 h-2.5 rounded-full transition-all duration-500"
                   style={{ width: `${isNaN(progress) ? 0 : Math.round(progress)}%` }}
                 ></div>
               </div>
@@ -115,12 +117,12 @@ export default function Dashboard() {
 
           {/* Interview Stats Cards */}
           <div className="space-y-4">
-            <GlassStatCard
+            <StatCard
               icon={<Calendar className="w-5 h-5" />}
               label="Your Interviews"
               value={interviewStats.completed}
             />
-            <GlassStatCard
+            <StatCard
               icon={<Clock className="w-5 h-5" />}
               label="Available Interviews"
               value="139"
@@ -129,18 +131,18 @@ export default function Dashboard() {
         </div>
 
         {/* Performance Metrics */}
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
-          <GlassMetricCard
+        <div className="grid sm:grid-cols-3 gap-6 mb-8">
+          <MetricCard
             label="Total Completed Interviews"
             value={interviewStats.completed}
             hint="Start your first interview"
           />
-          <GlassMetricCard
+          <MetricCard
             label="Average Score"
             value={`${interviewStats.averageScore}%`}
             hint="Keep practicing!"
           />
-          <GlassMetricCard
+          <MetricCard
             label="Practice Streak"
             value={`${interviewStats.streak} days`}
             hint="Build your streak!"
@@ -148,77 +150,73 @@ export default function Dashboard() {
         </div>
 
         {/* Quick Actions */}
-        <div className="mb-6">
+        <div className="mb-8">
           <div className="flex items-center gap-2 mb-4">
-            <Sparkles className="w-5 h-5 text-purple-400" />
-            <h2 className="text-xl font-bold text-white">Quick Actions</h2>
+            <Sparkles className="w-5 h-5 text-blue-600" />
+            <h2 className="text-xl font-bold text-gray-900">Quick Actions</h2>
           </div>
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <QuickActionButton
-              icon={<Plus className="w-8 h-8" />}
+              icon={<Plus className="w-6 h-6" />}
               title="Start Interview"
               description="Begin a new practice session"
               link="/interview"
-              color="from-gray-700/80 to-gray-800/80"
             />
             <QuickActionButton
-              icon={<Code className="w-8 h-8" />}
+              icon={<Code className="w-6 h-6" />}
               title="Technical Challenges"
               description="Practice coding problems"
               link="#"
-              color="from-gray-700/80 to-gray-800/80"
               disabled
               comingSoon
             />
             <QuickActionButton
-              icon={<Trophy className="w-8 h-8" />}
+              icon={<Trophy className="w-6 h-6" />}
               title="Leaderboard"
               description="See top performers"
               link="#"
-              color="from-amber-700/80 to-orange-800/80"
             />
             <QuickActionButton
-              icon={<History className="w-8 h-8" />}
+              icon={<History className="w-6 h-6" />}
               title="Interview History"
               description="View your past interviews"
               link="/interview"
-              color="from-purple-700/80 to-purple-800/80"
             />
           </div>
         </div>
 
         {/* Main Actions Grid */}
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           <ActionCard
-            icon={<FileText className="w-8 h-8" />}
+            icon={<FileText className="w-6 h-6" />}
             title="Resume Analysis"
             description={resume ? "View your resume insights and ATS score" : "Upload and analyze your resume"}
             link="/resume"
             hasData={!!resume}
           />
           <ActionCard
-            icon={<Target className="w-8 h-8" />}
+            icon={<Target className="w-6 h-6" />}
             title="Skill Gap Analysis"
             description="Identify missing skills for your target role"
             link="/skills"
             hasData={!!resume}
           />
           <ActionCard
-            icon={<Map className="w-8 h-8" />}
+            icon={<Map className="w-6 h-6" />}
             title="Career Roadmap"
             description={roadmap ? "View your personalized career roadmap" : "Generate your career roadmap"}
             link="/roadmap"
             hasData={!!roadmap}
           />
           <ActionCard
-            icon={<MessageSquare className="w-8 h-8" />}
+            icon={<MessageSquare className="w-6 h-6" />}
             title="Mock Interview"
             description="Practice with AI-powered mock interviews"
             link="/interview"
             hasData={true}
           />
           <ActionCard
-            icon={<Terminal className="w-8 h-8" />}
+            icon={<Terminal className="w-6 h-6" />}
             title="Coding Practice"
             description="Solve coding problems from GeeksforGeeks & LeetCode"
             link="/practice"
@@ -230,42 +228,42 @@ export default function Dashboard() {
   );
 }
 
-function GlassStatCard({ icon, label, value }) {
+function StatCard({ icon, label, value }) {
   return (
-    <div className="glass-card p-4 rounded-xl">
+    <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
       <div className="flex items-center gap-3 mb-2">
-        <div className="text-purple-400">{icon}</div>
-        <span className="text-sm text-gray-400">{label}</span>
+        <div className="text-blue-600">{icon}</div>
+        <span className="text-sm text-gray-600">{label}</span>
       </div>
-      <p className="text-2xl font-bold text-white">{value}</p>
+      <p className="text-2xl font-bold text-gray-900">{value}</p>
     </div>
   );
 }
 
-function GlassMetricCard({ label, value, hint }) {
+function MetricCard({ label, value, hint }) {
   return (
-    <div className="glass-card p-6 rounded-xl">
-      <p className="text-sm text-gray-400 mb-2">{label}</p>
-      <p className="text-3xl font-bold text-white mb-2">{value}</p>
+    <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+      <p className="text-sm text-gray-600 mb-2">{label}</p>
+      <p className="text-3xl font-bold text-gray-900 mb-2">{value}</p>
       <p className="text-xs text-gray-500">{hint}</p>
     </div>
   );
 }
 
-function QuickActionButton({ icon, title, description, link, color, disabled = false, comingSoon = false }) {
+function QuickActionButton({ icon, title, description, link, disabled = false, comingSoon = false }) {
   const content = (
-    <div className={`glass-card p-6 rounded-xl flex flex-col items-start justify-between transition-all relative ${
-      disabled ? 'opacity-60 cursor-not-allowed' : 'hover:scale-[1.02] cursor-pointer'
-    } bg-gradient-to-br ${color} min-h-[140px]`}>
+    <div className={`bg-white rounded-xl p-5 border border-gray-200 shadow-sm transition-all relative ${
+      disabled ? 'opacity-60 cursor-not-allowed' : 'hover:shadow-md cursor-pointer hover:border-gray-300'
+    } min-h-[120px] flex flex-col justify-between`}>
       {comingSoon && (
-        <div className="absolute top-2 right-2 bg-yellow-500/80 text-yellow-900 text-xs font-semibold px-2 py-1 rounded">
+        <div className="absolute top-2 right-2 bg-yellow-100 text-yellow-800 text-xs font-semibold px-2 py-1 rounded">
           Coming Soon
         </div>
       )}
-      <div className="text-white mb-4">{icon}</div>
+      <div className="text-blue-600 mb-3">{icon}</div>
       <div className="w-full">
-        {title && <h3 className="text-lg font-bold text-white mb-1">{title}</h3>}
-        {description && <p className="text-xs text-white/70 leading-relaxed">{description}</p>}
+        {title && <h3 className="text-base font-semibold text-gray-900 mb-1">{title}</h3>}
+        {description && <p className="text-xs text-gray-600 leading-relaxed">{description}</p>}
       </div>
     </div>
   );
@@ -281,18 +279,18 @@ function ActionCard({ icon, title, description, link, hasData }) {
   return (
     <Link
       to={link}
-      className="glass-card p-6 rounded-xl group hover:scale-[1.02] transition-all"
+      className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm group hover:shadow-md transition-all"
     >
       <div className="flex items-start gap-4">
-        <div className="text-purple-400 group-hover:text-purple-300 transition-colors">
+        <div className="text-blue-600 group-hover:text-blue-700 transition-colors">
           {icon}
         </div>
         <div className="flex-1">
-          <h3 className="text-xl font-semibold text-white mb-2">{title}</h3>
-          <p className="text-gray-400 mb-4">{description}</p>
-          <div className="flex items-center text-purple-400 group-hover:text-purple-300 font-medium">
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
+          <p className="text-gray-600 mb-4 text-sm">{description}</p>
+          <div className="flex items-center text-blue-600 group-hover:text-blue-700 font-medium text-sm">
             {hasData ? 'View Details' : 'Get Started'}
-            <Plus className="w-4 h-4 ml-2" />
+            <ArrowRight className="w-4 h-4 ml-2" />
           </div>
         </div>
       </div>

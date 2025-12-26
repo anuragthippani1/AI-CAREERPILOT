@@ -77,7 +77,7 @@ export default function CareerRoadmap() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <Loader className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
           <p className="text-gray-600">Generating your career roadmap...</p>
@@ -87,20 +87,20 @@ export default function CareerRoadmap() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-white border-b border-gray-200">
-        <div className="container mx-auto px-6 py-4">
-          <h1 className="text-2xl font-bold text-gray-900">Career Roadmap</h1>
+    <div className="min-h-screen bg-gray-50">
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <h1 className="text-xl font-bold text-gray-900">Career Roadmap</h1>
         </div>
       </header>
 
-      <main className="container mx-auto px-6 py-8 max-w-6xl">
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-6xl">
         {error ? (
           <div className="bg-red-50 border border-red-200 rounded-lg p-6">
             <p className="text-red-800">{error}</p>
             <button
               onClick={generateRoadmap}
-              className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+              className="mt-4 bg-gray-900 hover:bg-gray-800 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-sm hover:shadow-md"
             >
               Try Generating Roadmap
             </button>

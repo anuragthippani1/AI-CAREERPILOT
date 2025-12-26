@@ -19,7 +19,8 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background: #0a0a0a;
+  background: #ffffff;
+  color: #111827;
 }
 
 #root {
@@ -27,7 +28,7 @@ body {
   min-height: 100vh;
 }
 
-/* Glassmorphism Effect */
+/* Glassmorphism Effect (for dark mode components if needed) */
 .glass-card {
   background: rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(10px);

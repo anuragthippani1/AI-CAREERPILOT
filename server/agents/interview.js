@@ -309,37 +309,48 @@ Response format:
 
       // Get current question for analysis (the last question asked)
       const currentQuestion = questions && questions.length > 0 ? questions[questions.length - 1] : null;
+      const questionText = currentQuestion?.question || 'The interview question';
       
       // Get feedback and next question
       const conversationHistory = this.buildConversationHistory(questions, answers, feedback);
       
-      const prompt = `${this.systemPrompt}
+      // Determine difficulty level based on question number
+      const difficultyLevel = questions.length <= 2 ? 'beginner' : questions.length <= 4 ? 'intermediate' : 'advanced';
+      
+      const prompt = `You are an AI Interview Evaluator for CareerPilot.
 
 Interview Context:
-Role: ${session.role_title}
-Current Question Number: ${questions.length}
+- Target Role: ${session.role_title}
+- Difficulty Level: ${difficultyLevel}
+- Question: ${questionText}
 
-Conversation History:
-${conversationHistory}
+Evaluate the candidate's answer using this rubric:
 
-Latest Answer: ${answer}
+1. Relevance (0–3): Does the answer directly address the question?
+2. Conceptual Understanding (0–3): Is the technical understanding correct?
+3. Reasoning & Explanation (0–2): Does the answer explain why/how?
+4. Originality (0–2): Is it expressed in the candidate's own words?
 
-Provide:
-1. Feedback on the answer (scores and comments)
-2. Next question (or conclude if appropriate)
+Scoring rules:
+- If the answer repeats or paraphrases the question → total score MUST be ≤ 2
+- If the answer is vague or generic → total score MUST be ≤ 4
+- A strong, well-reasoned answer → total score ≥ 7
 
-Response format:
+Candidate's Answer: ${answer}
+
+Return ONLY valid JSON (no markdown, no code blocks, no explanations):
+
 {
-  "feedback": {
-    "clarity": <number 0-100>,
-    "technicalAccuracy": <number 0-100>,
-    "relevance": <number 0-100>,
-    "communication": <number 0-100>,
-    "overallScore": <number 0-100>,
-    "strengths": [<array of strings>],
-    "improvements": [<array of strings>],
-    "comments": "<string>"
+  "score": <0-10>,
+  "breakdown": {
+    "relevance": <0-3>,
+    "understanding": <0-3>,
+    "reasoning": <0-2>,
+    "originality": <0-2>
   },
+  "strengths": ["..."],
+  "improvements": ["..."],
+  "final_feedback": "One short paragraph",
   "nextQuestion": {
     "question": "<string>",
     "questionType": "<technical|behavioral|mixed>",
@@ -352,16 +363,54 @@ Response format:
       // Get interview type from session or default
       const currentInterviewType = questions[0]?.questionType || 'technical';
       
-      // Call Gemini with error handling
+      // Call Gemini with error handling and strict JSON parsing
       let interviewResponse;
       try {
         const result = await this.model.generateContent(prompt);
         const response = await result.response;
         let interviewText = response.text();
 
-        // Clean JSON
+        // Clean JSON - remove markdown code blocks and whitespace
         interviewText = interviewText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-        interviewResponse = JSON.parse(interviewText);
+        
+        // Try to parse JSON
+        try {
+          interviewResponse = JSON.parse(interviewText);
+          
+          // Validate and normalize the response structure
+          interviewResponse = this.validateAndNormalizeEvaluationResponse(interviewResponse, answer, currentQuestion, currentInterviewType, session.role_title, questions);
+        } catch (parseError) {
+          // Retry with stricter system message if JSON parsing fails
+          console.warn('JSON parsing failed, retrying with stricter prompt:', parseError.message);
+          const strictPrompt = `You are an AI Interview Evaluator. You MUST return ONLY valid JSON, no other text.
+
+Interview Context:
+- Target Role: ${session.role_title}
+- Difficulty Level: ${difficultyLevel}
+- Question: ${questionText}
+- Candidate's Answer: ${answer}
+
+Evaluate using this rubric:
+1. Relevance (0–3): Does the answer directly address the question?
+2. Conceptual Understanding (0–3): Is the technical understanding correct?
+3. Reasoning & Explanation (0–2): Does the answer explain why/how?
+4. Originality (0–2): Is it expressed in the candidate's own words?
+
+Scoring rules:
+- If answer repeats/paraphrases question → score ≤ 2
+- If answer is vague/generic → score ≤ 4
+- Strong answer → score ≥ 7
+
+Return ONLY this JSON structure (no markdown, no code blocks):
+{"score":0-10,"breakdown":{"relevance":0-3,"understanding":0-3,"reasoning":0-2,"originality":0-2},"strengths":[],"improvements":[],"final_feedback":"","nextQuestion":null,"isComplete":false,"summary":null}`;
+          
+          const retryResult = await this.model.generateContent(strictPrompt);
+          const retryResponse = await retryResult.response;
+          let retryText = retryResponse.text();
+          retryText = retryText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+          interviewResponse = JSON.parse(retryText);
+          interviewResponse = this.validateAndNormalizeEvaluationResponse(interviewResponse, answer, currentQuestion, currentInterviewType, session.role_title, questions);
+        }
       } catch (geminiError) {
         const errorMsg = geminiError.message || String(geminiError) || JSON.stringify(geminiError);
         
@@ -370,20 +419,20 @@ Response format:
           console.warn('Gemini API quota exceeded, using intelligent fallback feedback');
           // Analyze answer quality and provide adaptive feedback
           if (!currentQuestion) {
-            // Fallback if no current question available
+            // Fallback if no current question available - use rubric format
             interviewResponse = {
-              feedback: {
-                clarity: 50,
-                technicalAccuracy: 50,
-                relevance: 30,
-                communication: 50,
-                overallScore: 45,
-                strengths: ['Attempted to answer'],
-                improvements: ['Please provide a more detailed and relevant answer'],
-                comments: 'Your answer needs improvement. Please provide more specific details and ensure your answer directly addresses the question.'
+              score: 3,
+              breakdown: {
+                relevance: 1,
+                understanding: 1,
+                reasoning: 0,
+                originality: 1
               },
+              strengths: ['Attempted to answer'],
+              improvements: ['Please provide a more detailed and relevant answer'],
+              final_feedback: 'Your answer needs improvement. Please provide more specific details and ensure your answer directly addresses the question.',
               nextQuestion: {
-                question: this.generateNextQuestion(session.role_title, currentInterviewType, questions.length, 45),
+                question: this.generateNextQuestion(session.role_title, currentInterviewType, questions.length, 30),
                 questionType: currentInterviewType,
                 context: `Continuing the ${currentInterviewType} interview for the ${session.role_title} position.`
               },
@@ -391,6 +440,7 @@ Response format:
               summary: null
             };
           } else {
+            // Use rubric-based fallback evaluation
             interviewResponse = this.analyzeAnswerQuality(answer, currentQuestion, currentInterviewType, session.role_title, questions);
           }
         } else {
@@ -399,16 +449,29 @@ Response format:
         }
       }
 
-      // Add feedback
-      feedback.push(interviewResponse.feedback);
+      // Add feedback (convert from new format to legacy format for compatibility)
+      const legacyFeedback = this.convertToLegacyFeedbackFormat(interviewResponse);
+      feedback.push(legacyFeedback);
 
-      // Add next question if available
+      // Add next question if available (use the one from response or generate)
       if (interviewResponse.nextQuestion && !interviewResponse.isComplete) {
         questions.push(interviewResponse.nextQuestion);
+      } else if (!interviewResponse.isComplete && !interviewResponse.nextQuestion) {
+        // Generate next question if not provided
+        const questionNumber = questions.length + 1;
+        const shouldContinue = questionNumber < 5 && interviewResponse.score > 3;
+        if (shouldContinue) {
+          questions.push({
+            question: this.generateNextQuestion(session.role_title, currentInterviewType, questionNumber, interviewResponse.score * 10),
+            questionType: currentInterviewType,
+            context: `Continuing the ${currentInterviewType} interview for the ${session.role_title} position.`
+          });
+        }
       }
 
       // Update session
       const status = interviewResponse.isComplete ? 'completed' : 'in_progress';
+      // Use the new score format (0-10) converted to 0-100 for legacy compatibility
       const overallScore = this.calculateOverallScore(feedback);
 
       await db.query(
@@ -432,7 +495,7 @@ Response format:
         'interview',
         'continue',
         { sessionId, answerLength: answer.length },
-        { feedback: interviewResponse.feedback, hasNext: !!interviewResponse.nextQuestion },
+        { feedback: legacyFeedback, hasNext: !!interviewResponse.nextQuestion },
         executionTime,
         'success'
       );
@@ -441,8 +504,12 @@ Response format:
         success: true,
         data: {
           sessionId,
-          feedback: interviewResponse.feedback,
-          nextQuestion: interviewResponse.nextQuestion,
+          feedback: legacyFeedback,
+          nextQuestion: interviewResponse.nextQuestion || (interviewResponse.isComplete ? null : {
+            question: this.generateNextQuestion(session.role_title, currentInterviewType, questions.length + 1, interviewResponse.score * 10),
+            questionType: currentInterviewType,
+            context: `Continuing the ${currentInterviewType} interview for the ${session.role_title} position.`
+          }),
           isComplete: interviewResponse.isComplete,
           summary: interviewResponse.summary,
           questionNumber: questions.length,
@@ -498,7 +565,94 @@ Response format:
   }
 
   /**
-   * Analyze answer quality and provide adaptive feedback
+   * Validate and normalize evaluation response from AI
+   */
+  validateAndNormalizeEvaluationResponse(response, answer, question, interviewType, roleTitle, questions) {
+    // Ensure score is between 0-10
+    let score = typeof response.score === 'number' ? Math.max(0, Math.min(10, response.score)) : 5;
+    
+    // Validate breakdown
+    const breakdown = response.breakdown || {};
+    const relevance = Math.max(0, Math.min(3, breakdown.relevance || 0));
+    const understanding = Math.max(0, Math.min(3, breakdown.understanding || 0));
+    const reasoning = Math.max(0, Math.min(2, breakdown.reasoning || 0));
+    const originality = Math.max(0, Math.min(2, breakdown.originality || 0));
+    
+    // Recalculate score from breakdown if provided
+    const calculatedScore = relevance + understanding + reasoning + originality;
+    if (calculatedScore >= 0 && calculatedScore <= 10) {
+      score = calculatedScore;
+    }
+    
+    // Apply strict scoring rules
+    const answerLower = answer.toLowerCase();
+    const questionText = question?.question?.toLowerCase() || '';
+    
+    // Check if answer repeats/paraphrases question
+    const questionWords = questionText.split(/\s+/).filter(w => w.length > 3);
+    const answerWords = answerLower.split(/\s+/);
+    const repeatedWords = questionWords.filter(qw => answerWords.includes(qw));
+    const repetitionRatio = questionWords.length > 0 ? repeatedWords.length / questionWords.length : 0;
+    
+    if (repetitionRatio > 0.5) {
+      // Answer mostly repeats question - cap at 2
+      score = Math.min(score, 2);
+    }
+    
+    // Check if answer is vague/generic
+    const vaguePatterns = ['i think', 'maybe', 'probably', 'i guess', 'not sure', 'i don\'t know'];
+    const isVague = vaguePatterns.some(pattern => answerLower.includes(pattern)) || answer.trim().length < 30;
+    if (isVague && score > 4) {
+      score = Math.min(score, 4);
+    }
+    
+    return {
+      score: Math.max(0, Math.min(10, score)),
+      breakdown: {
+        relevance,
+        understanding,
+        reasoning,
+        originality
+      },
+      strengths: Array.isArray(response.strengths) ? response.strengths : [],
+      improvements: Array.isArray(response.improvements) ? response.improvements : [],
+      final_feedback: response.final_feedback || response.comments || 'Please provide a more detailed answer.',
+      nextQuestion: response.nextQuestion || null,
+      isComplete: response.isComplete === true,
+      summary: response.summary || null
+    };
+  }
+
+  /**
+   * Convert new rubric format (0-10) to legacy format (0-100) for compatibility
+   */
+  convertToLegacyFeedbackFormat(response) {
+    const breakdown = response.breakdown || {};
+    
+    // Convert 0-10 score to 0-100
+    const overallScore = Math.round((response.score / 10) * 100);
+    
+    // Convert breakdown scores (0-3, 0-3, 0-2, 0-2) to 0-100 scale
+    const relevance = Math.round((breakdown.relevance / 3) * 100);
+    const understanding = Math.round((breakdown.understanding / 3) * 100);
+    const reasoning = Math.round((breakdown.reasoning / 2) * 100);
+    const originality = Math.round((breakdown.originality / 2) * 100);
+    
+    // Map to legacy format
+    return {
+      clarity: Math.round((reasoning + originality) / 2), // Average of reasoning and originality
+      technicalAccuracy: understanding,
+      relevance: relevance,
+      communication: Math.round((reasoning + originality) / 2),
+      overallScore: overallScore,
+      strengths: response.strengths || [],
+      improvements: response.improvements || [],
+      comments: response.final_feedback || 'Please provide a more detailed answer.'
+    };
+  }
+
+  /**
+   * Analyze answer quality and provide adaptive feedback (fallback method using rubric)
    */
   analyzeAnswerQuality(answer, question, interviewType, roleTitle, questions) {
     // Handle case where question might be null or undefined
@@ -676,25 +830,55 @@ Response format:
     const questionNumber = (questions?.length || 0) + 1;
     const shouldContinue = questionNumber < 5 && overallScore > 30;
 
-    return {
-      feedback: {
-        clarity: Math.round(clarityScore),
-        technicalAccuracy: Math.round(technicalScore),
-        relevance: Math.round(relevanceScore),
-        communication: Math.round(communicationScore),
-        overallScore: overallScore,
-        strengths: strengths,
-        improvements: improvements,
-        comments: comments
+    // Convert to new rubric format (0-10 scale)
+    // Map old scores (0-100) to new rubric (0-10)
+    const relevanceRubric = Math.min(3, Math.round((relevanceScore / 100) * 3));
+    const understandingRubric = Math.min(3, Math.round((technicalScore / 100) * 3));
+    const reasoningRubric = Math.min(2, Math.round((clarityScore / 100) * 2));
+    const originalityRubric = Math.min(2, Math.round((communicationScore / 100) * 2));
+    
+    // Calculate total score (0-10)
+    let totalScore = relevanceRubric + understandingRubric + reasoningRubric + originalityRubric;
+    
+    // Apply strict rules (answerLower already declared above)
+    const questionText = question?.question?.toLowerCase() || '';
+    const questionWords = questionText.split(/\s+/).filter(w => w.length > 3);
+    const answerWords = answerLower.split(/\s+/);
+    const repeatedWords = questionWords.filter(qw => answerWords.includes(qw));
+    const repetitionRatio = questionWords.length > 0 ? repeatedWords.length / questionWords.length : 0;
+    
+    if (repetitionRatio > 0.5) {
+      totalScore = Math.min(totalScore, 2);
+    }
+    
+    const vaguePatterns = ['i think', 'maybe', 'probably', 'i guess', 'not sure', 'i don\'t know'];
+    const isVague = vaguePatterns.some(pattern => answerLower.includes(pattern)) || wordCount < 30;
+    if (isVague && totalScore > 4) {
+      totalScore = Math.min(totalScore, 4);
+    }
+    
+    const rubricResponse = {
+      score: Math.max(0, Math.min(10, totalScore)),
+      breakdown: {
+        relevance: relevanceRubric,
+        understanding: understandingRubric,
+        reasoning: reasoningRubric,
+        originality: originalityRubric
       },
+      strengths: strengths,
+      improvements: improvements,
+      final_feedback: comments,
       nextQuestion: shouldContinue ? {
-        question: this.generateNextQuestion(roleTitle, interviewType, questionNumber, overallScore),
+        question: this.generateNextQuestion(roleTitle, interviewType, questionNumber, totalScore * 10),
         questionType: interviewType,
         context: `Continuing the ${interviewType} interview for the ${roleTitle} position.`
       } : null,
       isComplete: !shouldContinue,
-      summary: !shouldContinue ? `Interview completed. Overall performance: ${overallScore}/100. ${overallScore >= 70 ? 'Strong performance!' : overallScore >= 50 ? 'Good effort, keep practicing.' : 'Continue practicing to improve your interview skills.'}` : null
+      summary: !shouldContinue ? `Interview completed. Overall performance: ${totalScore}/10. ${totalScore >= 7 ? 'Strong performance!' : totalScore >= 5 ? 'Good effort, keep practicing.' : 'Continue practicing to improve your interview skills.'}` : null
     };
+    
+    // Convert to legacy format for return
+    return rubricResponse;
   }
 
   /**

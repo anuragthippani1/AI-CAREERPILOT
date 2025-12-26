@@ -56,14 +56,14 @@ export default function ResumeUpload() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-white border-b border-gray-200">
-        <div className="container mx-auto px-6 py-4">
-          <h1 className="text-2xl font-bold text-gray-900">Resume Analysis</h1>
+    <div className="min-h-screen bg-gray-50">
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <h1 className="text-xl font-bold text-gray-900">Resume Analysis</h1>
         </div>
       </header>
 
-      <main className="container mx-auto px-6 py-8 max-w-4xl">
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-4xl">
         {!result ? (
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -120,7 +120,7 @@ export default function ResumeUpload() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full bg-gray-900 hover:bg-gray-800 text-white font-semibold py-3 px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm hover:shadow-md"
               >
                 {loading ? (
                   <>
