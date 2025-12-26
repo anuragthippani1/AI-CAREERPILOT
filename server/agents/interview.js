@@ -138,9 +138,10 @@ Response format:
               `Describe your leadership style. How do you motivate and manage a team?`,
               `Tell me about a time you had to resolve a conflict within your team.`,
               `How do you handle underperforming team members while maintaining team morale?`
-            ];
-            
-            const questionList = questions[interviewType] || questions.mixed;
+            ]
+          };
+          
+          const questionList = questions[interviewType] || questions.mixed;
             const selectedQuestion = questionList[Math.floor(Math.random() * questionList.length)];
             
             firstQuestion = {

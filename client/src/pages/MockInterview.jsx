@@ -113,12 +113,19 @@ export default function MockInterview() {
         setError('Failed to start interview');
       }
     } catch (err) {
-      const errorMsg = err.response?.data?.error || err.response?.data?.data?.error || err.message || 'Failed to start interview';
-      if (errorMsg.includes('quota') || errorMsg.includes('Quota')) {
-        setError('API quota exceeded. Please wait a few minutes or check your Gemini API plan.');
+      console.error('Interview start error:', err);
+      let errorMsg = 'Network Error';
+      
+      if (err.code === 'ECONNREFUSED' || err.message?.includes('Network Error') || !err.response) {
+        errorMsg = 'Cannot connect to server. Please make sure the backend server is running on port 8000.';
       } else {
-        setError(errorMsg.substring(0, 200));
+        errorMsg = err.response?.data?.error || err.response?.data?.data?.error || err.message || 'Failed to start interview';
+        if (errorMsg.includes('quota') || errorMsg.includes('Quota')) {
+          errorMsg = 'API quota exceeded. Please wait a few minutes or check your Gemini API plan.';
+        }
       }
+      
+      setError(errorMsg.substring(0, 200));
     } finally {
       setLoading(false);
     }
