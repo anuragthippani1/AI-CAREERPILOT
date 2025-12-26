@@ -6,6 +6,8 @@ import SkillGap from './pages/SkillGap';
 import CareerRoadmap from './pages/CareerRoadmap';
 import MockInterview from './pages/MockInterview';
 import CodingPractice from './pages/CodingPractice';
+import Profile from './pages/Profile';
+import Leaderboard from './pages/Leaderboard';
 
 function App() {
   return (
@@ -17,6 +19,8 @@ function App() {
       <Route path="/roadmap" element={<CareerRoadmap />} />
       <Route path="/interview" element={<MockInterview />} />
       <Route path="/practice" element={<CodingPractice />} />
+      <Route path="/profile" element={<Profile />} />
+      <Route path="/leaderboard" element={<Leaderboard />} />
     </Routes>
   );
 }

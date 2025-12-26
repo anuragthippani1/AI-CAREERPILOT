@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, Target, Map, MessageSquare, Plus, TrendingUp, Calendar, Clock, Sparkles, Code, Trophy, History, Terminal, ArrowRight } from 'lucide-react';
+import { FileText, Target, Map, MessageSquare, Plus, TrendingUp, Calendar, Clock, Sparkles, Code, Trophy, History, Terminal, ArrowRight, Star, Flame, Award, User } from 'lucide-react';
 import { userAPI, resumeAPI, roadmapAPI, interviewAPI } from '../services/api';
 
 export default function Dashboard() {
@@ -9,6 +9,8 @@ export default function Dashboard() {
   const [resume, setResume] = useState(null);
   const [roadmap, setRoadmap] = useState(null);
   const [interviewStats, setInterviewStats] = useState({ completed: 0, averageScore: 0, streak: 0 });
+  const [userStats, setUserStats] = useState(null);
+  const [recentAchievements, setRecentAchievements] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -18,16 +20,24 @@ export default function Dashboard() {
   const loadDashboard = async () => {
     try {
       setLoading(true);
-      const [userRes, resumeRes, roadmapRes, interviewRes] = await Promise.allSettled([
+      const [userRes, resumeRes, roadmapRes, interviewRes, statsRes, achievementsRes] = await Promise.allSettled([
         userAPI.get(userId),
         resumeAPI.get(userId),
         roadmapAPI.get(userId),
         interviewAPI.getSessions(userId),
+        userAPI.getStats(userId),
+        userAPI.getAchievements(userId),
       ]);
 
       if (userRes.status === 'fulfilled') setUser(userRes.value.data.data);
       if (resumeRes.status === 'fulfilled') setResume(resumeRes.value.data.data);
       if (roadmapRes.status === 'fulfilled') setRoadmap(roadmapRes.value.data.data);
+      if (statsRes.status === 'fulfilled') setUserStats(statsRes.value.data.data);
+      if (achievementsRes.status === 'fulfilled') {
+        const achievements = achievementsRes.value.data.data || [];
+        // Get 3 most recent achievements
+        setRecentAchievements(achievements.slice(0, 3));
+      }
       
       if (interviewRes.status === 'fulfilled' && interviewRes.value.data.success) {
         const sessions = interviewRes.value.data.data || [];
@@ -38,7 +48,7 @@ export default function Dashboard() {
         setInterviewStats({
           completed: completed.length,
           averageScore: Math.round(avgScore),
-          streak: 0, // TODO: Calculate streak
+          streak: statsRes.status === 'fulfilled' ? (statsRes.value.data.data?.currentStreak || 0) : 0,
         });
       }
     } catch (error) {
@@ -101,6 +111,29 @@ export default function Dashboard() {
             <p className="text-gray-600 mb-6">
               Start your interview preparation journey with our AI-powered platform.
             </p>
+            
+            {/* XP and Level Display */}
+            {userStats && (
+              <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <Star className="w-5 h-5 text-yellow-500" />
+                    <span className="font-semibold text-gray-900">Level {userStats.level}</span>
+                  </div>
+                  <span className="text-sm font-semibold text-gray-700">{userStats.xp.toLocaleString()} XP</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                  <div
+                    className="bg-gradient-to-r from-blue-600 to-indigo-600 h-2 rounded-full transition-all duration-500"
+                    style={{ width: `${userStats.progressToNextLevel}%` }}
+                  ></div>
+                </div>
+                <p className="text-xs text-gray-600">
+                  {userStats.xpNeeded} XP to Level {userStats.level + 1}
+                </p>
+              </div>
+            )}
+
             <div>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm text-gray-600">Your Progress</span>
@@ -115,8 +148,15 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Interview Stats Cards */}
+          {/* Stats Cards */}
           <div className="space-y-4">
+            {userStats && (
+              <StatCard
+                icon={<Flame className="w-5 h-5" />}
+                label="Current Streak"
+                value={`${userStats.currentStreak} days`}
+              />
+            )}
             <StatCard
               icon={<Calendar className="w-5 h-5" />}
               label="Your Interviews"
@@ -129,6 +169,43 @@ export default function Dashboard() {
             />
           </div>
         </div>
+
+        {/* Recent Achievements */}
+        {recentAchievements.length > 0 && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Trophy className="w-5 h-5 text-yellow-500" />
+                <h3 className="text-lg font-semibold text-gray-900">Recent Achievements</h3>
+              </div>
+              <Link
+                to="/profile"
+                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+              >
+                View All
+              </Link>
+            </div>
+            <div className="grid sm:grid-cols-3 gap-4">
+              {recentAchievements.map((achievement) => (
+                <div
+                  key={achievement.id}
+                  className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 bg-yellow-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <Award className="w-5 h-5 text-yellow-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-semibold text-gray-900 text-sm">{achievement.name}</h4>
+                      <p className="text-xs text-gray-600 mt-1 line-clamp-2">{achievement.description}</p>
+                      <p className="text-xs text-gray-500 mt-2">+{achievement.xpReward} XP</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Performance Metrics */}
         <div className="grid sm:grid-cols-3 gap-6 mb-8">
@@ -220,6 +297,13 @@ export default function Dashboard() {
             title="Coding Practice"
             description="Solve coding problems from GeeksforGeeks & LeetCode"
             link="/practice"
+            hasData={true}
+          />
+          <ActionCard
+            icon={<User className="w-6 h-6" />}
+            title="Profile"
+            description="View your profile, achievements, and stats"
+            link="/profile"
             hasData={true}
           />
         </div>

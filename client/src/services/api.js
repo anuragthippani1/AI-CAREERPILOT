@@ -42,6 +42,9 @@ export const userAPI = {
   create: (data) => api.post('/user/create', data),
   setGoal: (data) => api.post('/user/goal', data),
   get: (userId) => api.get(`/user/${userId}`),
+  updateProfile: (userId, data) => api.put(`/user/${userId}/profile`, data),
+  getStats: (userId) => api.get(`/user/${userId}/stats`),
+  getAchievements: (userId, all = false) => api.get(`/user/${userId}/achievements`, { params: { all } }),
 };
 
 // Practice API
@@ -53,6 +56,19 @@ export const practiceAPI = {
   getProgress: (userId) => api.get(`/practice/progress/${userId}`),
   getHint: (userId, questionId, code) => api.post('/practice/hint', { userId, questionId, code }),
   getUserCode: (userId, questionId) => api.get(`/practice/code/${userId}/${questionId}`),
+};
+
+// Leaderboard API
+export const leaderboardAPI = {
+  getTopUsers: (page = 1, limit = 20) => api.get('/leaderboard', { params: { page, limit } }),
+  getTopByInterviews: (page = 1, limit = 20) => api.get('/leaderboard/interviews', { params: { page, limit } }),
+  getTopByStreaks: (page = 1, limit = 20) => api.get('/leaderboard/streaks', { params: { page, limit } }),
+  getUserRank: (userId) => api.get(`/leaderboard/rank/${userId}`),
+};
+
+// Achievements API
+export const achievementsAPI = {
+  getAll: (userId) => api.get(`/user/${userId}/achievements`),
 };
 
 export default api;

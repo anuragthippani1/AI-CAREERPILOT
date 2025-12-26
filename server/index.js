@@ -66,6 +66,7 @@ const roadmapRoutes = require('./routes/roadmap');
 const interviewRoutes = require('./routes/interview');
 const userRoutes = require('./routes/user');
 const practiceRoutes = require('./routes/practice');
+const leaderboardRoutes = require('./routes/leaderboard');
 
 app.use('/api/resume', resumeRoutes);
 app.use('/api/skills', skillsRoutes);
@@ -73,6 +74,7 @@ app.use('/api/roadmap', roadmapRoutes);
 app.use('/api/interview', interviewRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/practice', practiceRoutes);
+app.use('/api/leaderboard', leaderboardRoutes);
 
 // Health check with detailed status
 app.get('/api/health', (req, res) => {
@@ -123,6 +125,12 @@ app.use((err, req, res, next) => {
       path: req.path 
     })
   });
+});
+
+// Initialize achievements on startup
+const achievements = require('./services/achievements');
+achievements.initializeAchievements().catch(err => {
+  console.error('Error initializing achievements:', err);
 });
 
 app.listen(PORT, () => {

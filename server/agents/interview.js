@@ -8,6 +8,8 @@ const { v4: uuidv4 } = require('uuid');
 const db = require('../config/database');
 const { logAgentAction } = require('../utils/logger');
 const questionBank = require('../services/questionBank');
+const gamification = require('../services/gamification');
+const achievements = require('../services/achievements');
 
 class InterviewAgent {
   constructor() {
@@ -489,6 +491,36 @@ Return ONLY this JSON structure (no markdown, no code blocks):
         ]
       );
 
+      // Award XP and check achievements if interview is completed
+      let xpResult = null;
+      let unlockedAchievements = [];
+      if (status === 'completed') {
+        try {
+          // Calculate XP: 50 base + (score/10) bonus + 10 per question
+          const baseXP = 50;
+          const scoreBonus = Math.round(overallScore / 10);
+          const questionBonus = questions.length * 10;
+          const totalXP = baseXP + scoreBonus + questionBonus;
+
+          // Award XP
+          xpResult = await gamification.awardXP(context.userId, totalXP, 'interview');
+
+          // Update streak
+          await gamification.updateStreak(context.userId);
+
+          // Check and unlock achievements
+          const interviewTime = Math.floor((Date.now() - new Date(session.created_at).getTime()) / 1000);
+          unlockedAchievements = await achievements.checkAchievements(context.userId, 'complete_interview', {
+            score: overallScore,
+            time: interviewTime,
+            questionCount: questions.length
+          });
+        } catch (error) {
+          console.error('Error awarding XP/achievements for interview:', error);
+          // Don't fail the interview if gamification fails
+        }
+      }
+
       const executionTime = Date.now() - startTime;
       await logAgentAction(
         context.userId,
@@ -505,6 +537,10 @@ Return ONLY this JSON structure (no markdown, no code blocks):
         data: {
           sessionId,
           feedback: legacyFeedback,
+          xpGained: xpResult ? xpResult.xpGained : null,
+          leveledUp: xpResult ? xpResult.leveledUp : false,
+          newLevel: xpResult ? xpResult.newLevel : null,
+          unlockedAchievements: unlockedAchievements,
           nextQuestion: interviewResponse.nextQuestion || (interviewResponse.isComplete ? null : {
             question: this.generateNextQuestion(session.role_title, currentInterviewType, questions.length + 1, interviewResponse.score * 10),
             questionType: currentInterviewType,

@@ -9,9 +9,19 @@ CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
     name VARCHAR(255) NOT NULL,
+    xp INT DEFAULT 0,
+    level INT DEFAULT 1,
+    current_streak INT DEFAULT 0,
+    longest_streak INT DEFAULT 0,
+    last_activity_date DATE,
+    avatar_url VARCHAR(500),
+    bio TEXT,
+    title VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_email (email)
+    INDEX idx_email (email),
+    INDEX idx_xp (xp),
+    INDEX idx_level (level)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Resumes Table
@@ -197,4 +207,45 @@ CREATE TABLE IF NOT EXISTS practice_progress (
     INDEX idx_completion_status (completion_status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Achievements Table
+CREATE TABLE IF NOT EXISTS achievements (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    code VARCHAR(100) UNIQUE NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    icon VARCHAR(100),
+    xp_reward INT DEFAULT 0,
+    category ENUM('interviews', 'streaks', 'coding', 'milestones') NOT NULL,
+    criteria JSON,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_category (category),
+    INDEX idx_code (code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- User Achievements Table
+CREATE TABLE IF NOT EXISTS user_achievements (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    achievement_id INT NOT NULL,
+    unlocked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (achievement_id) REFERENCES achievements(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_user_achievement (user_id, achievement_id),
+    INDEX idx_user_id (user_id),
+    INDEX idx_achievement_id (achievement_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Leaderboard Cache Table
+CREATE TABLE IF NOT EXISTS leaderboard_cache (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    rank INT NOT NULL,
+    xp INT NOT NULL,
+    level INT NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_rank (rank),
+    INDEX idx_xp (xp),
+    INDEX idx_user_id (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

@@ -3,6 +3,7 @@ import { Code, Filter, Search, TrendingUp, Clock, CheckCircle, XCircle, Lightbul
 import CodeEditor from '../components/CodeEditor';
 import QuestionPanel from '../components/QuestionPanel';
 import TestResults from '../components/TestResults';
+import XPNotification from '../components/XPNotification';
 import { practiceAPI } from '../services/api';
 
 export default function CodingPractice() {
@@ -24,6 +25,7 @@ export default function CodingPractice() {
   const [progress, setProgress] = useState(null);
   const [hint, setHint] = useState(null);
   const [explanation, setExplanation] = useState(null);
+  const [xpNotification, setXpNotification] = useState(null);
 
   useEffect(() => {
     loadQuestions();
@@ -148,6 +150,19 @@ export default function CodingPractice() {
       if (response.data.success) {
         setTestResults(response.data.data.executionResult);
         setExplanation(response.data.data.explanation);
+        
+        // Show XP and achievement notifications if problem was solved
+        if (response.data.data.executionResult?.success) {
+          if (response.data.data.xpGained || response.data.data.leveledUp || response.data.data.unlockedAchievements?.length > 0) {
+            setXpNotification({
+              xpGained: response.data.data.xpGained,
+              leveledUp: response.data.data.leveledUp,
+              newLevel: response.data.data.newLevel,
+              unlockedAchievements: response.data.data.unlockedAchievements || []
+            });
+          }
+        }
+        
         await loadProgress();
         await loadQuestionDetails(selectedQuestion.id);
       } else {
@@ -184,6 +199,17 @@ export default function CodingPractice() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* XP Notification */}
+      {xpNotification && (
+        <XPNotification
+          xpGained={xpNotification.xpGained}
+          leveledUp={xpNotification.leveledUp}
+          newLevel={xpNotification.newLevel}
+          unlockedAchievements={xpNotification.unlockedAchievements}
+          onClose={() => setXpNotification(null)}
+        />
+      )}
+
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { MessageSquare, Send, Loader, CheckCircle, AlertCircle, Clock, BarChart3, TrendingUp, FileText, Calendar, Target, Award } from 'lucide-react';
 import { interviewAPI } from '../services/api';
+import XPNotification from '../components/XPNotification';
 
 export default function MockInterview() {
   const [userId] = useState(1);
@@ -21,6 +22,7 @@ export default function MockInterview() {
   const [interviewHistory, setInterviewHistory] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
   const [overallStats, setOverallStats] = useState(null);
+  const [xpNotification, setXpNotification] = useState(null);
 
   useEffect(() => {
     if (startTime && !isComplete) {
@@ -159,6 +161,16 @@ export default function MockInterview() {
             setIsComplete(true);
             setCurrentQuestion(null);
             loadInterviewHistory();
+            
+            // Show XP and achievement notifications
+            if (agentResult.data.xpGained || agentResult.data.leveledUp || agentResult.data.unlockedAchievements?.length > 0) {
+              setXpNotification({
+                xpGained: agentResult.data.xpGained,
+                leveledUp: agentResult.data.leveledUp,
+                newLevel: agentResult.data.newLevel,
+                unlockedAchievements: agentResult.data.unlockedAchievements || []
+              });
+            }
           } else {
             setCurrentQuestion(agentResult.data.nextQuestion);
           }
@@ -410,6 +422,17 @@ export default function MockInterview() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* XP Notification */}
+      {xpNotification && (
+        <XPNotification
+          xpGained={xpNotification.xpGained}
+          leveledUp={xpNotification.leveledUp}
+          newLevel={xpNotification.newLevel}
+          unlockedAchievements={xpNotification.unlockedAchievements}
+          onClose={() => setXpNotification(null)}
+        />
+      )}
+
       <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
@@ -458,6 +481,33 @@ export default function MockInterview() {
                     <p className="text-3xl font-bold text-gray-900">{formatTime(elapsedTime)}</p>
                   </div>
                 </div>
+                {xpNotification && (
+                  <div className="bg-white rounded-lg p-4 mb-4">
+                    <p className="text-sm text-gray-600 mb-1">XP Earned</p>
+                    <p className="text-2xl font-bold text-green-600">
+                      +{xpNotification.xpGained || 0} XP
+                    </p>
+                    {xpNotification.leveledUp && (
+                      <p className="text-sm text-gray-600 mt-1">
+                        🎉 Level Up! You're now Level {xpNotification.newLevel}
+                      </p>
+                    )}
+                  </div>
+                )}
+                {xpNotification?.unlockedAchievements && xpNotification.unlockedAchievements.length > 0 && (
+                  <div className="bg-white rounded-lg p-4 mb-4">
+                    <p className="text-sm font-semibold text-gray-900 mb-2">Achievements Unlocked:</p>
+                    <div className="space-y-2">
+                      {xpNotification.unlockedAchievements.map((achievement, i) => (
+                        <div key={i} className="flex items-center gap-2">
+                          <Award className="w-4 h-4 text-yellow-500" />
+                          <span className="text-sm text-gray-700">{achievement.name}</span>
+                          <span className="text-xs text-gray-500">+{achievement.xpReward} XP</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 {feedback.summary && (
                   <p className="text-gray-700">{feedback.summary}</p>
                 )}

@@ -1,9 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const { body, param, query, validationResult } = require('express-validator');
+const db = require('../config/database');
+const { v4: uuidv4 } = require('uuid');
 const questionBank = require('../services/questionBank');
 const codeExecutor = require('../services/codeExecutor');
 const PracticeAgent = require('../agents/practice');
+const gamification = require('../services/gamification');
+const achievements = require('../services/achievements');
 const db = require('../config/database');
 const { v4: uuidv4 } = require('uuid');
 
@@ -203,14 +207,51 @@ router.post('/submit',
         ]
       );
 
-      // If solved, update solved_at
+      // If solved, update solved_at and award XP
+      let xpResult = null;
+      let unlockedAchievements = [];
       if (executionResult.success) {
+        // Check if this is the first time solving this problem
+        const [progress] = await db.query(
+          'SELECT solved_at FROM practice_progress WHERE user_id = ? AND question_id = ?',
+          [userId, questionId]
+        );
+        const isFirstSolve = !progress[0] || !progress[0].solved_at;
+
         await db.query(
           `UPDATE practice_progress 
            SET solved_at = NOW(), completion_status = 'solved'
            WHERE user_id = ? AND question_id = ? AND solved_at IS NULL`,
           [userId, questionId]
         );
+
+        // Award XP only if first time solving
+        if (isFirstSolve) {
+          try {
+            // Calculate XP based on difficulty: 25 (easy), 50 (medium), 100 (hard)
+            const difficultyXP = {
+              easy: 25,
+              medium: 50,
+              hard: 100
+            };
+            const xpAmount = difficultyXP[question.difficulty?.toLowerCase()] || 25;
+
+            // Award XP
+            xpResult = await gamification.awardXP(userId, xpAmount, 'coding');
+
+            // Update streak
+            await gamification.updateStreak(userId);
+
+            // Check and unlock achievements
+            unlockedAchievements = await achievements.checkAchievements(userId, 'solve_problem', {
+              difficulty: question.difficulty,
+              questionId
+            });
+          } catch (error) {
+            console.error('Error awarding XP/achievements for coding problem:', error);
+            // Don't fail the submission if gamification fails
+          }
+        }
       }
 
       // Get AI explanation
@@ -243,7 +284,11 @@ router.post('/submit',
           executionResult,
           score,
           sessionId,
-          explanation
+          explanation,
+          xpGained: xpResult ? xpResult.xpGained : null,
+          leveledUp: xpResult ? xpResult.leveledUp : false,
+          newLevel: xpResult ? xpResult.newLevel : null,
+          unlockedAchievements: unlockedAchievements
         }
       });
     } catch (error) {
