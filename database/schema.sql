@@ -108,3 +108,93 @@ CREATE TABLE IF NOT EXISTS agent_logs (
     INDEX idx_created_at (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Coding Questions Table
+CREATE TABLE IF NOT EXISTS coding_questions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(500) NOT NULL,
+    slug VARCHAR(500) UNIQUE NOT NULL,
+    description TEXT NOT NULL,
+    difficulty ENUM('easy', 'medium', 'hard') NOT NULL,
+    topics JSON, -- Array of topics: ["Arrays", "Strings", "Trees", etc.]
+    company_tags JSON, -- Array of company names: ["Google", "Amazon", etc.]
+    examples JSON, -- Array of example inputs/outputs
+    constraints TEXT,
+    hints JSON, -- Array of hints
+    test_cases JSON, -- Array of test cases with input/output
+    solution_template JSON, -- Code templates for different languages
+    source ENUM('geeksforgeeks', 'leetcode', 'curated') DEFAULT 'curated',
+    source_id VARCHAR(255), -- Original ID from source
+    acceptance_rate DECIMAL(5,2), -- Percentage of users who solved it
+    frequency INT DEFAULT 0, -- How often it appears in interviews
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_difficulty (difficulty),
+    INDEX idx_source (source),
+    INDEX idx_slug (slug),
+    FULLTEXT idx_search (title, description)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Question Solutions Table
+CREATE TABLE IF NOT EXISTS question_solutions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    question_id INT NOT NULL,
+    language VARCHAR(50) NOT NULL, -- python, javascript, java, cpp
+    solution_code TEXT NOT NULL,
+    time_complexity VARCHAR(100),
+    space_complexity VARCHAR(100),
+    explanation TEXT,
+    is_optimal BOOLEAN DEFAULT false,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (question_id) REFERENCES coding_questions(id) ON DELETE CASCADE,
+    INDEX idx_question_id (question_id),
+    INDEX idx_language (language)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- User Practice Sessions Table
+CREATE TABLE IF NOT EXISTS user_practice_sessions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    question_id INT NOT NULL,
+    session_id VARCHAR(255) NOT NULL,
+    code TEXT,
+    language VARCHAR(50) NOT NULL,
+    status ENUM('in_progress', 'submitted', 'completed', 'failed') DEFAULT 'in_progress',
+    test_results JSON, -- Results of test case execution
+    score DECIMAL(5,2), -- Score out of 100
+    execution_time_ms INT,
+    memory_usage_kb INT,
+    error_message TEXT,
+    feedback_json JSON, -- AI-generated feedback
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (question_id) REFERENCES coding_questions(id) ON DELETE CASCADE,
+    INDEX idx_user_id (user_id),
+    INDEX idx_question_id (question_id),
+    INDEX idx_session_id (session_id),
+    INDEX idx_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Practice Progress Table
+CREATE TABLE IF NOT EXISTS practice_progress (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    question_id INT NOT NULL,
+    attempts INT DEFAULT 0,
+    best_score DECIMAL(5,2) DEFAULT 0,
+    completion_status ENUM('not_started', 'in_progress', 'solved', 'mastered') DEFAULT 'not_started',
+    first_attempt_at TIMESTAMP NULL,
+    last_attempt_at TIMESTAMP NULL,
+    solved_at TIMESTAMP NULL,
+    time_spent_minutes INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (question_id) REFERENCES coding_questions(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_user_question (user_id, question_id),
+    INDEX idx_user_id (user_id),
+    INDEX idx_question_id (question_id),
+    INDEX idx_completion_status (completion_status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+

@@ -5,6 +5,7 @@ import ResumeUpload from './pages/ResumeUpload';
 import SkillGap from './pages/SkillGap';
 import CareerRoadmap from './pages/CareerRoadmap';
 import MockInterview from './pages/MockInterview';
+import CodingPractice from './pages/CodingPractice';
 
 function App() {
   return (
@@ -15,9 +16,11 @@ function App() {
       <Route path="/skills" element={<SkillGap />} />
       <Route path="/roadmap" element={<CareerRoadmap />} />
       <Route path="/interview" element={<MockInterview />} />
+      <Route path="/practice" element={<CodingPractice />} />
     </Routes>
   );
 }
 
 export default App;
+
 

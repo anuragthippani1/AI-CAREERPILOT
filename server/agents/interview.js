@@ -7,6 +7,7 @@ const { getModel } = require('../config/gemini');
 const { v4: uuidv4 } = require('uuid');
 const db = require('../config/database');
 const { logAgentAction } = require('../utils/logger');
+const questionBank = require('../services/questionBank');
 
 class InterviewAgent {
   constructor() {
@@ -40,7 +41,7 @@ Format your response as JSON.`;
     try {
       sessionId = uuidv4();
       const roleTitle = inputData.roleTitle || context.activeGoal?.target_role || 'Software Engineer';
-      const interviewType = inputData.type || 'technical'; // technical, behavioral, mixed, system-design, leadership
+      const interviewType = inputData.type || 'technical'; // technical, behavioral, mixed, system-design, leadership, coding
       const companyName = inputData.companyName || null;
 
       // Get user context for personalized questions
@@ -49,6 +50,30 @@ Format your response as JSON.`;
             ? JSON.parse(context.resume.analysis_json) 
             : context.resume.analysis_json)
         : null;
+
+      // For technical/coding interviews, try to get a real coding problem
+      let codingQuestion = null;
+      if (interviewType === 'technical' || interviewType === 'coding' || interviewType === 'mixed') {
+        try {
+          codingQuestion = await this.getCodingQuestion(roleTitle, 'medium');
+          if (codingQuestion) {
+            // Format coding question for interview
+            firstQuestion = {
+              question: `Let's solve a coding problem:\n\n${codingQuestion.title}\n\n${codingQuestion.description}\n\nExamples:\n${codingQuestion.examples.map((ex, i) => `Example ${i + 1}:\nInput: ${ex.input}\nOutput: ${ex.output}`).join('\n\n')}`,
+              questionType: 'coding',
+              questionId: codingQuestion.id,
+              context: `This is a coding interview question for the ${roleTitle} position.`,
+              hints: codingQuestion.hints || [],
+              expectedTopics: codingQuestion.topics || [],
+              constraints: codingQuestion.constraints,
+              testCases: codingQuestion.testCases,
+              solutionTemplate: codingQuestion.solutionTemplate
+            };
+          }
+        } catch (error) {
+          console.warn('Could not fetch coding question, using AI-generated question:', error.message);
+        }
+      }
 
       const prompt = `${this.systemPrompt}
 
@@ -68,24 +93,25 @@ Response format:
   "expectedTopics": [<array of topics to cover>]
 }`;
 
-      // Call Gemini with error handling and fallback
-      let firstQuestion;
-      try {
-        const result = await this.model.generateContent(prompt);
-        const response = await result.response;
-        let interviewText = response.text();
+      // If we already have a coding question, skip AI generation
+      if (!firstQuestion) {
+        // Call Gemini with error handling and fallback
+        try {
+          const result = await this.model.generateContent(prompt);
+          const response = await result.response;
+          let interviewText = response.text();
 
-        // Clean JSON
-        interviewText = interviewText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-        firstQuestion = JSON.parse(interviewText);
-      } catch (geminiError) {
-        const errorMsg = geminiError.message || String(geminiError) || JSON.stringify(geminiError);
-        
-        // If quota exceeded, use fallback for demo (don't throw error)
-        if (errorMsg.includes('quota') || errorMsg.includes('429') || errorMsg.includes('Quota') || errorMsg.includes('exceeded')) {
-          console.warn('Gemini API quota exceeded, using fallback question for demo');
-          // Provide realistic fallback question based on role and type
-          const questions = {
+          // Clean JSON
+          interviewText = interviewText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+          firstQuestion = JSON.parse(interviewText);
+        } catch (geminiError) {
+          const errorMsg = geminiError.message || String(geminiError) || JSON.stringify(geminiError);
+          
+          // If quota exceeded, use fallback for demo (don't throw error)
+          if (errorMsg.includes('quota') || errorMsg.includes('429') || errorMsg.includes('Quota') || errorMsg.includes('exceeded')) {
+            console.warn('Gemini API quota exceeded, using fallback question for demo');
+            // Provide realistic fallback question based on role and type
+            const questions = {
             technical: [
               `Can you walk me through your experience with ${roleTitle}? What are the key technologies you've worked with?`,
               `Describe a challenging technical problem you solved in your ${roleTitle} role. How did you approach it?`,
@@ -112,22 +138,22 @@ Response format:
               `Describe your leadership style. How do you motivate and manage a team?`,
               `Tell me about a time you had to resolve a conflict within your team.`,
               `How do you handle underperforming team members while maintaining team morale?`
-            ]
-          };
-          
-          const questionList = questions[interviewType] || questions.mixed;
-          const selectedQuestion = questionList[Math.floor(Math.random() * questionList.length)];
-          
-          firstQuestion = {
-            question: selectedQuestion,
-            questionType: interviewType,
-            context: `This is a ${interviewType} interview for the ${roleTitle} position. (Note: Using demo mode due to API quota limits)`,
-            hints: ['Be specific', 'Use examples', 'Show your thought process'],
-            expectedTopics: ['Experience', 'Skills', 'Problem-solving']
-          };
-        } else {
-          // Other errors - throw them
-          throw geminiError;
+            ];
+            
+            const questionList = questions[interviewType] || questions.mixed;
+            const selectedQuestion = questionList[Math.floor(Math.random() * questionList.length)];
+            
+            firstQuestion = {
+              question: selectedQuestion,
+              questionType: interviewType,
+              context: `This is a ${interviewType} interview for the ${roleTitle} position. (Note: Using demo mode due to API quota limits)`,
+              hints: ['Be specific', 'Use examples', 'Show your thought process'],
+              expectedTopics: ['Experience', 'Skills', 'Problem-solving']
+            };
+          } else {
+            // Other errors - throw them
+            throw geminiError;
+          }
         }
       }
 
@@ -668,6 +694,19 @@ Response format:
       isComplete: !shouldContinue,
       summary: !shouldContinue ? `Interview completed. Overall performance: ${overallScore}/100. ${overallScore >= 70 ? 'Strong performance!' : overallScore >= 50 ? 'Good effort, keep practicing.' : 'Continue practicing to improve your interview skills.'}` : null
     };
+  }
+
+  /**
+   * Get coding question for interview
+   */
+  async getCodingQuestion(roleTitle, difficulty = 'medium') {
+    try {
+      const question = await questionBank.getQuestionForInterview(roleTitle, difficulty);
+      return question;
+    } catch (error) {
+      console.error('Error getting coding question:', error);
+      return null;
+    }
   }
 
   /**

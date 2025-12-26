@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, Target, Map, MessageSquare, Plus, TrendingUp, Calendar, Clock, Sparkles, Code, Trophy, History } from 'lucide-react';
+import { FileText, Target, Map, MessageSquare, Plus, TrendingUp, Calendar, Clock, Sparkles, Code, Trophy, History, Terminal } from 'lucide-react';
 import { userAPI, resumeAPI, roadmapAPI, interviewAPI } from '../services/api';
 
 export default function Dashboard() {
@@ -215,6 +215,13 @@ export default function Dashboard() {
             title="Mock Interview"
             description="Practice with AI-powered mock interviews"
             link="/interview"
+            hasData={true}
+          />
+          <ActionCard
+            icon={<Terminal className="w-8 h-8" />}
+            title="Coding Practice"
+            description="Solve coding problems from GeeksforGeeks & LeetCode"
+            link="/practice"
             hasData={true}
           />
         </div>

@@ -58,3 +58,4 @@ else
     echo "  mysql -u root -p < database/schema.sql"
 fi
 
+

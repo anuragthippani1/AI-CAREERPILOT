@@ -27,3 +27,4 @@ echo "1. Set up MySQL database: mysql -u root -p < database/schema.sql"
 echo "2. Edit .env with your configuration"
 echo "3. Run: npm run dev"
 
+

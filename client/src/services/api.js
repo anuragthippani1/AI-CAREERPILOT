@@ -44,5 +44,16 @@ export const userAPI = {
   get: (userId) => api.get(`/user/${userId}`),
 };
 
+// Practice API
+export const practiceAPI = {
+  getQuestions: (filters) => api.get('/practice/questions', { params: filters }),
+  getQuestion: (questionId) => api.get(`/practice/questions/${questionId}`),
+  executeCode: (data) => api.post('/practice/execute', data),
+  submitSolution: (data) => api.post('/practice/submit', data),
+  getProgress: (userId) => api.get(`/practice/progress/${userId}`),
+  getHint: (userId, questionId, code) => api.post('/practice/hint', { userId, questionId, code }),
+  getUserCode: (userId, questionId) => api.get(`/practice/code/${userId}/${questionId}`),
+};
+
 export default api;
 
