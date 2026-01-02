@@ -61,3 +61,5 @@ CREATE TABLE IF NOT EXISTS leaderboard_cache (
     INDEX idx_user_id (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+
+

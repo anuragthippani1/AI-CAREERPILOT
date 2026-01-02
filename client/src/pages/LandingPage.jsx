@@ -14,6 +14,7 @@ export default function LandingPage() {
   const [recentAchievements, setRecentAchievements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [availableInterviews, setAvailableInterviews] = useState([]);
+  const [availableInterviewsTotal, setAvailableInterviewsTotal] = useState(0);
   const [interviewFilters, setInterviewFilters] = useState({
     type: '',
     techStack: '',
@@ -98,6 +99,7 @@ export default function LandingPage() {
       filtered = filtered.filter(i => i.level.toLowerCase() === interviewFilters.level.toLowerCase());
     }
 
+    setAvailableInterviewsTotal(filtered.length);
     const startIndex = (currentPage - 1) * interviewsPerPage;
     const endIndex = startIndex + interviewsPerPage;
     setAvailableInterviews(filtered.slice(startIndex, endIndex));
@@ -111,43 +113,46 @@ export default function LandingPage() {
   };
 
   const progress = roadmap?.progress_percentage || 0;
-  const totalPages = Math.ceil(12 / interviewsPerPage); // Mock total
+  const totalPages = Math.max(1, Math.ceil(availableInterviewsTotal / interviewsPerPage));
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+          <p className="mt-4 text-gray-400">Loading...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[#0a0a0a] relative">
+      {/* Grid Pattern Overlay */}
+      <div className="fixed inset-0 bg-grid-pattern opacity-30 pointer-events-none z-0"></div>
+      
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200">
-        <nav className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <header className="sticky top-0 z-50 glass-card border-b border-white/10">
+        <nav className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 relative z-10">
           <div className="flex items-center justify-between">
-            <Link to="/" className="flex items-center space-x-2 group">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-white" />
+            <Link to="/" className="flex items-center space-x-3 group">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-500 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30 group-hover:scale-110 transition-transform duration-300">
+                <Sparkles className="w-6 h-6 text-white" />
               </div>
-              <span className="text-xl font-bold text-gray-900">
+              <span className="text-2xl font-bold text-white">
                 CareerPilot
               </span>
             </Link>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <Link
                 to="/profile"
-                className="px-4 py-2 text-gray-700 hover:text-gray-900 font-medium text-sm hover:bg-gray-100 rounded-lg transition-colors"
+                className="px-5 py-2.5 text-gray-300 hover:text-white font-medium text-sm glass-card rounded-xl transition-all duration-300 hover:scale-105"
               >
                 Profile
               </Link>
               <Link
                 to="/leaderboard"
-                className="px-4 py-2 text-gray-700 hover:text-gray-900 font-medium text-sm hover:bg-gray-100 rounded-lg transition-colors"
+                className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold text-sm rounded-xl hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-300 hover:scale-105"
               >
                 Leaderboard
               </Link>
@@ -156,15 +161,19 @@ export default function LandingPage() {
         </nav>
       </header>
 
-      <main>
-        {/* Hero Section - Compact */}
-        <section className="bg-gradient-to-br from-blue-50 to-indigo-50 border-b border-gray-200">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
-            <div className="max-w-4xl mx-auto text-center">
-              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-                {getGreeting()}, {user?.name || 'anurag'}!
+      <main className="relative z-10">
+        {/* Hero Section - Dark Theme */}
+        <section className="relative overflow-hidden">
+          <div className="relative container mx-auto px-4 sm:px-6 lg:px-8 py-16">
+            <div className="max-w-4xl mx-auto text-center animate-fade-in">
+              <div className="inline-flex items-center gap-2 px-4 py-2 glass-card rounded-full border border-white/10 shadow-sm mb-6">
+                <Zap className="w-4 h-4 text-blue-400" />
+                <span className="text-sm font-semibold text-gray-300">AI-Powered Interview Practice</span>
+              </div>
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white mb-6 leading-tight">
+                {getGreeting()}, <span className="text-blue-400">{user?.name || 'anurag'}</span>!
               </h1>
-              <p className="text-lg text-gray-600 mb-6">
+              <p className="text-xl text-gray-400 mb-8 max-w-2xl mx-auto leading-relaxed">
                 Start your interview preparation journey with our AI-powered platform.
               </p>
             </div>
@@ -172,48 +181,52 @@ export default function LandingPage() {
         </section>
 
         {/* Dashboard Content */}
-        <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
           {/* Top Section */}
           <div className="grid md:grid-cols-3 gap-6 mb-8">
             {/* Greeting Card */}
-            <div className="md:col-span-2 bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-              <div className="flex items-center gap-3 mb-4">
-                <Sparkles className="w-5 h-5 text-blue-600" />
-                <h2 className="text-xl font-bold text-gray-900">
+            <div className="md:col-span-2 glass-card rounded-2xl p-8 modern-card">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg shadow-blue-500/30">
+                  <Sparkles className="w-5 h-5 text-white" />
+                </div>
+                <h2 className="text-2xl font-bold text-white">
                   Your Progress
                 </h2>
               </div>
               
               {/* XP and Level Display */}
               {userStats && (
-                <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <Star className="w-5 h-5 text-yellow-500" />
-                      <span className="font-semibold text-gray-900">Level {userStats.level}</span>
+                <div className="mb-6 p-5 glass-card rounded-2xl border border-white/10">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-yellow-500/20 rounded-lg border border-yellow-500/30">
+                        <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
+                      </div>
+                      <span className="font-bold text-white text-lg">Level {userStats.level}</span>
                     </div>
-                    <span className="text-sm font-semibold text-gray-700">{userStats.xp.toLocaleString()} XP</span>
+                    <span className="text-base font-bold text-blue-400">{userStats.xp.toLocaleString()} XP</span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                  <div className="w-full bg-gray-800/50 rounded-full h-3 mb-2 overflow-hidden">
                     <div
-                      className="bg-gradient-to-r from-blue-600 to-indigo-600 h-2 rounded-full transition-all duration-500"
+                      className="bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 h-3 rounded-full transition-all duration-700 shadow-lg shadow-blue-500/30"
                       style={{ width: `${userStats.progressToNextLevel}%` }}
                     ></div>
                   </div>
-                  <p className="text-xs text-gray-600">
+                  <p className="text-sm text-gray-400 font-medium">
                     {userStats.xpNeeded} XP to Level {userStats.level + 1}
                   </p>
                 </div>
               )}
 
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-gray-600">Your Progress</span>
-                  <span className="text-sm font-semibold text-gray-900">{isNaN(progress) ? '0' : Math.round(progress)}%</span>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm font-semibold text-gray-300">Your Progress</span>
+                  <span className="text-lg font-bold text-blue-400">{isNaN(progress) ? '0' : Math.round(progress)}%</span>
                 </div>
-                <div className="w-full bg-gray-100 rounded-full h-2.5">
+                <div className="w-full bg-gray-800/50 rounded-full h-3 overflow-hidden">
                   <div
-                    className="bg-gradient-to-r from-blue-600 to-indigo-600 h-2.5 rounded-full transition-all duration-500"
+                    className="bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 h-3 rounded-full transition-all duration-700 shadow-md shadow-blue-500/20"
                     style={{ width: `${isNaN(progress) ? 0 : Math.round(progress)}%` }}
                   ></div>
                 </div>
@@ -237,7 +250,7 @@ export default function LandingPage() {
               <StatCard
                 icon={<Clock className="w-5 h-5" />}
                 label="Available Interviews"
-                value="139"
+                value={availableInterviewsTotal}
               />
             </div>
           </div>
@@ -263,11 +276,13 @@ export default function LandingPage() {
 
           {/* Quick Actions */}
           <div className="mb-8">
-            <div className="flex items-center gap-2 mb-4">
-              <Sparkles className="w-5 h-5 text-blue-600" />
-              <h2 className="text-xl font-bold text-gray-900">Quick Actions</h2>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg shadow-blue-500/30">
+                <Sparkles className="w-5 h-5 text-white" />
+              </div>
+              <h2 className="text-2xl font-bold text-white">Quick Actions</h2>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-5">
               <QuickActionButton
                 icon={<Plus className="w-6 h-6" />}
                 title="Start Interview"
@@ -299,23 +314,23 @@ export default function LandingPage() {
           <div className="mb-8">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-xl font-bold text-gray-900 mb-2">Find Interviews</h2>
-                <p className="text-sm text-gray-600">Select Type, Tech Stack, and Level to filter available interviews</p>
+                <h2 className="text-2xl font-bold text-white mb-2">Find Interviews</h2>
+                <p className="text-base text-gray-400">Select Type, Tech Stack, and Level to filter available interviews</p>
               </div>
             </div>
 
             {/* Filters */}
-            <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6 shadow-sm">
+            <div className="glass-card rounded-2xl p-6 mb-6">
               <div className="grid sm:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Select Type</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Select Type</label>
                   <select
                     value={interviewFilters.type}
                     onChange={(e) => {
                       setInterviewFilters({ ...interviewFilters, type: e.target.value });
                       setCurrentPage(1);
                     }}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-3 glass-card border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 hover:border-white/20 placeholder:text-gray-500"
                   >
                     <option value="">All Types</option>
                     <option value="Technical">Technical</option>
@@ -326,14 +341,14 @@ export default function LandingPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Select Tech Stack</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Select Tech Stack</label>
                   <select
                     value={interviewFilters.techStack}
                     onChange={(e) => {
                       setInterviewFilters({ ...interviewFilters, techStack: e.target.value });
                       setCurrentPage(1);
                     }}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-3 glass-card border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 hover:border-white/20 placeholder:text-gray-500"
                   >
                     <option value="">All Tech Stacks</option>
                     <option value="React">React</option>
@@ -345,14 +360,14 @@ export default function LandingPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Select Level</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Select Level</label>
                   <select
                     value={interviewFilters.level}
                     onChange={(e) => {
                       setInterviewFilters({ ...interviewFilters, level: e.target.value });
                       setCurrentPage(1);
                     }}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-3 glass-card border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 hover:border-white/20 placeholder:text-gray-500"
                   >
                     <option value="">All Levels</option>
                     <option value="junior">Junior</option>
@@ -365,38 +380,42 @@ export default function LandingPage() {
 
             {/* Profile Completion Notice */}
             {!resume && (
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
-                <p className="text-sm text-blue-800">
+              <div className="glass-card border border-blue-500/30 rounded-2xl p-6 mb-6">
+                <p className="text-base font-semibold text-blue-400 mb-3">
                   Please complete your profile to get personalized interview suggestions
                 </p>
                 <Link
                   to="/resume"
-                  className="inline-block mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl text-sm font-semibold hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-300 hover:scale-105"
                 >
                   Complete Profile
+                  <ArrowRight className="w-4 h-4" />
                 </Link>
               </div>
             )}
 
             {/* Interview Cards */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Your Interviews</h3>
+              <h3 className="text-lg font-semibold text-white mb-4">Your Interviews</h3>
               {interviewStats.completed === 0 ? (
-                <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-                  <MessageSquare className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <h4 className="text-lg font-semibold text-gray-900 mb-2">Track your progress and improvement</h4>
-                  <p className="text-gray-600 mb-6">
+                <div className="glass-card rounded-2xl p-12 text-center">
+                  <div className="w-20 h-20 glass-card border border-blue-500/30 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                    <MessageSquare className="w-10 h-10 text-blue-400" />
+                  </div>
+                  <h4 className="text-xl font-bold text-white mb-3">Track your progress and improvement</h4>
+                  <p className="text-gray-400 mb-8 max-w-md mx-auto leading-relaxed">
                     You haven't taken any interviews yet. Start your interview preparation journey by taking your first practice interview. Our AI-powered platform will help you improve your skills.
                   </p>
                   <Link
                     to="/interview"
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-gray-900 text-white rounded-lg font-semibold hover:bg-gray-800 transition-colors"
+                    className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-bold hover:shadow-xl hover:shadow-blue-500/30 transition-all duration-300 hover:scale-105"
                   >
                     Start Your First Interview
+                    <ArrowRight className="w-5 h-5" />
                   </Link>
                 </div>
               ) : (
-                <div className="text-sm text-gray-600 mb-4">
+                <div className="text-sm text-gray-400 mb-4">
                   Track your progress and improvement
                 </div>
               )}
@@ -418,20 +437,20 @@ export default function LandingPage() {
                   <button
                     onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                     disabled={currentPage === 1}
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    className="px-5 py-2.5 glass-card border border-white/10 rounded-xl text-gray-300 hover:text-white hover:border-white/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-semibold transition-all duration-300 hover:scale-105"
                   >
                     <ChevronLeft className="w-4 h-4" />
                     Previous
                   </button>
-                  <div className="flex gap-1">
+                  <div className="flex gap-2">
                     {Array.from({ length: Math.min(totalPages, 10) }, (_, i) => i + 1).map((page) => (
                       <button
                         key={page}
                         onClick={() => setCurrentPage(page)}
-                        className={`px-3 py-2 rounded-lg text-sm font-medium ${
+                        className={`px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300 ${
                           currentPage === page
-                            ? 'bg-gray-900 text-white'
-                            : 'text-gray-700 hover:bg-gray-100'
+                            ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30 scale-110'
+                            : 'glass-card text-gray-300 hover:text-white hover:border-white/20 border border-white/10 hover:scale-105'
                         }`}
                       >
                         {page}
@@ -441,7 +460,7 @@ export default function LandingPage() {
                   <button
                     onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                     disabled={currentPage >= totalPages}
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    className="px-5 py-2.5 glass-card border border-white/10 rounded-xl text-gray-300 hover:text-white hover:border-white/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-semibold transition-all duration-300 hover:scale-105"
                   >
                     Next
                     <ChevronRight className="w-4 h-4" />
@@ -499,13 +518,13 @@ export default function LandingPage() {
         </section>
 
         {/* Why Choose CareerPilot */}
-        <section className="py-16 md:py-24 bg-gray-50">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="max-w-3xl mx-auto text-center mb-12 md:mb-16">
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
-                Why Choose <span className="text-blue-600">CareerPilot</span>
+        <section className="relative py-20 md:py-28 overflow-hidden">
+          <div className="relative container mx-auto px-4 sm:px-6 lg:px-8 z-10">
+            <div className="max-w-3xl mx-auto text-center mb-16">
+              <h2 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white mb-6">
+                Why Choose <span className="text-blue-400">CareerPilot</span>
               </h2>
-              <p className="text-lg text-gray-600">
+              <p className="text-xl text-gray-400 leading-relaxed">
                 Our AI-powered platform helps you prepare for interviews with personalized feedback and real-world scenarios.
               </p>
             </div>
@@ -536,12 +555,12 @@ export default function LandingPage() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-gray-200 bg-white py-8">
+      <footer className="border-t border-white/10 glass-card py-8 relative z-10">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center text-gray-600 text-sm">
+          <div className="text-center text-gray-400 text-sm">
             <p>
               Built with <span className="text-red-500">❤️</span> by{' '}
-              <a href="https://github.com/anuragthippani1" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-700 font-medium transition-colors">
+              <a href="https://github.com/anuragthippani1" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 font-medium transition-colors">
                 Anurag Thippani
               </a>
             </p>
@@ -554,40 +573,40 @@ export default function LandingPage() {
 
 function StatCard({ icon, label, value }) {
   return (
-    <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
-      <div className="flex items-center gap-3 mb-2">
-        <div className="text-blue-600">{icon}</div>
-        <span className="text-sm text-gray-600">{label}</span>
+    <div className="glass-card rounded-2xl p-5 modern-card">
+      <div className="flex items-center gap-3 mb-3">
+        <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg shadow-md shadow-blue-500/30 text-white">{icon}</div>
+        <span className="text-sm font-semibold text-gray-300">{label}</span>
       </div>
-      <p className="text-2xl font-bold text-gray-900">{value}</p>
+      <p className="text-3xl font-extrabold text-white">{value}</p>
     </div>
   );
 }
 
 function MetricCard({ label, value, hint }) {
   return (
-    <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-      <p className="text-sm text-gray-600 mb-2">{label}</p>
-      <p className="text-3xl font-bold text-gray-900 mb-2">{value}</p>
-      <p className="text-xs text-gray-500">{hint}</p>
+    <div className="glass-card rounded-2xl p-6 modern-card">
+      <p className="text-sm font-semibold text-gray-400 mb-3">{label}</p>
+      <p className="text-4xl font-extrabold text-white mb-3">{value}</p>
+      <p className="text-xs font-medium text-gray-500">{hint}</p>
     </div>
   );
 }
 
 function QuickActionButton({ icon, title, description, link, disabled = false, comingSoon = false }) {
   const content = (
-    <div className={`bg-white rounded-xl p-5 border border-gray-200 shadow-sm transition-all relative ${
-      disabled ? 'opacity-60 cursor-not-allowed' : 'hover:shadow-md cursor-pointer hover:border-gray-300'
-    } min-h-[120px] flex flex-col justify-between`}>
+    <div className={`glass-card rounded-2xl p-6 transition-all relative modern-card ${
+      disabled ? 'opacity-60 cursor-not-allowed' : 'hover:shadow-lg cursor-pointer hover:border-white/20'
+    } min-h-[140px] flex flex-col justify-between group`}>
       {comingSoon && (
-        <div className="absolute top-2 right-2 bg-yellow-100 text-yellow-800 text-xs font-semibold px-2 py-1 rounded">
+        <div className="absolute top-3 right-3 bg-gradient-to-r from-yellow-400 to-orange-400 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md">
           Coming Soon
         </div>
       )}
-      <div className="text-blue-600 mb-3">{icon}</div>
+      <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg shadow-blue-500/30 w-fit mb-4 group-hover:scale-110 transition-transform duration-300 text-white">{icon}</div>
       <div className="w-full">
-        {title && <h3 className="text-base font-semibold text-gray-900 mb-1">{title}</h3>}
-        {description && <p className="text-xs text-gray-600 leading-relaxed">{description}</p>}
+        {title && <h3 className="text-lg font-bold text-white mb-2 group-hover:text-blue-400 transition-colors">{title}</h3>}
+        {description && <p className="text-sm text-gray-400 leading-relaxed">{description}</p>}
       </div>
     </div>
   );
@@ -603,18 +622,18 @@ function ActionCard({ icon, title, description, link, hasData }) {
   return (
     <Link
       to={link}
-      className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm group hover:shadow-md transition-all"
+      className="glass-card rounded-2xl p-6 group hover:shadow-lg modern-card"
     >
       <div className="flex items-start gap-4">
-        <div className="text-blue-600 group-hover:text-blue-700 transition-colors">
-          {icon}
+        <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg shadow-blue-500/30 group-hover:scale-110 transition-transform duration-300">
+          <div className="text-white">{icon}</div>
         </div>
         <div className="flex-1">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
-          <p className="text-gray-600 mb-4 text-sm">{description}</p>
-          <div className="flex items-center text-blue-600 group-hover:text-blue-700 font-medium text-sm">
+          <h3 className="text-lg font-bold text-white mb-2 group-hover:text-blue-400 transition-colors">{title}</h3>
+          <p className="text-gray-400 mb-4 text-sm leading-relaxed">{description}</p>
+          <div className="flex items-center text-blue-400 group-hover:text-blue-300 font-semibold text-sm">
             {hasData ? 'View Details' : 'Get Started'}
-            <ArrowRight className="w-4 h-4 ml-2" />
+            <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
           </div>
         </div>
       </div>
@@ -624,48 +643,49 @@ function ActionCard({ icon, title, description, link, hasData }) {
 
 function FeatureCard({ icon, title, description }) {
   return (
-    <div className="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-lg transition-shadow">
-      <div className="inline-flex p-3 bg-blue-50 rounded-lg text-blue-600 mb-4">
+    <div className="glass-card rounded-2xl p-6 modern-card group">
+      <div className="inline-flex p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl text-white mb-5 shadow-lg shadow-blue-500/30 group-hover:scale-110 transition-transform duration-300">
         {icon}
       </div>
-      <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
-      <p className="text-gray-600 leading-relaxed text-sm">{description}</p>
+      <h3 className="text-lg font-bold text-white mb-3 group-hover:text-blue-400 transition-colors">{title}</h3>
+      <p className="text-gray-400 leading-relaxed text-sm">{description}</p>
     </div>
   );
 }
 
 function InterviewCard({ interview, onStart }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow">
+    <div className="glass-card rounded-2xl p-6 modern-card group">
       <div className="flex items-start justify-between mb-4">
         <div>
-          <span className="inline-block px-2 py-1 bg-green-50 text-green-700 rounded text-xs font-medium mb-2">
+          <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-green-500/20 border border-green-500/30 text-green-400 rounded-full text-xs font-bold mb-3 shadow-sm">
+            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
             Available
           </span>
-          <h3 className="text-lg font-semibold text-gray-900">{interview.type}</h3>
-          <p className="text-base font-medium text-gray-700 mt-1">{interview.role}</p>
+          <h3 className="text-lg font-bold text-white mb-1">{interview.type}</h3>
+          <p className="text-base font-semibold text-gray-300">{interview.role}</p>
         </div>
       </div>
-      <div className="space-y-2 mb-4">
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <span className="font-medium">Level:</span>
-          <span className="px-2 py-1 bg-gray-100 rounded text-xs">{interview.level}</span>
+      <div className="space-y-2.5 mb-5">
+        <div className="flex items-center gap-2 text-sm">
+          <span className="font-semibold text-gray-400">Level:</span>
+          <span className="px-3 py-1 glass-card border border-white/10 rounded-lg text-xs font-bold text-blue-400">{interview.level}</span>
         </div>
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <span className="font-medium">Date:</span>
+        <div className="flex items-center gap-2 text-sm text-gray-400">
+          <span className="font-semibold">Date:</span>
           <span>{interview.date}</span>
         </div>
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <span className="font-medium">Tech:</span>
-          <span className="text-xs">{interview.techStack}</span>
+        <div className="flex items-center gap-2 text-sm text-gray-400">
+          <span className="font-semibold">Tech:</span>
+          <span className="text-xs font-medium">{interview.techStack}</span>
         </div>
       </div>
-      <p className="text-xs text-gray-500 mb-4">
+      <p className="text-xs text-gray-500 mb-5 leading-relaxed">
         You haven't taken the interview yet. Take it now to improve your skills.
       </p>
       <button
         onClick={onStart}
-        className="w-full px-4 py-2 bg-gray-900 text-white rounded-lg font-semibold hover:bg-gray-800 transition-colors text-sm"
+        className="w-full px-5 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-bold hover:shadow-xl hover:shadow-blue-500/30 transition-all duration-300 hover:scale-105 text-sm"
       >
         Start Interview
       </button>

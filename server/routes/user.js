@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { body, param, validationResult } = require('express-validator');
+const { body, param, query, validationResult } = require('express-validator');
 const db = require('../config/database');
 const gamification = require('../services/gamification');
 const achievements = require('../services/achievements');
@@ -11,7 +11,7 @@ router.post('/create', async (req, res, next) => {
     const { email, name } = req.body;
 
     if (!email || !name) {
-      return res.status(400).json({ error: 'Email and name are required' });
+      return res.status(400).json({ success: false, error: 'Email and name are required' });
     }
 
     const [result] = await db.query(
@@ -19,10 +19,10 @@ router.post('/create', async (req, res, next) => {
       [email, name]
     );
 
-    res.json({ success: true, data: { userId: result.insertId, email, name } });
+    res.status(201).json({ success: true, data: { userId: result.insertId, email, name } });
   } catch (error) {
     if (error.code === 'ER_DUP_ENTRY') {
-      return res.status(409).json({ error: 'User with this email already exists' });
+      return res.status(409).json({ success: false, error: 'User with this email already exists' });
     }
     next(error);
   }
@@ -35,7 +35,7 @@ router.post('/goal', async (req, res, next) => {
     const { targetRole, targetCompany, targetSalary, timelineMonths } = req.body;
 
     if (!targetRole) {
-      return res.status(400).json({ error: 'Target role is required' });
+      return res.status(400).json({ success: false, error: 'Target role is required' });
     }
 
     // Deactivate existing goals
@@ -194,7 +194,6 @@ router.get('/:userId/stats',
 // GET /api/user/:userId/achievements - Get user achievements
 router.get('/:userId/achievements',
   param('userId').isInt({ min: 1 }),
-  query('all').optional().isBoolean(),
   query('all').optional().isBoolean(),
   async (req, res, next) => {
     try {

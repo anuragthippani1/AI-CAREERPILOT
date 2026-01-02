@@ -48,6 +48,7 @@ CREATE TABLE IF NOT EXISTS skills (
     source ENUM('resume', 'manual', 'inferred') DEFAULT 'resume',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_user_skill (user_id, skill_name),
     INDEX idx_user_id (user_id),
     INDEX idx_skill_name (skill_name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

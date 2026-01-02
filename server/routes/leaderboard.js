@@ -66,16 +66,25 @@ router.get('/interviews',
   query('limit').optional().isInt({ min: 1, max: 100 }),
   async (req, res, next) => {
     try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          success: false,
+          error: 'Validation failed',
+          details: errors.array()
+        });
+      }
+
       const page = parseInt(req.query.page) || 1;
       const limit = parseInt(req.query.limit) || 20;
       const offset = (page - 1) * limit;
 
       const [users] = await db.query(
         `SELECT u.id, u.name, u.email, u.avatar_url, u.title,
-         COUNT(CASE WHEN is.status = 'completed' THEN 1 END) as completed_interviews,
-         AVG(CASE WHEN is.status = 'completed' THEN is.overall_score END) as avg_score
+         COUNT(CASE WHEN sess.status = 'completed' THEN 1 END) as completed_interviews,
+         AVG(CASE WHEN sess.status = 'completed' THEN sess.overall_score END) as avg_score
          FROM users u
-         LEFT JOIN interview_sessions is ON u.id = is.user_id
+         LEFT JOIN interview_sessions sess ON u.id = sess.user_id
          GROUP BY u.id, u.name, u.email, u.avatar_url, u.title
          HAVING completed_interviews > 0
          ORDER BY completed_interviews DESC, avg_score DESC
@@ -86,8 +95,8 @@ router.get('/interviews',
       const [countResult] = await db.query(
         `SELECT COUNT(DISTINCT u.id) as total
          FROM users u
-         INNER JOIN interview_sessions is ON u.id = is.user_id
-         WHERE is.status = 'completed'`
+         INNER JOIN interview_sessions sess ON u.id = sess.user_id
+         WHERE sess.status = 'completed'`
       );
       const total = countResult[0].total;
 
@@ -120,6 +129,15 @@ router.get('/streaks',
   query('limit').optional().isInt({ min: 1, max: 100 }),
   async (req, res, next) => {
     try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          success: false,
+          error: 'Validation failed',
+          details: errors.array()
+        });
+      }
+
       const page = parseInt(req.query.page) || 1;
       const limit = parseInt(req.query.limit) || 20;
       const offset = (page - 1) * limit;
@@ -224,4 +242,6 @@ router.get('/rank/:userId',
 );
 
 module.exports = router;
+
+
 

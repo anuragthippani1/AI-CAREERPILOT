@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Upload, FileText, CheckCircle, AlertCircle, Loader } from 'lucide-react';
-import { resumeAPI, userAPI } from '../services/api';
+import { resumeAPI } from '../services/api';
 
 export default function ResumeUpload() {
   const navigate = useNavigate();
@@ -22,8 +22,8 @@ export default function ResumeUpload() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!file && !targetRole) {
-      setError('Please upload a resume or enter text');
+    if (!file) {
+      setError('Please upload a resume file to analyze');
       return;
     }
 
@@ -119,7 +119,7 @@ export default function ResumeUpload() {
 
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || !file}
                 className="w-full bg-gray-900 hover:bg-gray-800 text-white font-semibold py-3 px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm hover:shadow-md"
               >
                 {loading ? (

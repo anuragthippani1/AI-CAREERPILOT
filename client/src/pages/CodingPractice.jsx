@@ -33,11 +33,11 @@ export default function CodingPractice() {
   }, [filters]);
 
   useEffect(() => {
-    if (selectedQuestion) {
+    if (selectedQuestion?.id) {
       loadQuestionDetails(selectedQuestion.id);
       loadUserCode(selectedQuestion.id);
     }
-  }, [selectedQuestion]);
+  }, [selectedQuestion?.id]);
 
   const loadQuestions = async () => {
     try {

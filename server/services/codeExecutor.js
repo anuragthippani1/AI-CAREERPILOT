@@ -267,10 +267,13 @@ class CodeExecutorService {
       // Execute code
       const executionResult = await this.executeCode(code, language, testCases);
 
+      const totalTests = Number(executionResult.totalTests) || 0;
+      const passedTests = Number(executionResult.passedTests) || 0;
+
       return {
         questionId,
         passed: executionResult.success,
-        score: executionResult.passedTests / executionResult.totalTests * 100,
+        score: totalTests > 0 ? (passedTests / totalTests) * 100 : 0,
         executionResult
       };
     } catch (error) {
@@ -298,4 +301,6 @@ class CodeExecutorService {
 const codeExecutor = new CodeExecutorService();
 
 module.exports = codeExecutor;
+
+
 

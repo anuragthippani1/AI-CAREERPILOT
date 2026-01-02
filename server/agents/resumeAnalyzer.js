@@ -32,6 +32,66 @@ Always provide:
 Format your response as JSON.`;
   }
 
+  isRecoverableAiError(error) {
+    const msg = (error && (error.message || String(error))) || '';
+    const lower = msg.toLowerCase();
+    return (
+      msg.includes('quota') ||
+      msg.includes('429') ||
+      msg.includes('Quota') ||
+      msg.includes('exceeded') ||
+      lower.includes('api key') ||
+      msg.includes('401') ||
+      msg.includes('403') ||
+      lower.includes('unauthorized') ||
+      lower.includes('permission')
+    );
+  }
+
+  generateFallbackAnalysis(resumeText, targetRole) {
+    const text = (resumeText || '').toString();
+    const length = text.trim().length;
+
+    // Very lightweight skill keyword extraction (demo-safe fallback)
+    const skillKeywords = [
+      'javascript', 'typescript', 'react', 'node', 'express', 'python', 'java', 'c++', 'c#',
+      'sql', 'mysql', 'postgres', 'mongodb', 'redis', 'aws', 'azure', 'gcp', 'docker', 'kubernetes',
+      'git', 'ci/cd', 'rest', 'graphql', 'linux'
+    ];
+    const lower = text.toLowerCase();
+    const skills = skillKeywords.filter(k => lower.includes(k)).map(s => s.toUpperCase());
+
+    const atsScore = Math.max(35, Math.min(85, Math.round(45 + Math.log10(Math.max(10, length)) * 15 + skills.length * 2)));
+
+    return {
+      atsScore,
+      strengths: [
+        length > 500 ? 'Resume has substantial detail' : 'Resume provided',
+        skills.length > 0 ? 'Contains relevant technical keywords' : 'Provides baseline background'
+      ],
+      improvements: [
+        `Tailor your resume more specifically to ${targetRole}`,
+        'Add measurable impact (metrics) for key achievements',
+        'Ensure consistent formatting and clear section headings'
+      ],
+      skills: skills.slice(0, 25),
+      experience: {
+        summary: length > 0 ? text.trim().slice(0, 220) + (text.trim().length > 220 ? '…' : '') : 'Not provided',
+        years: 0,
+        roles: []
+      },
+      education: {
+        summary: 'Not extracted (demo fallback)',
+        degrees: []
+      },
+      roleSpecificSuggestions: [
+        `Add 2-3 bullet points emphasizing ${targetRole} responsibilities`,
+        'Highlight the most relevant stack/tools near the top'
+      ],
+      overallAssessment: 'AI analysis fallback used (Gemini unavailable). Upload a complete resume and configure GEMINI_API_KEY for best results.'
+    };
+  }
+
   /**
    * Analyze resume from file or text
    */
@@ -84,13 +144,32 @@ Analyze this resume and provide a comprehensive analysis in JSON format:
 }`;
 
       // Call Gemini
-      const result = await this.model.generateContent(prompt);
-      const response = await result.response;
-      let analysisText = response.text();
+      let analysis;
+      const parseGeminiJson = (text) => {
+        const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        return JSON.parse(cleaned);
+      };
 
-      // Clean JSON from markdown if present
-      analysisText = analysisText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-      const analysis = JSON.parse(analysisText);
+      try {
+        const result = await this.model.generateContent(prompt);
+        const response = await result.response;
+        analysis = parseGeminiJson(response.text());
+      } catch (geminiError) {
+        // Retry once with stricter instruction if parsing fails / AI response is noisy
+        const strictPrompt = `${prompt}\n\nIMPORTANT: Return ONLY valid JSON. No markdown, no commentary, no code fences.`;
+        try {
+          const retryResult = await this.model.generateContent(strictPrompt);
+          const retryResponse = await retryResult.response;
+          analysis = parseGeminiJson(retryResponse.text());
+        } catch (retryError) {
+          if (this.isRecoverableAiError(geminiError) || this.isRecoverableAiError(retryError) || retryError instanceof SyntaxError) {
+            console.warn('Gemini unavailable or returned invalid JSON; using fallback resume analysis for demo.');
+            analysis = this.generateFallbackAnalysis(resumeText, targetRole);
+          } else {
+            throw retryError;
+          }
+        }
+      }
 
       // Save to database
       const resumeId = await this.saveResume(context.userId, resumeText, inputData, analysis);

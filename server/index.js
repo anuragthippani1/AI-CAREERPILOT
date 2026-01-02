@@ -48,8 +48,33 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 // CORS middleware
+const allowedOrigins = new Set(
+  [
+    process.env.FRONTEND_URL,
+    'http://localhost:3000',
+    'http://localhost:5173',
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:5173'
+  ].filter(Boolean)
+);
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: (origin, callback) => {
+    // Allow non-browser clients (curl/postman) with no Origin header
+    if (!origin) return callback(null, true);
+
+    // In development, allow localhost on any port (Vite may auto-pick if ports are busy)
+    if ((process.env.NODE_ENV || 'development') !== 'production') {
+      if (/^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin)) {
+        return callback(null, true);
+      }
+    }
+
+    if (allowedOrigins.has(origin)) return callback(null, true);
+
+    // Deny other origins in production; in dev we still keep a tight allowlist to avoid surprises
+    return callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -109,6 +134,35 @@ app.use((req, res, next) => {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
+  // Normalize common infrastructure errors into demo-safe responses
+  const dbErrorCodes = new Set([
+    'ECONNREFUSED',
+    'PROTOCOL_CONNECTION_LOST',
+    'ER_ACCESS_DENIED_ERROR',
+    'ER_BAD_DB_ERROR',
+    'ER_DBACCESS_DENIED_ERROR',
+    'ER_NO_SUCH_TABLE',
+    'ER_BAD_FIELD_ERROR',
+    'ER_PARSE_ERROR'
+  ]);
+
+  // CORS errors should be 403
+  if (err && typeof err.message === 'string' && err.message.startsWith('CORS blocked for origin:')) {
+    return res.status(403).json({
+      success: false,
+      error: err.message
+    });
+  }
+
+  // MySQL errors: surface as 503 so the UI can show a clear message
+  if (err && dbErrorCodes.has(err.code)) {
+    return res.status(503).json({
+      success: false,
+      error: 'Database is unavailable. Please verify DB settings and run migrations/seed.',
+      ...(process.env.NODE_ENV === 'development' && { details: { code: err.code, message: err.message } })
+    });
+  }
+
   console.error('Error:', {
     message: err.message,
     stack: err.stack,

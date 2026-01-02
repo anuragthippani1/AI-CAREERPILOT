@@ -28,3 +28,5 @@ echo "2. Edit .env with your configuration"
 echo "3. Run: npm run dev"
 
 
+
+

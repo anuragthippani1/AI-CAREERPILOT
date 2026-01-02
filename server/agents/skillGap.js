@@ -29,6 +29,58 @@ Always provide:
 Format your response as JSON.`;
   }
 
+  isRecoverableAiError(error) {
+    const msg = (error && (error.message || String(error))) || '';
+    const lower = msg.toLowerCase();
+    return (
+      msg.includes('quota') ||
+      msg.includes('429') ||
+      msg.includes('Quota') ||
+      msg.includes('exceeded') ||
+      lower.includes('api key') ||
+      msg.includes('401') ||
+      msg.includes('403') ||
+      lower.includes('unauthorized') ||
+      lower.includes('permission')
+    );
+  }
+
+  generateFallbackGapAnalysis(targetRole, userSkills = []) {
+    const genericCritical = [
+      { skill: 'Data Structures & Algorithms', importance: 'high', estimatedTime: '4-6 weeks', priority: 9 },
+      { skill: 'System Design Basics', importance: 'high', estimatedTime: '3-5 weeks', priority: 8 },
+      { skill: 'Testing & Debugging', importance: 'medium', estimatedTime: '2-3 weeks', priority: 7 },
+    ];
+
+    // If they already list many skills, bump match a bit.
+    const match = Math.max(20, Math.min(80, 35 + Math.min(25, userSkills.length * 2)));
+
+    return {
+      currentMatchPercentage: match,
+      missingCritical: genericCritical.map(s => ({
+        ...s,
+        learningResources: [
+          'Build small projects to apply concepts',
+          'Use documentation + official guides',
+          'Practice 3-5 problems per week'
+        ]
+      })),
+      missingNiceToHave: [
+        {
+          skill: 'Communication & Stakeholder Management',
+          learningResources: ['Write weekly summaries of your work', 'Practice explaining tradeoffs'],
+          estimatedTime: '2-4 weeks'
+        }
+      ],
+      existingStrengths: userSkills.slice(0, 10),
+      recommendations: [
+        `Tailor your learning plan toward ${targetRole}`,
+        'Focus on one critical skill at a time and track progress weekly'
+      ],
+      overallAssessment: 'AI skill-gap fallback used (Gemini unavailable). Configure GEMINI_API_KEY for best results.'
+    };
+  }
+
   /**
    * Analyze skill gap
    */
@@ -85,13 +137,32 @@ Analyze the skill gap and provide recommendations in JSON format:
 }`;
 
       // Call Gemini
-      const result = await this.model.generateContent(prompt);
-      const response = await result.response;
-      let analysisText = response.text();
+      let gapAnalysis;
+      const parseGeminiJson = (text) => {
+        const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        return JSON.parse(cleaned);
+      };
 
-      // Clean JSON
-      analysisText = analysisText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-      const gapAnalysis = JSON.parse(analysisText);
+      try {
+        const result = await this.model.generateContent(prompt);
+        const response = await result.response;
+        gapAnalysis = parseGeminiJson(response.text());
+      } catch (geminiError) {
+        // Retry once with stricter instruction
+        const strictPrompt = `${prompt}\n\nIMPORTANT: Return ONLY valid JSON. No markdown, no commentary, no code fences.`;
+        try {
+          const retryResult = await this.model.generateContent(strictPrompt);
+          const retryResponse = await retryResult.response;
+          gapAnalysis = parseGeminiJson(retryResponse.text());
+        } catch (retryError) {
+          if (this.isRecoverableAiError(geminiError) || this.isRecoverableAiError(retryError) || retryError instanceof SyntaxError) {
+            console.warn('Gemini unavailable or returned invalid JSON; using fallback skill gap for demo.');
+            gapAnalysis = this.generateFallbackGapAnalysis(targetRole, userSkills);
+          } else {
+            throw retryError;
+          }
+        }
+      }
 
       // Save missing skills to database
       await this.saveMissingSkills(context.userId, gapAnalysis.missingCritical || []);

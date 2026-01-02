@@ -42,15 +42,16 @@ Format your response as JSON.`;
         // Create a default career goal
         const [result] = await db.query(
           `INSERT INTO career_goals (user_id, target_role, status)
-           VALUES (?, ?, 'active')
-           ON DUPLICATE KEY UPDATE target_role = VALUES(target_role)`,
+           VALUES (?, ?, 'active')`,
           [context.userId, inputData.targetRole || 'Software Engineer']
         );
-        const [goals] = await db.query(
-          'SELECT * FROM career_goals WHERE id = ?',
-          [result.insertId || 1]
-        );
-        goal = goals[0] || { target_role: inputData.targetRole || 'Software Engineer', id: null };
+        const goalId = result.insertId || null;
+        if (goalId) {
+          const [goals] = await db.query('SELECT * FROM career_goals WHERE id = ?', [goalId]);
+          goal = goals[0] || { target_role: inputData.targetRole || 'Software Engineer', id: null };
+        } else {
+          goal = { target_role: inputData.targetRole || 'Software Engineer', id: null };
+        }
       }
 
       const targetRole = goal.target_role || inputData.targetRole || 'Software Engineer';
@@ -129,10 +130,21 @@ Generate a comprehensive career roadmap in JSON format:
       } catch (geminiError) {
         const errorMsg = geminiError.message || String(geminiError);
         
-        // If quota exceeded, use fallback roadmap
-        if (errorMsg.includes('quota') || errorMsg.includes('429') || errorMsg.includes('Quota') || errorMsg.includes('exceeded')) {
+        // If Gemini is unavailable (quota/missing key/unauthorized), use fallback roadmap
+        const isRecoverableAiError =
+          errorMsg.includes('quota') ||
+          errorMsg.includes('429') ||
+          errorMsg.includes('Quota') ||
+          errorMsg.includes('exceeded') ||
+          errorMsg.toLowerCase().includes('api key') ||
+          errorMsg.includes('401') ||
+          errorMsg.includes('403') ||
+          errorMsg.toLowerCase().includes('unauthorized') ||
+          errorMsg.toLowerCase().includes('permission');
+
+        if (isRecoverableAiError || geminiError instanceof SyntaxError) {
           console.warn('Gemini API quota exceeded, using fallback roadmap for demo');
-          roadmap = generateFallbackRoadmap(targetRole, skillGap, resumeAnalysis);
+          roadmap = this.generateFallbackRoadmap(targetRole, skillGap, resumeAnalysis);
         } else {
           throw geminiError;
         }

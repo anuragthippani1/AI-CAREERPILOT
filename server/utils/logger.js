@@ -3,9 +3,18 @@
  * Logs all agent actions to database
  */
 
-const db = require('../config/database');
+const db = require("../config/database");
 
-async function logAgentAction(userId, agentName, action, inputData, outputData, executionTime, status, errorMessage = null) {
+async function logAgentAction(
+  userId,
+  agentName,
+  action,
+  inputData,
+  outputData,
+  executionTime,
+  status,
+  errorMessage = null
+) {
   try {
     await db.query(
       `INSERT INTO agent_logs 
@@ -19,17 +28,15 @@ async function logAgentAction(userId, agentName, action, inputData, outputData, 
         outputData ? JSON.stringify(outputData) : null,
         executionTime || 0,
         status,
-        errorMessage
+        errorMessage,
       ]
     );
   } catch (error) {
-    console.error('Error logging agent action:', error);
+    console.error("Error logging agent action:", error);
     // Don't throw - logging failures shouldn't break the app
   }
 }
 
 module.exports = {
-  logAgentAction
+  logAgentAction,
 };
-
-

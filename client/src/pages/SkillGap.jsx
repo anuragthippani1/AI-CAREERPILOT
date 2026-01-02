@@ -9,6 +9,7 @@ export default function SkillGap() {
   const [loading, setLoading] = useState(false);
   const [analysis, setAnalysis] = useState(null);
   const [targetRole, setTargetRole] = useState('');
+  const [resumeAnalysis, setResumeAnalysis] = useState(null);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -25,13 +26,13 @@ export default function SkillGap() {
 
       if (resumeRes.status === 'fulfilled' && resumeRes.value.data.data) {
         const resume = resumeRes.value.data.data;
-        const resumeAnalysis = typeof resume.analysis_json === 'string' 
+        const parsedResumeAnalysis = typeof resume.analysis_json === 'string' 
           ? JSON.parse(resume.analysis_json) 
           : resume.analysis_json;
 
-        // Auto-analyze if we have resume
-        if (resumeAnalysis) {
-          await analyzeSkillGap(resumeAnalysis);
+        if (parsedResumeAnalysis) {
+          // Store for later analysis (requires a target role/goal)
+          setResumeAnalysis(parsedResumeAnalysis);
         }
       }
     } catch (err) {
@@ -41,8 +42,8 @@ export default function SkillGap() {
     }
   };
 
-  const analyzeSkillGap = async (resumeAnalysis = null) => {
-    if (!targetRole && !resumeAnalysis) {
+  const analyzeSkillGap = async () => {
+    if (!targetRole) {
       setError('Please set a target role first');
       return;
     }
@@ -102,7 +103,7 @@ export default function SkillGap() {
               )}
 
               <button
-                onClick={() => analyzeSkillGap()}
+                onClick={analyzeSkillGap}
                 disabled={loading}
                 className="w-full bg-gray-900 hover:bg-gray-800 text-white font-semibold py-3 px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm hover:shadow-md"
               >

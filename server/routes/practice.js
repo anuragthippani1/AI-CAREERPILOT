@@ -8,8 +8,6 @@ const codeExecutor = require('../services/codeExecutor');
 const PracticeAgent = require('../agents/practice');
 const gamification = require('../services/gamification');
 const achievements = require('../services/achievements');
-const db = require('../config/database');
-const { v4: uuidv4 } = require('uuid');
 
 const practiceAgent = new PracticeAgent();
 
@@ -162,7 +160,9 @@ router.post('/submit',
       );
 
       // Calculate score
-      const score = executionResult.passedTests / executionResult.totalTests * 100;
+      const totalTests = Number(executionResult.totalTests) || 0;
+      const passedTests = Number(executionResult.passedTests) || 0;
+      const score = totalTests > 0 ? (passedTests / totalTests) * 100 : 0;
 
       // Save practice session
       const sessionId = uuidv4();

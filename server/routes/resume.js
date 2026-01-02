@@ -58,7 +58,10 @@ router.post('/analyze', upload.single('resume'), validateResumeAnalyze, async (r
     } else if (req.body.text) {
       inputData.text = req.body.text;
     } else {
-      return res.status(400).json({ error: 'No resume file or text provided' });
+      return res.status(400).json({
+        success: false,
+        error: 'No resume file or text provided'
+      });
     }
 
     const result = await orchestrator.orchestrate(userId, 'analyze_resume', inputData);
@@ -105,7 +108,10 @@ router.get('/:userId',
     );
 
     if (resumes.length === 0) {
-      return res.status(404).json({ error: 'No resume found' });
+      return res.status(404).json({
+        success: false,
+        error: 'No resume found'
+      });
     }
 
     const resume = resumes[0];

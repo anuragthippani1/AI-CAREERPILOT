@@ -39,12 +39,12 @@ Format your response as JSON.`;
     const startTime = Date.now();
     let firstQuestion = null;
     let sessionId = null;
+    let roleTitle = inputData.roleTitle || context.activeGoal?.target_role || 'Software Engineer';
+    let interviewType = inputData.type || 'technical'; // technical, behavioral, mixed, system-design, leadership, coding
+    let companyName = inputData.companyName || null;
 
     try {
       sessionId = uuidv4();
-      const roleTitle = inputData.roleTitle || context.activeGoal?.target_role || 'Software Engineer';
-      const interviewType = inputData.type || 'technical'; // technical, behavioral, mixed, system-design, leadership, coding
-      const companyName = inputData.companyName || null;
 
       // Get user context for personalized questions
       const resumeAnalysis = context.resume?.analysis_json 
@@ -109,8 +109,19 @@ Response format:
         } catch (geminiError) {
           const errorMsg = geminiError.message || String(geminiError) || JSON.stringify(geminiError);
           
-          // If quota exceeded, use fallback for demo (don't throw error)
-          if (errorMsg.includes('quota') || errorMsg.includes('429') || errorMsg.includes('Quota') || errorMsg.includes('exceeded')) {
+          // If Gemini is unavailable (quota/missing key/unauthorized), use fallback for demo (don't throw error)
+          const isRecoverableAiError =
+            errorMsg.includes('quota') ||
+            errorMsg.includes('429') ||
+            errorMsg.includes('Quota') ||
+            errorMsg.includes('exceeded') ||
+            errorMsg.toLowerCase().includes('api key') ||
+            errorMsg.includes('401') ||
+            errorMsg.includes('403') ||
+            errorMsg.toLowerCase().includes('unauthorized') ||
+            errorMsg.toLowerCase().includes('permission');
+
+          if (isRecoverableAiError || geminiError instanceof SyntaxError) {
             console.warn('Gemini API quota exceeded, using fallback question for demo');
             // Provide realistic fallback question based on role and type
             const questions = {
@@ -209,13 +220,17 @@ Response format:
         const feedback = [];
 
         try {
+          if (!sessionId) {
+            sessionId = uuidv4();
+          }
+
           await db.query(
             `INSERT INTO interview_sessions 
              (user_id, session_id, role_title, questions_json, answers_json, feedback_json, status)
              VALUES (?, ?, ?, ?, ?, ?, 'in_progress')`,
             [
               context.userId,
-              uuidv4(),
+              sessionId,
               roleTitle,
               JSON.stringify(questions),
               JSON.stringify(answers),
@@ -417,7 +432,18 @@ Return ONLY this JSON structure (no markdown, no code blocks):
         const errorMsg = geminiError.message || String(geminiError) || JSON.stringify(geminiError);
         
         // If quota exceeded or other API error, provide intelligent fallback feedback
-        if (errorMsg.includes('quota') || errorMsg.includes('429') || errorMsg.includes('Quota') || errorMsg.includes('exceeded')) {
+        const isRecoverableAiError =
+          errorMsg.includes('quota') ||
+          errorMsg.includes('429') ||
+          errorMsg.includes('Quota') ||
+          errorMsg.includes('exceeded') ||
+          errorMsg.toLowerCase().includes('api key') ||
+          errorMsg.includes('401') ||
+          errorMsg.includes('403') ||
+          errorMsg.toLowerCase().includes('unauthorized') ||
+          errorMsg.toLowerCase().includes('permission');
+
+        if (isRecoverableAiError || geminiError instanceof SyntaxError) {
           console.warn('Gemini API quota exceeded, using intelligent fallback feedback');
           // Analyze answer quality and provide adaptive feedback
           if (!currentQuestion) {
@@ -635,9 +661,18 @@ Return ONLY this JSON structure (no markdown, no code blocks):
       score = Math.min(score, 2);
     }
     
-    // Check if answer is vague/generic
-    const vaguePatterns = ['i think', 'maybe', 'probably', 'i guess', 'not sure', 'i don\'t know'];
-    const isVague = vaguePatterns.some(pattern => answerLower.includes(pattern)) || answer.trim().length < 30;
+    // Check if answer is vague/generic (avoid false positives for concise-but-specific answers)
+    const vaguePatterns = ['i think', 'maybe', 'probably', 'i guess', 'not sure', "i don't know", 'idk'];
+    const genericPhrases = ['it depends', 'various', 'many factors', 'in general', 'generally', 'best practice', 'somehow'];
+    const wordCount = answer.trim().split(/\s+/).filter(Boolean).length;
+    const hasExamples = /\b(example|for example|for instance|e\.g\.)\b/i.test(answer);
+    const hasReasoningMarkers = /\b(because|so that|therefore|as a result|which led|trade-?off)\b/i.test(answer);
+    const hasActionWords = /\b(built|created|developed|implemented|designed|debugged|optimized|led|shipped)\b/i.test(answer);
+    const looksGeneric = genericPhrases.some(p => answerLower.includes(p));
+    const isVague =
+      vaguePatterns.some(pattern => answerLower.includes(pattern)) ||
+      (looksGeneric && !hasExamples && !hasReasoningMarkers && !hasActionWords) ||
+      (wordCount < 12 && !hasExamples && !hasReasoningMarkers && !hasActionWords);
     if (isVague && score > 4) {
       score = Math.min(score, 4);
     }
@@ -693,18 +728,18 @@ Return ONLY this JSON structure (no markdown, no code blocks):
   analyzeAnswerQuality(answer, question, interviewType, roleTitle, questions) {
     // Handle case where question might be null or undefined
     if (!question || !question.question) {
-      // Fallback if question is missing
+      // Fallback if question is missing - return in rubric format (0-10) to keep pipeline consistent
       return {
-        feedback: {
-          clarity: 40,
-          technicalAccuracy: 40,
-          relevance: 20,
-          communication: 40,
-          overallScore: 35,
-          strengths: ['Attempted to answer'],
-          improvements: ['Please ensure your answer addresses the question asked'],
-          comments: 'Your answer needs significant improvement. Please provide a relevant and detailed response.'
+        score: 3,
+        breakdown: {
+          relevance: 1,
+          understanding: 1,
+          reasoning: 0,
+          originality: 1
         },
+        strengths: ['Attempted to answer'],
+        improvements: ['Please ensure your answer addresses the question asked'],
+        final_feedback: 'Your answer needs significant improvement. Please provide a relevant and detailed response.',
         nextQuestion: null,
         isComplete: true,
         summary: 'Interview completed. Please try again with a complete question.'
@@ -715,6 +750,14 @@ Return ONLY this JSON structure (no markdown, no code blocks):
     const questionLower = question.question.toLowerCase();
     const answerLength = answer.trim().length;
     const wordCount = answer.trim().split(/\s+/).length;
+
+    // Answer quality indicators (define early; used in multiple scoring paths)
+    const hasExamples = answerLower.includes('example') || answerLower.includes('project') || answerLower.includes('worked');
+    const hasTechnicalTerms = answerLower.match(/\b(react|javascript|python|java|node|api|database|algorithm|system|design|architecture)\b/i);
+    const hasActionWords = answerLower.match(/\b(built|created|developed|implemented|designed|solved|improved|optimized)\b/i);
+    const isTooShort = wordCount < 20;
+    const isTooLong = wordCount > 500;
+    const hasGrammarIssues = (answer.match(/[.!?]/g) || []).length < 1 && wordCount > 30;
 
     // Check relevance - STRICT scoring
     let relevanceScore = 40; // Start lower at 40
@@ -737,8 +780,33 @@ Return ONLY this JSON structure (no markdown, no code blocks):
       // Weak relevance - some keywords but low ratio
       relevanceScore = 25 + (matchingKeywords.length * 5);
     } else {
-      // No keywords match - answer is likely completely unrelated
-      // Check for common unrelated answer patterns
+      // No keywords match — for behavioral/mixed questions, use intent + structure heuristics
+      if (interviewType === 'behavioral' || interviewType === 'mixed' || interviewType === 'leadership') {
+        const intent = (() => {
+          if (questionLower.includes('motivated') || questionLower.includes('motivation') || questionLower.includes('drew you') || questionLower.includes('why')) return 'motivation';
+          if (questionLower.includes('tell me about a time') || questionLower.includes('describe a situation') || questionLower.includes('conflict') || questionLower.includes('disagreed')) return 'story';
+          if (questionLower.includes('project') || questionLower.includes('worked on') || questionLower.includes('interesting')) return 'project';
+          return 'general';
+        })();
+
+        const motivationWords = /\b(motivat|enjoy|love|passion|curious|interest|drive|excited)\b/i.test(answer);
+        const storyWords = /\b(when|once|during|in my last|in my previous|at one point|situation)\b/i.test(answer);
+        const projectWords = /\b(project|built|created|developed|implemented|designed|shipped)\b/i.test(answer);
+        const reasoningWords = /\b(because|so that|as a result|which led|therefore)\b/i.test(answer);
+        const firstPerson = /\b(i|my|we)\b/i.test(answer);
+
+        let signals = 0;
+        if (firstPerson) signals += 1;
+        if (hasExamples) signals += 1;
+        if (reasoningWords) signals += 1;
+        if (intent === 'motivation' && motivationWords) signals += 2;
+        if (intent === 'story' && storyWords) signals += 2;
+        if (intent === 'project' && projectWords) signals += 2;
+
+        relevanceScore = Math.max(25, Math.min(90, 35 + signals * 12));
+      } else {
+        // No keywords match - answer is likely completely unrelated
+        // Check for common unrelated answer patterns
       const unrelatedPatterns = [
         /^(i don't know|idk|not sure|maybe|probably|i think|i guess)/i,
         /^(yes|no|ok|sure|alright|fine)$/i,
@@ -751,15 +819,8 @@ Return ONLY this JSON structure (no markdown, no code blocks):
       } else {
         relevanceScore = Math.max(15, 30 - (questionKeywords.length * 3)); // Penalize heavily for no matches
       }
+      }
     }
-
-    // Check answer quality indicators
-    const hasExamples = answerLower.includes('example') || answerLower.includes('project') || answerLower.includes('worked');
-    const hasTechnicalTerms = answerLower.match(/\b(react|javascript|python|java|node|api|database|algorithm|system|design|architecture)\b/i);
-    const hasActionWords = answerLower.match(/\b(built|created|developed|implemented|designed|solved|improved|optimized)\b/i);
-    const isTooShort = wordCount < 20;
-    const isTooLong = wordCount > 500;
-    const hasGrammarIssues = (answer.match(/[.!?]/g) || []).length < 1 && wordCount > 30;
 
     // Calculate clarity score
     let clarityScore = 60;
@@ -887,8 +948,13 @@ Return ONLY this JSON structure (no markdown, no code blocks):
       totalScore = Math.min(totalScore, 2);
     }
     
-    const vaguePatterns = ['i think', 'maybe', 'probably', 'i guess', 'not sure', 'i don\'t know'];
-    const isVague = vaguePatterns.some(pattern => answerLower.includes(pattern)) || wordCount < 30;
+    const vaguePatterns = ['i think', 'maybe', 'probably', 'i guess', 'not sure', "i don't know", 'idk'];
+    const genericPhrases = ['it depends', 'various', 'many factors', 'in general', 'generally', 'best practice', 'somehow'];
+    const looksGeneric = genericPhrases.some(p => answerLower.includes(p));
+    const isVague =
+      vaguePatterns.some(pattern => answerLower.includes(pattern)) ||
+      (looksGeneric && !hasExamples && !hasActionWords) ||
+      (wordCount < 12 && !hasExamples && !hasActionWords);
     if (isVague && totalScore > 4) {
       totalScore = Math.min(totalScore, 4);
     }

@@ -69,8 +69,13 @@ class QuestionBankService {
       }
 
       // Ordering
-      const orderBy = filters.orderBy || 'id';
-      const orderDir = filters.orderDir || 'ASC';
+      const allowedOrderBy = new Set(['id', 'title', 'difficulty', 'created_at', 'updated_at']);
+      const requestedOrderBy = (filters.orderBy || 'id').toString();
+      const orderBy = allowedOrderBy.has(requestedOrderBy) ? requestedOrderBy : 'id';
+
+      const requestedOrderDir = (filters.orderDir || 'ASC').toString().toUpperCase();
+      const orderDir = requestedOrderDir === 'DESC' ? 'DESC' : 'ASC';
+
       query += ` ORDER BY ${orderBy} ${orderDir}`;
 
       // Pagination
@@ -83,6 +88,11 @@ class QuestionBankService {
 
       return questions.map(q => this.formatQuestion(q));
     } catch (error) {
+      // Demo-safe: if schema isn't migrated yet, return empty list (routes/agents can fallback)
+      if (error && (error.code === 'ER_NO_SUCH_TABLE' || error.errno === 1146 || error.sqlState === '42S02')) {
+        console.warn('⚠️  coding_questions table is missing. Run DB schema/migrations to enable coding practice.');
+        return [];
+      }
       console.error('Error fetching questions by filter:', error);
       throw error;
     }
@@ -349,4 +359,5 @@ class QuestionBankService {
 const questionBank = new QuestionBankService();
 
 module.exports = questionBank;
+
 

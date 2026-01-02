@@ -7,7 +7,7 @@ const orchestrator = require('../agents/orchestrator');
 const validateInterviewStart = [
   body('userId').optional().isInt({ min: 1 }).withMessage('User ID must be a positive integer'),
   body('roleTitle').notEmpty().trim().isLength({ min: 1, max: 200 }).withMessage('Role title is required and must be between 1 and 200 characters'),
-  body('type').notEmpty().isIn(['technical', 'behavioral', 'system-design', 'coding', 'leadership']).withMessage('Interview type must be one of: technical, behavioral, system-design, coding, leadership'),
+  body('type').notEmpty().isIn(['technical', 'behavioral', 'mixed', 'system-design', 'coding', 'leadership']).withMessage('Interview type must be one of: technical, behavioral, mixed, system-design, coding, leadership'),
   body('companyName').optional().trim().isLength({ max: 200 }).withMessage('Company name must be less than 200 characters'),
 ];
 
@@ -115,7 +115,10 @@ router.post('/feedback',
     );
 
     if (sessions.length === 0) {
-      return res.status(404).json({ error: 'Interview session not found' });
+      return res.status(404).json({
+        success: false,
+        error: 'Interview session not found'
+      });
     }
 
     const session = sessions[0];

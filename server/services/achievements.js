@@ -174,6 +174,15 @@ class AchievementsService {
 
       console.log(`Initialized ${achievements.length} achievements`);
     } catch (error) {
+      // Demo-safe: if the schema/migrations haven't been applied yet, don't crash or spam logs.
+      // MySQL missing table: ER_NO_SUCH_TABLE (errno 1146, sqlState 42S02)
+      if (error && (error.code === 'ER_NO_SUCH_TABLE' || error.errno === 1146 || error.sqlState === '42S02')) {
+        console.warn(
+          '⚠️  Achievements tables are missing. Run the DB migrations/schema (see `database/schema.sql` and `database/migrations/`). Skipping achievements initialization for now.'
+        );
+        return;
+      }
+
       console.error('Error initializing achievements:', error);
       throw error;
     }
@@ -524,4 +533,5 @@ class AchievementsService {
 }
 
 module.exports = new AchievementsService();
+
 
