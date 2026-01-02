@@ -8,19 +8,22 @@ import MockInterview from './pages/MockInterview';
 import CodingPractice from './pages/CodingPractice';
 import Profile from './pages/Profile';
 import Leaderboard from './pages/Leaderboard';
+import AppLayout from './components/AppLayout';
 
 function App() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
-      <Route path="/dashboard" element={<Dashboard />} />
-      <Route path="/resume" element={<ResumeUpload />} />
-      <Route path="/skills" element={<SkillGap />} />
-      <Route path="/roadmap" element={<CareerRoadmap />} />
-      <Route path="/interview" element={<MockInterview />} />
-      <Route path="/practice" element={<CodingPractice />} />
-      <Route path="/profile" element={<Profile />} />
-      <Route path="/leaderboard" element={<Leaderboard />} />
+      <Route element={<AppLayout />}>
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/resume" element={<ResumeUpload />} />
+        <Route path="/skills" element={<SkillGap />} />
+        <Route path="/roadmap" element={<CareerRoadmap />} />
+        <Route path="/interview" element={<MockInterview />} />
+        <Route path="/practice" element={<CodingPractice />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/leaderboard" element={<Leaderboard />} />
+      </Route>
     </Routes>
   );
 }

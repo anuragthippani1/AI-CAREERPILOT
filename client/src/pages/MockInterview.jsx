@@ -199,22 +199,17 @@ export default function MockInterview() {
 
   if (showHistory) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div className="flex items-center justify-between">
-              <h1 className="text-xl font-bold text-gray-900">Interview History & Analytics</h1>
-              <button
-                onClick={() => setShowHistory(false)}
-                className="px-4 py-2 text-gray-700 hover:text-gray-900 font-medium text-sm hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                Back to Interview
-              </button>
-            </div>
-          </div>
-        </header>
-
+      <div className="min-h-screen">
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-xl font-bold text-gray-900">Interview History & Analytics</h1>
+            <button
+              onClick={() => setShowHistory(false)}
+              className="px-4 py-2 text-gray-700 hover:text-gray-900 font-medium text-sm hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              Back to Interview
+            </button>
+          </div>
           {overallStats && (
             <div className="grid md:grid-cols-4 gap-6 mb-8">
               <StatCard
@@ -284,25 +279,20 @@ export default function MockInterview() {
 
   if (!sessionId && !loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div className="flex items-center justify-between">
-              <h1 className="text-xl font-bold text-gray-900">AI Mock Interview Platform</h1>
-              {interviewHistory.length > 0 && (
-                <button
-                  onClick={() => setShowHistory(true)}
-                  className="px-4 py-2 text-gray-700 hover:text-gray-900 font-medium flex items-center gap-2 text-sm hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  <BarChart3 className="w-5 h-5" />
-                  View History
-                </button>
-              )}
-            </div>
-          </div>
-        </header>
-
+      <div className="min-h-screen">
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-4xl">
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-xl font-bold text-gray-900">AI Mock Interview Platform</h1>
+            {interviewHistory.length > 0 && (
+              <button
+                onClick={() => setShowHistory(true)}
+                className="px-4 py-2 text-gray-700 hover:text-gray-900 font-medium flex items-center gap-2 text-sm hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <BarChart3 className="w-5 h-5" />
+                View History
+              </button>
+            )}
+          </div>
           {overallStats && (
             <div className="grid sm:grid-cols-3 gap-4 mb-6">
               <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
@@ -421,7 +411,7 @@ export default function MockInterview() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       {/* XP Notification */}
       {xpNotification && (
         <XPNotification
@@ -433,31 +423,26 @@ export default function MockInterview() {
         />
       )}
 
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">
-                {companyName ? `${companyName} - ` : ''}{roleTitle} Interview
-              </h1>
-              <p className="text-sm text-gray-600 mt-1">
-                {interviewType.charAt(0).toUpperCase() + interviewType.slice(1)} Interview Session
-              </p>
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-5xl">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-xl font-bold text-gray-900">
+              {companyName ? `${companyName} - ` : ''}{roleTitle} Interview
+            </h1>
+            <p className="text-sm text-gray-600 mt-1">
+              {interviewType.charAt(0).toUpperCase() + interviewType.slice(1)} Interview Session
+            </p>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 text-gray-600">
+              <Clock className="w-5 h-5" />
+              <span className="font-mono">{formatTime(elapsedTime)}</span>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 text-gray-600">
-                <Clock className="w-5 h-5" />
-                <span className="font-mono">{formatTime(elapsedTime)}</span>
-              </div>
-              <div className="text-sm text-gray-600">
-                Question {questionNumber} / {totalQuestions || '?'}
-              </div>
+            <div className="text-sm text-gray-600">
+              Question {questionNumber} / {totalQuestions || '?'}
             </div>
           </div>
         </div>
-      </header>
-
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-5xl">
         {isComplete ? (
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:p-8">
             <div className="text-center mb-8">

@@ -75,7 +75,7 @@ export default function Leaderboard() {
 
   if (loading && getCurrentLeaderboard().length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-[60vh] flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading leaderboard...</p>
@@ -87,14 +87,9 @@ export default function Leaderboard() {
   const currentLeaderboard = getCurrentLeaderboard();
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <h1 className="text-xl font-bold text-gray-900">Leaderboard</h1>
-        </div>
-      </header>
-
+    <div className="min-h-screen">
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-6xl">
+        <h1 className="text-xl font-bold text-gray-900 mb-6">Leaderboard</h1>
         {/* User Rank Card */}
         {userRank && (
           <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200 p-6 mb-6">

@@ -71,14 +71,9 @@ export default function SkillGap() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <h1 className="text-xl font-bold text-gray-900">Skill Gap Analysis</h1>
-        </div>
-      </header>
-
+    <div className="min-h-screen">
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-4xl">
+        <h1 className="text-xl font-bold text-gray-900 mb-6">Skill Gap Analysis</h1>
         {!analysis ? (
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
             <div className="space-y-6">

@@ -77,7 +77,7 @@ export default function CareerRoadmap() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-[60vh] flex items-center justify-center">
         <div className="text-center">
           <Loader className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
           <p className="text-gray-600">Generating your career roadmap...</p>
@@ -87,14 +87,9 @@ export default function CareerRoadmap() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <h1 className="text-xl font-bold text-gray-900">Career Roadmap</h1>
-        </div>
-      </header>
-
+    <div className="min-h-screen">
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-6xl">
+        <h1 className="text-xl font-bold text-gray-900 mb-6">Career Roadmap</h1>
         {error ? (
           <div className="bg-red-50 border border-red-200 rounded-lg p-6">
             <p className="text-red-800">{error}</p>

@@ -69,7 +69,7 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-[60vh] flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading your career dashboard...</p>
@@ -79,25 +79,19 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-white" />
-              </div>
-              <h1 className="text-xl font-bold text-gray-900">CareerPilot Dashboard</h1>
+    <div className="min-h-screen">
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
+              <Sparkles className="w-5 h-5 text-white" />
             </div>
-            <div className="text-sm text-gray-600">
-              {user ? `${getGreeting()}, ${user.name || 'User'}!` : 'Welcome'}
-            </div>
+            <h1 className="text-xl font-bold text-gray-900">CareerPilot Dashboard</h1>
+          </div>
+          <div className="text-sm text-gray-600">
+            {user ? `${getGreeting()}, ${user.name || 'User'}!` : 'Welcome'}
           </div>
         </div>
-      </header>
-
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Top Section */}
         <div className="grid md:grid-cols-3 gap-6 mb-8">
           {/* Greeting Card */}
