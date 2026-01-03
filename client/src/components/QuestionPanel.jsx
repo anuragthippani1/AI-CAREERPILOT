@@ -85,6 +85,16 @@ export default function QuestionPanel({ question, hint, explanation }) {
         </div>
       )}
 
+      {/* Expected Approach */}
+      {question.expectedApproach && (
+        <div className="mb-6">
+          <h3 className="text-base font-semibold text-gray-900 mb-3">Expected Approach</h3>
+          <div className="text-gray-700 whitespace-pre-wrap bg-blue-50/60 p-4 rounded-lg border border-blue-200 text-sm">
+            {question.expectedApproach}
+          </div>
+        </div>
+      )}
+
       {/* Hint */}
       {hint && (
         <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">

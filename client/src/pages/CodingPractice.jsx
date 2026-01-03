@@ -4,7 +4,7 @@ import CodeEditor from '../components/CodeEditor';
 import QuestionPanel from '../components/QuestionPanel';
 import TestResults from '../components/TestResults';
 import XPNotification from '../components/XPNotification';
-import { practiceAPI } from '../services/api';
+import { practiceAPI, technicalChallengesAPI } from '../services/api';
 
 export default function CodingPractice() {
   const [userId] = useState(1); // Demo user
@@ -42,7 +42,7 @@ export default function CodingPractice() {
   const loadQuestions = async () => {
     try {
       setLoading(true);
-      const response = await practiceAPI.getQuestions(filters);
+      const response = await technicalChallengesAPI.getChallenges(filters);
       if (response.data.success) {
         setQuestions(response.data.data || []);
         if (response.data.data && response.data.data.length > 0 && !selectedQuestion) {
@@ -51,7 +51,7 @@ export default function CodingPractice() {
       }
     } catch (err) {
       console.error('Error loading questions:', err);
-      setError('Failed to load questions');
+      setError('Failed to load technical challenges');
     } finally {
       setLoading(false);
     }
@@ -59,7 +59,7 @@ export default function CodingPractice() {
 
   const loadQuestionDetails = async (questionId) => {
     try {
-      const response = await practiceAPI.getQuestion(questionId);
+      const response = await technicalChallengesAPI.getChallenge(questionId);
       if (response.data.success) {
         setSelectedQuestion(response.data.data);
       }
@@ -288,10 +288,16 @@ export default function CodingPractice() {
                     <option value="">All Topics</option>
                     <option value="Arrays">Arrays</option>
                     <option value="Strings">Strings</option>
+                    <option value="Hashing">Hashing</option>
+                    <option value="Linked List">Linked List</option>
+                    <option value="Stack & Queue">Stack & Queue</option>
+                    <option value="Recursion">Recursion</option>
                     <option value="Trees">Trees</option>
+                    <option value="Binary Search">Binary Search</option>
                     <option value="Graphs">Graphs</option>
                     <option value="Dynamic Programming">Dynamic Programming</option>
                     <option value="Greedy">Greedy</option>
+                    <option value="Bit Manipulation">Bit Manipulation</option>
                     <option value="Math">Math</option>
                   </select>
                 </div>
@@ -307,8 +313,12 @@ export default function CodingPractice() {
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Problems</h2>
               {loading ? (
                 <div className="text-center text-gray-400 py-8">Loading...</div>
+              ) : error ? (
+                <div className="text-center text-red-600 py-8">{error}</div>
               ) : questions.length === 0 ? (
-                <div className="text-center text-gray-400 py-8">No questions found</div>
+                <div className="text-center text-gray-400 py-8">
+                  No challenges found. If you just set up the project, run the DB schema + seed (see `setup_database.sh`).
+                </div>
               ) : (
                 <div className="space-y-2">
                   {questions.map((q) => (

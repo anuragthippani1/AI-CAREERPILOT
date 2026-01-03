@@ -51,15 +51,16 @@ CREATE TABLE IF NOT EXISTS user_achievements (
 CREATE TABLE IF NOT EXISTS leaderboard_cache (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
-    rank INT NOT NULL,
+    `rank` INT NOT NULL,
     xp INT NOT NULL,
     level INT NOT NULL,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    INDEX idx_rank (rank),
+    INDEX idx_rank (`rank`),
     INDEX idx_xp (xp),
     INDEX idx_user_id (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 
 
 

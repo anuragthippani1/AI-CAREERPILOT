@@ -297,16 +297,43 @@ class QuestionBankService {
    * Format question for response
    */
   formatQuestion(question) {
+    const topics = typeof question.topics === 'string' ? JSON.parse(question.topics) : question.topics;
+    const examples = typeof question.examples === 'string' ? JSON.parse(question.examples) : question.examples;
+    const requiredCategories = new Set([
+      'Arrays',
+      'Strings',
+      'Linked List',
+      'Stack & Queue',
+      'Hashing',
+      'Recursion',
+      'Trees',
+      'Binary Search',
+      'Graphs',
+      'Dynamic Programming',
+      'Greedy',
+      'Bit Manipulation'
+    ]);
+
+    const category =
+      (Array.isArray(topics) ? topics.find(t => requiredCategories.has(t)) : null) ||
+      (Array.isArray(topics) && topics.length > 0 ? topics[0] : null);
+
+    const firstExample = Array.isArray(examples) && examples.length > 0 ? examples[0] : null;
+
     return {
       id: question.id,
       title: question.title,
       slug: question.slug,
       description: question.description,
       difficulty: question.difficulty,
-      topics: typeof question.topics === 'string' ? JSON.parse(question.topics) : question.topics,
+      category,
+      topics,
       companyTags: typeof question.company_tags === 'string' ? JSON.parse(question.company_tags) : question.company_tags,
-      examples: typeof question.examples === 'string' ? JSON.parse(question.examples) : question.examples,
+      sampleInput: firstExample?.input || null,
+      sampleOutput: firstExample?.output || null,
+      examples,
       constraints: question.constraints,
+      expectedApproach: question.expected_approach || null,
       hints: typeof question.hints === 'string' ? JSON.parse(question.hints) : question.hints,
       testCases: typeof question.test_cases === 'string' ? JSON.parse(question.test_cases) : question.test_cases,
       solutionTemplate: typeof question.solution_template === 'string' ? JSON.parse(question.solution_template) : question.solution_template,

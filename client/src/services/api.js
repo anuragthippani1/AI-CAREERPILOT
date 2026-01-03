@@ -58,6 +58,12 @@ export const practiceAPI = {
   getUserCode: (userId, questionId) => api.get(`/practice/code/${userId}/${questionId}`),
 };
 
+// Technical Challenges API (read-only problem catalog)
+export const technicalChallengesAPI = {
+  getChallenges: (filters) => api.get('/technical-challenges', { params: filters }),
+  getChallenge: (challengeId) => api.get(`/technical-challenges/${challengeId}`),
+};
+
 // Leaderboard API
 export const leaderboardAPI = {
   getTopUsers: (page = 1, limit = 20) => api.get('/leaderboard', { params: { page, limit } }),

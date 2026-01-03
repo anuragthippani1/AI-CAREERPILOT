@@ -130,6 +130,7 @@ CREATE TABLE IF NOT EXISTS coding_questions (
     company_tags JSON, -- Array of company names: ["Google", "Amazon", etc.]
     examples JSON, -- Array of example inputs/outputs
     constraints TEXT,
+    expected_approach TEXT, -- High-level expected approach (no code)
     hints JSON, -- Array of hints
     test_cases JSON, -- Array of test cases with input/output
     solution_template JSON, -- Code templates for different languages
@@ -240,12 +241,12 @@ CREATE TABLE IF NOT EXISTS user_achievements (
 CREATE TABLE IF NOT EXISTS leaderboard_cache (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
-    rank INT NOT NULL,
+    `rank` INT NOT NULL,
     xp INT NOT NULL,
     level INT NOT NULL,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    INDEX idx_rank (rank),
+    INDEX idx_rank (`rank`),
     INDEX idx_xp (xp),
     INDEX idx_user_id (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

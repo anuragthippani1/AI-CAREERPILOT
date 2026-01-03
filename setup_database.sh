@@ -33,6 +33,7 @@ $MYSQL_CMD << EOF
 CREATE DATABASE IF NOT EXISTS careerpilot;
 USE careerpilot;
 SOURCE database/schema.sql;
+SOURCE database/seed_questions.sql;
 SHOW TABLES;
 EOF
 
@@ -53,6 +54,7 @@ else
     echo "  USE careerpilot;"
     echo "  SOURCE database/schema.sql;"
 fi
+
 
 
 
