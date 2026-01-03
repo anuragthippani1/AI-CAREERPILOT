@@ -1,134 +1,198 @@
-import { useState, useEffect } from 'react';
-import { Trophy, Medal, Award, TrendingUp, Flame, MessageSquare, Code, Star, Crown } from 'lucide-react';
+import { useMemo, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Trophy, Medal, Award, Flame, MessageSquare, Star, Crown, Info } from 'lucide-react';
 import { leaderboardAPI } from '../services/api';
 
+function getUserIdFromStorageOrUrl() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const fromUrl = params.get('userId');
+    const fromStorage =
+      localStorage.getItem('careerpilot_user_id') ||
+      localStorage.getItem('careerpilotUserId') ||
+      localStorage.getItem('userId');
+
+    const raw = (fromUrl || fromStorage || '').toString().trim();
+    const id = parseInt(raw, 10);
+    return Number.isFinite(id) && id > 0 ? id : null;
+  } catch {
+    return null;
+  }
+}
+
+function makeDemoUsers(tab) {
+  const baseNames = [
+    'Aarav', 'Maya', 'Noah', 'Isha', 'Liam', 'Zara', 'Ethan', 'Anika', 'Arjun', 'Sofia', 'Kai', 'Nina', 'Rohan', 'Leah', 'Sam'
+  ];
+
+  if (tab === 'xp') {
+    return baseNames.slice(0, 12).map((name, idx) => ({
+      id: 1000 + idx,
+      name,
+      title: ['SWE', 'Frontend Dev', 'Backend Dev', 'Full-stack', 'Data Eng'][idx % 5],
+      xp: 14500 - idx * 900,
+      level: 12 - Math.floor(idx / 2),
+      avatar_url: null,
+      rank: idx + 1
+    }));
+  }
+
+  if (tab === 'interviews') {
+    return baseNames.slice(0, 12).map((name, idx) => ({
+      id: 2000 + idx,
+      name,
+      title: ['SWE', 'Frontend Dev', 'Backend Dev', 'Full-stack'][idx % 4],
+      avatar_url: null,
+      completedInterviews: Math.max(1, 18 - idx * 2),
+      avgScore: Math.max(55, 92 - idx * 3),
+      rank: idx + 1
+    }));
+  }
+
+  // streaks
+  return baseNames.slice(0, 12).map((name, idx) => ({
+    id: 3000 + idx,
+    name,
+    title: ['SWE', 'Frontend Dev', 'Backend Dev', 'Full-stack'][idx % 4],
+    avatar_url: null,
+    currentStreak: Math.max(1, 14 - idx),
+    longestStreak: Math.max(3, 30 - idx * 2),
+    rank: idx + 1
+  }));
+}
+
+function XPInfoTooltip() {
+  return (
+    <span className="relative inline-flex items-center ml-2 group">
+      <Info className="w-4 h-4 text-white/60 hover:text-white/80" />
+      <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-full mt-2 z-20 w-64 opacity-0 group-hover:opacity-100 transition-opacity">
+        <span className="block glass-card rounded-lg p-3 text-xs text-white/90 border border-white/10 shadow-lg">
+          <span className="block font-semibold text-white mb-1">How XP is earned</span>
+          <span className="block text-white/80">- Resume: upload + analysis</span>
+          <span className="block text-white/80">- Challenges: solving + submissions</span>
+          <span className="block text-white/80">- Interviews: completing mock sessions</span>
+        </span>
+      </span>
+    </span>
+  );
+}
+
 export default function Leaderboard() {
-  const [userId] = useState(1); // Demo user
+  const navigate = useNavigate();
+  const [userId] = useState(() => getUserIdFromStorageOrUrl());
   const [activeTab, setActiveTab] = useState('xp');
-  const [xpLeaderboard, setXpLeaderboard] = useState([]);
-  const [interviewLeaderboard, setInterviewLeaderboard] = useState([]);
-  const [streakLeaderboard, setStreakLeaderboard] = useState([]);
+  const [leaderboard, setLeaderboard] = useState([]);
   const [userRank, setUserRank] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 0 });
+  const [error, setError] = useState(null);
+  const [isDemo, setIsDemo] = useState(false);
 
   useEffect(() => {
     loadLeaderboard();
-    loadUserRank();
   }, [activeTab]);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        if (!userId) {
+          setUserRank(null);
+          return;
+        }
+        const response = await leaderboardAPI.getUserRank(userId);
+        if (response?.data?.success) setUserRank(response.data.data);
+      } catch (err) {
+        console.error('Error loading user rank:', err);
+        setUserRank(null);
+      }
+    };
+
+    load();
+  }, [userId]);
 
   const loadLeaderboard = async () => {
     try {
       setLoading(true);
-      let response;
+      setError(null);
 
-      if (activeTab === 'xp') {
-        response = await leaderboardAPI.getTopUsers(pagination.page, pagination.limit);
-        if (response.data.success) {
-          setXpLeaderboard(response.data.data);
-          setPagination(response.data.pagination);
+      const limit = 50;
+      const page = 1;
+
+      let response = null;
+      if (activeTab === 'xp') response = await leaderboardAPI.getTopUsers(page, limit);
+      if (activeTab === 'interviews') response = await leaderboardAPI.getTopByInterviews(page, limit);
+      if (activeTab === 'streaks') response = await leaderboardAPI.getTopByStreaks(page, limit);
+
+      if (response?.data?.success) {
+        const rows = Array.isArray(response.data.data) ? response.data.data : [];
+        if (rows.length > 0) {
+          setLeaderboard(rows);
+          setIsDemo(false);
+        } else {
+          setLeaderboard(makeDemoUsers(activeTab));
+          setIsDemo(true);
         }
-      } else if (activeTab === 'interviews') {
-        response = await leaderboardAPI.getTopByInterviews(pagination.page, pagination.limit);
-        if (response.data.success) {
-          setInterviewLeaderboard(response.data.data);
-          setPagination(response.data.pagination);
-        }
-      } else if (activeTab === 'streaks') {
-        response = await leaderboardAPI.getTopByStreaks(pagination.page, pagination.limit);
-        if (response.data.success) {
-          setStreakLeaderboard(response.data.data);
-          setPagination(response.data.pagination);
-        }
+      } else {
+        setLeaderboard([]);
+        setError('Failed to load leaderboard');
       }
-    } catch (error) {
-      console.error('Error loading leaderboard:', error);
+    } catch (err) {
+      console.error('Error loading leaderboard:', err);
+      setLeaderboard([]);
+      setError(err?.response?.data?.error || 'Failed to load leaderboard');
     } finally {
       setLoading(false);
     }
   };
 
-  const loadUserRank = async () => {
-    try {
-      const response = await leaderboardAPI.getUserRank(userId);
-      if (response.data.success) {
-        setUserRank(response.data.data);
-      }
-    } catch (error) {
-      console.error('Error loading user rank:', error);
-    }
-  };
+  const top3 = useMemo(() => leaderboard.slice(0, 3), [leaderboard]);
+  const rest = useMemo(() => leaderboard.slice(3, 50), [leaderboard]);
 
-  const getCurrentLeaderboard = () => {
-    if (activeTab === 'xp') return xpLeaderboard;
-    if (activeTab === 'interviews') return interviewLeaderboard;
-    if (activeTab === 'streaks') return streakLeaderboard;
-    return [];
-  };
+  const youInList = useMemo(() => {
+    if (!userId) return null;
+    return leaderboard.find((u) => parseInt(u.id, 10) === userId) || null;
+  }, [leaderboard, userId]);
+
+  const isUnranked = !userRank || userRank.total === 0 || (userRank.xp || 0) <= 0;
 
   const getRankIcon = (rank) => {
-    if (rank === 1) return <Crown className="w-6 h-6 text-yellow-500" />;
-    if (rank === 2) return <Medal className="w-6 h-6 text-gray-400" />;
-    if (rank === 3) return <Award className="w-6 h-6 text-orange-500" />;
-    return <span className="text-lg font-bold text-gray-400">#{rank}</span>;
+    if (rank === 1) return <Trophy className="w-6 h-6 text-yellow-400" />;
+    if (rank === 2) return <Medal className="w-6 h-6 text-white/70" />;
+    if (rank === 3) return <Award className="w-6 h-6 text-orange-400" />;
+    return <span className="text-sm font-bold text-white/70">#{rank}</span>;
   };
 
-  if (loading && getCurrentLeaderboard().length === 0) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading leaderboard...</p>
-        </div>
-      </div>
-    );
-  }
-
-  const currentLeaderboard = getCurrentLeaderboard();
-
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen relative z-10">
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-6xl">
-        <h1 className="text-xl font-bold text-gray-900 mb-6">Leaderboard</h1>
-        {/* User Rank Card */}
-        {userRank && (
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200 p-6 mb-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">Your Rank</p>
-                <p className="text-3xl font-bold text-gray-900">#{userRank.rank}</p>
-                <p className="text-sm text-gray-600 mt-1">
-                  Top {userRank.percentile}% • {userRank.xp} XP • Level {userRank.level}
-                </p>
-              </div>
-              <div className="text-right">
-                <Trophy className="w-12 h-12 text-yellow-500" />
-              </div>
-            </div>
+        <div className="flex items-start justify-between gap-4 mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-white">Leaderboard</h1>
+            <p className="text-white/70 text-sm mt-1">Climb ranks by practicing consistently — small wins add up.</p>
           </div>
-        )}
+          {isDemo && (
+            <div className="glass-card px-3 py-1.5 rounded-lg text-xs text-white/90 border border-white/10">
+              Preview / Demo Leaderboard
+            </div>
+          )}
+        </div>
 
         {/* Tabs */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-1 mb-6 flex gap-1">
+        <div className="glass-card rounded-xl p-1 mb-6 flex gap-1">
           <button
             onClick={() => setActiveTab('xp')}
             className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-colors ${
-              activeTab === 'xp'
-                ? 'bg-gray-900 text-white'
-                : 'text-gray-600 hover:bg-gray-100'
+              activeTab === 'xp' ? 'bg-white/10 text-white' : 'text-white/70 hover:bg-white/5'
             }`}
           >
             <div className="flex items-center justify-center gap-2">
               <Star className="w-4 h-4" />
-              XP Leaderboard
+              XP
             </div>
           </button>
           <button
             onClick={() => setActiveTab('interviews')}
             className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-colors ${
-              activeTab === 'interviews'
-                ? 'bg-gray-900 text-white'
-                : 'text-gray-600 hover:bg-gray-100'
+              activeTab === 'interviews' ? 'bg-white/10 text-white' : 'text-white/70 hover:bg-white/5'
             }`}
           >
             <div className="flex items-center justify-center gap-2">
@@ -139,9 +203,7 @@ export default function Leaderboard() {
           <button
             onClick={() => setActiveTab('streaks')}
             className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-colors ${
-              activeTab === 'streaks'
-                ? 'bg-gray-900 text-white'
-                : 'text-gray-600 hover:bg-gray-100'
+              activeTab === 'streaks' ? 'bg-white/10 text-white' : 'text-white/70 hover:bg-white/5'
             }`}
           >
             <div className="flex items-center justify-center gap-2">
@@ -151,143 +213,250 @@ export default function Leaderboard() {
           </button>
         </div>
 
-        {/* Leaderboard Table */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          {currentLeaderboard.length === 0 ? (
-            <div className="p-12 text-center">
-              <Trophy className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">No rankings yet. Be the first to compete!</p>
-            </div>
-          ) : (
-            <>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50 border-b border-gray-200">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Rank</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">User</th>
-                      {activeTab === 'xp' && (
-                        <>
-                          <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">XP</th>
-                          <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Level</th>
-                        </>
-                      )}
-                      {activeTab === 'interviews' && (
-                        <>
-                          <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Completed</th>
-                          <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Avg Score</th>
-                        </>
-                      )}
-                      {activeTab === 'streaks' && (
-                        <>
-                          <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Current</th>
-                          <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Longest</th>
-                        </>
-                      )}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {currentLeaderboard.map((user) => (
-                      <tr
-                        key={user.id}
-                        className={`hover:bg-gray-50 transition-colors ${
-                          user.id === userId ? 'bg-blue-50' : ''
-                        }`}
-                      >
-                        <td className="px-6 py-4">
-                          <div className="flex items-center">
-                            {getRankIcon(user.rank)}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
-                              {user.avatar_url ? (
-                                <img src={user.avatar_url} alt={user.name} className="w-10 h-10 rounded-full object-cover" />
-                              ) : (
-                                user.name?.charAt(0).toUpperCase() || 'U'
-                              )}
-                            </div>
-                            <div>
-                              <p className="font-semibold text-gray-900">{user.name}</p>
-                              {user.title && <p className="text-sm text-gray-500">{user.title}</p>}
-                            </div>
-                          </div>
-                        </td>
-                        {activeTab === 'xp' && (
-                          <>
-                            <td className="px-6 py-4">
-                              <span className="font-semibold text-gray-900">{user.xp.toLocaleString()}</span>
-                            </td>
-                            <td className="px-6 py-4">
-                              <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded text-sm font-medium">
-                                Level {user.level}
-                              </span>
-                            </td>
-                          </>
-                        )}
-                        {activeTab === 'interviews' && (
-                          <>
-                            <td className="px-6 py-4">
-                              <span className="font-semibold text-gray-900">{user.completedInterviews}</span>
-                            </td>
-                            <td className="px-6 py-4">
-                              <span className="font-semibold text-gray-900">{user.avgScore}%</span>
-                            </td>
-                          </>
-                        )}
-                        {activeTab === 'streaks' && (
-                          <>
-                            <td className="px-6 py-4">
-                              <div className="flex items-center gap-2">
-                                <Flame className="w-4 h-4 text-orange-500" />
-                                <span className="font-semibold text-gray-900">{user.currentStreak} days</span>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <span className="font-semibold text-gray-900">{user.longestStreak} days</span>
-                            </td>
-                          </>
-                        )}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+        {/* Loading / Error / Empty */}
+        {loading && leaderboard.length === 0 && (
+          <div className="glass-card rounded-xl p-10 text-center">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-white/60 mx-auto" />
+            <p className="mt-4 text-white/70">Loading leaderboard…</p>
+          </div>
+        )}
 
-              {/* Pagination */}
-              {pagination.totalPages > 1 && (
-                <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-                  <div className="text-sm text-gray-600">
-                    Showing {((pagination.page - 1) * pagination.limit) + 1} to{' '}
-                    {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} users
+        {!loading && error && leaderboard.length === 0 && (
+          <div className="glass-card rounded-xl p-10 text-center">
+            <Trophy className="w-14 h-14 text-white/30 mx-auto mb-3" />
+            <p className="text-white font-semibold">Leaderboard temporarily unavailable</p>
+            <p className="text-white/70 text-sm mt-1">{error}</p>
+            <div className="mt-5 flex items-center justify-center gap-2">
+              <button
+                onClick={loadLeaderboard}
+                className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/15 text-white text-sm font-semibold border border-white/10"
+              >
+                Retry
+              </button>
+              <button
+                onClick={() => navigate('/practice')}
+                className="px-4 py-2 rounded-lg bg-blue-500/80 hover:bg-blue-500 text-white text-sm font-semibold"
+              >
+                Practice challenges
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Top 3 */}
+        {leaderboard.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            {top3.map((u, idx) => {
+              const place = idx + 1;
+              const isYou = userId && parseInt(u.id, 10) === userId;
+              const ring =
+                place === 1
+                  ? 'border-yellow-400/30 shadow-[0_0_30px_rgba(234,179,8,0.12)]'
+                  : place === 2
+                    ? 'border-white/15 shadow-[0_0_24px_rgba(255,255,255,0.08)]'
+                    : 'border-orange-400/25 shadow-[0_0_24px_rgba(249,115,22,0.10)]';
+
+              const primaryStat =
+                activeTab === 'xp'
+                  ? { label: 'XP', value: (u.xp || 0).toLocaleString() }
+                  : activeTab === 'interviews'
+                    ? { label: 'Completed', value: u.completedInterviews || 0 }
+                    : { label: 'Current streak', value: `${u.currentStreak || 0}d` };
+
+              const secondaryStat =
+                activeTab === 'xp'
+                  ? { label: 'Level', value: u.level || 1 }
+                  : activeTab === 'interviews'
+                    ? { label: 'Avg score', value: `${u.avgScore || 0}%` }
+                    : { label: 'Longest', value: `${u.longestStreak || 0}d` };
+
+              return (
+                <div key={u.id} className={`glass-card rounded-xl p-5 border ${ring}`}>
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-11 h-11 rounded-full bg-white/10 border border-white/10 flex items-center justify-center text-white font-bold">
+                        {u.name?.charAt(0)?.toUpperCase() || 'U'}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <p className="font-semibold text-white truncate">{u.name || 'Unknown'}</p>
+                          {isYou && (
+                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-200 border border-blue-400/20 flex-shrink-0">
+                              You
+                            </span>
+                          )}
+                        </div>
+                        {u.title && <p className="text-xs text-white/60 truncate">{u.title}</p>}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {place === 1 ? <Crown className="w-5 h-5 text-yellow-300" /> : null}
+                      {getRankIcon(place)}
+                    </div>
                   </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => {
-                        setPagination({ ...pagination, page: pagination.page - 1 });
-                        loadLeaderboard();
-                      }}
-                      disabled={pagination.page === 1}
-                      className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Previous
-                    </button>
-                    <button
-                      onClick={() => {
-                        setPagination({ ...pagination, page: pagination.page + 1 });
-                        loadLeaderboard();
-                      }}
-                      disabled={pagination.page >= pagination.totalPages}
-                      className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-semibold hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Next
-                    </button>
+
+                  <div className="mt-4 grid grid-cols-2 gap-3">
+                    <div className="rounded-lg bg-white/5 border border-white/10 p-3">
+                      <p className="text-xs text-white/60">{primaryStat.label}</p>
+                      <p className="text-lg font-bold text-white">{primaryStat.value}</p>
+                    </div>
+                    <div className="rounded-lg bg-white/5 border border-white/10 p-3">
+                      <p className="text-xs text-white/60">{secondaryStat.label}</p>
+                      <p className="text-lg font-bold text-white">{secondaryStat.value}</p>
+                    </div>
                   </div>
                 </div>
-              )}
-            </>
-          )}
+              );
+            })}
+          </div>
+        )}
+
+        {/* Ranked list (4-50) */}
+        {leaderboard.length > 0 && (
+          <div className="glass-card rounded-xl border border-white/10 overflow-hidden">
+            <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <p className="text-sm font-semibold text-white">Ranks 4–50</p>
+                {activeTab === 'xp' && <XPInfoTooltip />}
+              </div>
+              <p className="text-xs text-white/60">Showing top {Math.min(50, leaderboard.length)}</p>
+            </div>
+            {rest.length === 0 ? (
+              <div className="p-8 text-center">
+                <p className="text-white/70 text-sm">More ranks will appear as more people compete.</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-white/10">
+                {rest.map((u) => {
+                  const isYou = userId && parseInt(u.id, 10) === userId;
+                  const rowStyle = isYou ? 'bg-blue-500/10' : 'hover:bg-white/5';
+
+                  return (
+                    <div key={u.id} className={`px-5 py-4 flex items-center justify-between gap-4 ${rowStyle}`}>
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-10 flex items-center justify-start">{getRankIcon(u.rank)}</div>
+                        <div className="w-9 h-9 rounded-full bg-white/10 border border-white/10 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                          {u.name?.charAt(0)?.toUpperCase() || 'U'}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <p className="text-white font-semibold truncate">{u.name || 'Unknown'}</p>
+                            {isYou && (
+                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-200 border border-blue-400/20 flex-shrink-0">
+                                You
+                              </span>
+                            )}
+                          </div>
+                          {u.title && <p className="text-xs text-white/60 truncate">{u.title}</p>}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-6 flex-shrink-0">
+                        {activeTab === 'xp' && (
+                          <>
+                            <div className="text-right">
+                              <p className="text-xs text-white/60">XP</p>
+                              <p className="text-white font-bold">{(u.xp || 0).toLocaleString()}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-xs text-white/60">Level</p>
+                              <p className="text-white font-bold">{u.level || 1}</p>
+                            </div>
+                          </>
+                        )}
+
+                        {activeTab === 'interviews' && (
+                          <>
+                            <div className="text-right">
+                              <p className="text-xs text-white/60">Completed</p>
+                              <p className="text-white font-bold">{u.completedInterviews || 0}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-xs text-white/60">Avg</p>
+                              <p className="text-white font-bold">{u.avgScore || 0}%</p>
+                            </div>
+                          </>
+                        )}
+
+                        {activeTab === 'streaks' && (
+                          <>
+                            <div className="text-right">
+                              <p className="text-xs text-white/60">Current</p>
+                              <p className="text-white font-bold">{u.currentStreak || 0}d</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-xs text-white/60">Longest</p>
+                              <p className="text-white font-bold">{u.longestStreak || 0}d</p>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Sticky "Your Rank" */}
+        <div className="sticky bottom-4 mt-8">
+          <div className="glass-card rounded-xl border border-white/10 p-5">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <p className="text-xs text-white/60 mb-1">Your Rank</p>
+                {!userId ? (
+                  <>
+                    <p className="text-white font-semibold">Connect your profile to compete</p>
+                    <p className="text-white/70 text-sm mt-1">
+                      Your rank appears once you have a user profile and earn XP.
+                    </p>
+                  </>
+                ) : isUnranked ? (
+                  <>
+                    <p className="text-white font-semibold">Not ranked yet</p>
+                    <p className="text-white/70 text-sm mt-1">
+                      Earn XP by completing challenges or interviews to enter the leaderboard.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-3">
+                      <p className="text-2xl font-bold text-white">#{userRank.rank}</p>
+                      {youInList ? (
+                        <span className="text-xs text-white/60">You’re in the top list.</span>
+                      ) : (
+                        <span className="text-xs text-white/60">Not in top 50 yet — keep going.</span>
+                      )}
+                    </div>
+                    <p className="text-white/70 text-sm mt-1">
+                      Top {userRank.percentile}% • {(userRank.xp || 0).toLocaleString()} XP • Level {userRank.level || 1}
+                    </p>
+                  </>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <button
+                  onClick={() => navigate('/practice')}
+                  className="px-4 py-2 rounded-lg bg-blue-500/80 hover:bg-blue-500 text-white text-sm font-semibold"
+                >
+                  Practice challenges
+                </button>
+                <button
+                  onClick={loadLeaderboard}
+                  className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/15 text-white text-sm font-semibold border border-white/10"
+                >
+                  Refresh
+                </button>
+              </div>
+            </div>
+            {isDemo && (
+              <div className="mt-4 text-xs text-white/60">
+                This is a preview leaderboard. It disappears automatically once real rankings exist.
+              </div>
+            )}
+          </div>
         </div>
       </main>
     </div>

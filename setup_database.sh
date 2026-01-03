@@ -33,6 +33,9 @@ $MYSQL_CMD << EOF
 CREATE DATABASE IF NOT EXISTS careerpilot;
 USE careerpilot;
 SOURCE database/schema.sql;
+-- Ensure schema upgrades are applied if tables already existed (safe to re-run)
+SOURCE database/migrations/ensure_users_gamification_columns.sql;
+SOURCE database/migrations/add_expected_approach.sql;
 SOURCE database/seed_questions.sql;
 SHOW TABLES;
 EOF
