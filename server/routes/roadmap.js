@@ -25,10 +25,11 @@ router.get('/:userId',
       [userId]
     );
 
+    // Demo/UX-friendly: treat "no roadmap yet" as a successful empty state (avoid noisy 404s in the browser console)
     if (roadmaps.length === 0) {
-      return res.status(404).json({
-        success: false,
-        error: 'No roadmap found. Generate one first.'
+      return res.json({
+        success: true,
+        data: null
       });
     }
 

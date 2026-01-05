@@ -22,24 +22,6 @@ app.use(helmet({
 // Compression middleware
 app.use(compression());
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
-  message: 'Too many requests from this IP, please try again later.',
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 50, // Stricter limit for API routes
-  message: 'Too many API requests, please try again later.',
-});
-
-app.use('/api/', apiLimiter);
-app.use(limiter);
-
 // Logging middleware
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
@@ -79,6 +61,29 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+// Rate limiting (after CORS so even 429 responses include CORS headers)
+const isProd = (process.env.NODE_ENV || 'development') === 'production';
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  // Be lenient in dev to avoid tripping limits during local testing/HMR
+  max: isProd ? 100 : 1000,
+  message: 'Too many requests from this IP, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => req.method === 'OPTIONS',
+});
+
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: isProd ? 50 : 500,
+  message: 'Too many API requests, please try again later.',
+  skip: (req) => req.method === 'OPTIONS',
+});
+
+app.use('/api/', apiLimiter);
+app.use(limiter);
 
 // Body parsing middleware with size limits
 app.use(express.json({ limit: '10mb' }));

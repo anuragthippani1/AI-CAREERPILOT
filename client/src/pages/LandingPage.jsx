@@ -53,7 +53,10 @@ export default function LandingPage() {
         const sessions = interviewRes.value.data.data || [];
         const completed = sessions.filter(s => s.status === 'completed');
         const avgScore = completed.length > 0
-          ? completed.reduce((sum, s) => sum + (s.overall_score || 0), 0) / completed.length
+          ? completed.reduce((sum, s) => {
+              const n = Number(s.overall_score);
+              return sum + (Number.isFinite(n) ? n : 0);
+            }, 0) / completed.length
           : 0;
         setInterviewStats({
           completed: completed.length,

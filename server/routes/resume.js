@@ -107,10 +107,11 @@ router.get('/:userId',
       [userId]
     );
 
+    // Demo/UX-friendly: treat "no resume yet" as a successful empty state (avoid noisy 404s in the browser console)
     if (resumes.length === 0) {
-      return res.status(404).json({
-        success: false,
-        error: 'No resume found'
+      return res.json({
+        success: true,
+        data: null
       });
     }
 
