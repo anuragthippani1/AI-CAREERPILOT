@@ -23,9 +23,30 @@ export default function AppLayout() {
   const moreDesktopRef = useRef(null);
   const moreMobileRef = useRef(null);
 
+  const bg = useMemo(() => {
+    const p = location.pathname || '/';
+    if (p.startsWith('/dashboard')) return 'dashboard';
+    if (p.startsWith('/practice')) return 'practice';
+    if (p.startsWith('/leaderboard')) return 'leaderboard';
+    if (p.startsWith('/profile')) return 'profile';
+    if (p.startsWith('/interview')) return 'practice'; // focused
+    return 'default';
+  }, [location.pathname]);
+
   const isMoreActive = useMemo(() => {
     return moreNav.some((i) => i.to === location.pathname);
   }, [location.pathname]);
+
+  useEffect(() => {
+    document.body.dataset.cpBg = bg;
+  }, [bg]);
+
+  useEffect(() => {
+    return () => {
+      // When leaving the app shell (e.g. going back to landing), allow that page to set its own background.
+      delete document.body.dataset.cpBg;
+    };
+  }, []);
 
   useEffect(() => {
     const onDocClick = (e) => {

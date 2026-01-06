@@ -18,6 +18,13 @@ export default function LandingPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    document.body.dataset.cpBg = 'landing';
+    return () => {
+      delete document.body.dataset.cpBg;
+    };
+  }, []);
+
+  useEffect(() => {
     loadDashboard();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

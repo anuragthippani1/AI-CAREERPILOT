@@ -18,18 +18,102 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  /* Calm enterprise dark */
-  background:
-    radial-gradient(1200px circle at 20% -10%, rgba(56, 189, 248, 0.10), transparent 55%),
-    radial-gradient(900px circle at 100% 0%, rgba(99, 102, 241, 0.10), transparent 50%),
-    #070A12;
+  /* Premium background system (CSS only): base + vignette + subtle structure */
+  --bg-base: #070a12;
+  --bg-center: 0.045; /* slightly lighter center */
+  --bg-vignette: 0.72; /* darker edges */
+  --bg-accent-1: rgba(148, 163, 184, 0.00); /* cool/neutral by default */
+  --bg-accent-2: rgba(148, 163, 184, 0.00);
+  --bg-grid-alpha: 0.0; /* structural pattern (opacity < 5%) */
+
+  background: var(--bg-base);
   color: rgba(255, 255, 255, 0.92);
   position: relative;
+}
+
+/* Light per-page background variation (felt, not noticed) */
+body[data-cp-bg="default"] {
+  --bg-accent-1: rgba(56, 189, 248, 0.06);
+  --bg-accent-2: rgba(99, 102, 241, 0.06);
+  --bg-center: 0.045;
+  --bg-grid-alpha: 0.0;
+}
+
+body[data-cp-bg="dashboard"] {
+  --bg-accent-1: rgba(56, 189, 248, 0.07);
+  --bg-accent-2: rgba(99, 102, 241, 0.06);
+  --bg-center: 0.050;
+  --bg-grid-alpha: 0.012;
+}
+
+body[data-cp-bg="practice"] {
+  --bg-accent-1: rgba(56, 189, 248, 0.04);
+  --bg-accent-2: rgba(99, 102, 241, 0.04);
+  --bg-center: 0.040;
+  --bg-grid-alpha: 0.0;
+}
+
+body[data-cp-bg="leaderboard"] {
+  --bg-accent-1: rgba(56, 189, 248, 0.07);
+  --bg-accent-2: rgba(99, 102, 241, 0.07);
+  --bg-center: 0.060; /* slightly brighter center */
+  --bg-grid-alpha: 0.006; /* almost imperceptible */
+}
+
+body[data-cp-bg="profile"] {
+  --bg-accent-1: rgba(148, 163, 184, 0.00);
+  --bg-accent-2: rgba(148, 163, 184, 0.00);
+  --bg-center: 0.040; /* cleanest */
+  --bg-grid-alpha: 0.0;
+}
+
+body[data-cp-bg="landing"] {
+  --bg-accent-1: rgba(56, 189, 248, 0.07);
+  --bg-accent-2: rgba(99, 102, 241, 0.06);
+  --bg-center: 0.052;
+  --bg-grid-alpha: 0.0;
+}
+
+/* Background layers: fixed, passive, behind all content */
+body::before {
+  content: '';
+  position: fixed;
+  inset: -20%;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    /* soft center lift */
+    radial-gradient(900px circle at 50% 18%, rgba(255, 255, 255, var(--bg-center)), transparent 62%),
+    /* cool-toned depth (very low alpha) */
+    radial-gradient(1200px circle at 18% -10%, var(--bg-accent-1), transparent 58%),
+    radial-gradient(1000px circle at 102% 0%, var(--bg-accent-2), transparent 55%),
+    /* darker bottom weight */
+    radial-gradient(1400px circle at 50% 120%, rgba(0, 0, 0, 0.75), transparent 55%),
+    /* vignette edges */
+    radial-gradient(1400px circle at 50% 55%, rgba(0, 0, 0, 0.0), rgba(0, 0, 0, var(--bg-vignette)));
+}
+
+/* Structural pattern: a very subtle grid that disappears behind content (opacity < 5%) */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, var(--bg-grid-alpha)) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, var(--bg-grid-alpha)) 1px, transparent 1px);
+  background-size: 84px 84px;
+  /* fade pattern toward edges so it’s felt, not noticed */
+  -webkit-mask-image: radial-gradient(circle at 50% 10%, rgba(0, 0, 0, 0.55), transparent 72%);
+  mask-image: radial-gradient(circle at 50% 10%, rgba(0, 0, 0, 0.55), transparent 72%);
 }
 
 #root {
   width: 100%;
   min-height: 100vh;
+  position: relative;
+  z-index: 1;
 }
 
 /* Calm surface (keep legacy class name to avoid churn across components/pages) */
