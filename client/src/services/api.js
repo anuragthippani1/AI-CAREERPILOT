@@ -27,6 +27,9 @@ export const skillsAPI = {
 export const roadmapAPI = {
   get: (userId) => api.get(`/roadmap/${userId}`),
   generate: (data) => api.post('/roadmap/generate', data),
+  getTaskProgress: (userId) => api.get(`/roadmap/tasks/progress/${userId}`),
+  completeTask: (data) => api.post('/roadmap/tasks/complete', data),
+  startTask: (data) => api.post('/roadmap/tasks/start', data),
 };
 
 // Interview API

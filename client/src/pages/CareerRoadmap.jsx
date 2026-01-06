@@ -43,7 +43,8 @@ function taskKey(userId) {
   return `careerpilot_roadmap_tasks_v1_${userId}`;
 }
 
-function loadRoadmapTaskState(userId) {
+// Legacy localStorage functions (kept as fallback/cache only)
+function loadRoadmapTaskStateFromCache(userId) {
   try {
     const raw = localStorage.getItem(taskKey(userId));
     if (!raw) return {};
@@ -54,7 +55,7 @@ function loadRoadmapTaskState(userId) {
   }
 }
 
-function saveRoadmapTaskState(userId, state) {
+function saveRoadmapTaskStateToCache(userId, state) {
   try {
     localStorage.setItem(taskKey(userId), JSON.stringify(state));
   } catch {
@@ -504,13 +505,31 @@ export default function CareerRoadmap() {
   const [practiceProgress, setPracticeProgress] = useState(null);
   const [interviewSummary, setInterviewSummary] = useState({ completed: 0, avgScore: null });
 
-  const [taskState, setTaskState] = useState(() => loadRoadmapTaskState(userId));
+  const [taskState, setTaskState] = useState({});
   const [openPhaseId, setOpenPhaseId] = useState(null);
   const navigate = useNavigate();
   const taskRefs = useRef({});
 
+  // Load task state from backend (with localStorage fallback)
   useEffect(() => {
-    setTaskState(loadRoadmapTaskState(userId));
+    const loadTaskState = async () => {
+      try {
+        const response = await roadmapAPI.getTaskProgress(userId);
+        if (response.data.success) {
+          const backendState = response.data.data || {};
+          setTaskState(backendState);
+          // Update cache
+          saveRoadmapTaskStateToCache(userId, backendState);
+        }
+      } catch (error) {
+        console.warn('Failed to load task state from backend, using cache:', error);
+        // Fallback to localStorage
+        const cachedState = loadRoadmapTaskStateFromCache(userId);
+        setTaskState(cachedState);
+      }
+    };
+
+    loadTaskState();
   }, [userId]);
 
   useEffect(() => {
@@ -566,20 +585,48 @@ export default function CareerRoadmap() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
-  const toggleTaskDone = (taskId, done) => {
-    setTaskState((prev) => {
-      const next = { ...prev, [taskId]: { ...(prev[taskId] || {}), done: !!done, doneAt: done ? Date.now() : null } };
-      saveRoadmapTaskState(userId, next);
-      return next;
-    });
+  const toggleTaskDone = async (taskId, done) => {
+    try {
+      // Optimistic update
+      setTaskState((prev) => {
+        const next = { ...prev, [taskId]: { ...(prev[taskId] || {}), done: !!done, doneAt: done ? Date.now() : null } };
+        saveRoadmapTaskStateToCache(userId, next);
+        return next;
+      });
+
+      // Persist to backend
+      await roadmapAPI.completeTask({
+        userId,
+        taskId,
+        completed: done,
+        roadmapId: roadmap?.id || null
+      });
+    } catch (error) {
+      console.error('Failed to persist task completion:', error);
+      // Keep optimistic update even if backend fails
+    }
   };
 
-  const startTask = (task) => {
-    setTaskState((prev) => {
-      const next = { ...prev, [task.id]: { ...(prev[task.id] || {}), startedAt: prev[task.id]?.startedAt || Date.now() } };
-      saveRoadmapTaskState(userId, next);
-      return next;
-    });
+  const startTask = async (task) => {
+    try {
+      // Optimistic update
+      setTaskState((prev) => {
+        const next = { ...prev, [task.id]: { ...(prev[task.id] || {}), startedAt: prev[task.id]?.startedAt || Date.now() } };
+        saveRoadmapTaskStateToCache(userId, next);
+        return next;
+      });
+
+      // Persist to backend
+      await roadmapAPI.startTask({
+        userId,
+        taskId: task.id,
+        roadmapId: roadmap?.id || null
+      });
+    } catch (error) {
+      console.error('Failed to persist task start:', error);
+      // Keep optimistic update even if backend fails
+    }
+
     if (task.href) navigate(task.href);
   };
 
