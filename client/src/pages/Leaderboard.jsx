@@ -97,6 +97,13 @@ export default function Leaderboard() {
   }, [activeTab]);
 
   useEffect(() => {
+    document.body.dataset.cpBg = 'leaderboard';
+    return () => {
+      delete document.body.dataset.cpBg;
+    };
+  }, []);
+
+  useEffect(() => {
     const load = async () => {
       try {
         if (!userId) {

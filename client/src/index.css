@@ -18,63 +18,86 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  /* Premium background system (CSS only): base + vignette + subtle structure */
-  --bg-base: #070a12;
-  --bg-center: 0.045; /* slightly lighter center */
-  --bg-vignette: 0.72; /* darker edges */
+  /* Premium layered background system (CSS only): deep base + subtle vignette + ultra-light structure */
+  --bg-base: #050812;
+  --bg-center: 0.038; /* very subtle center lift */
+  --bg-vignette: 0.80; /* darker edges for depth */
   --bg-accent-1: rgba(148, 163, 184, 0.00); /* cool/neutral by default */
   --bg-accent-2: rgba(148, 163, 184, 0.00);
-  --bg-grid-alpha: 0.0; /* structural pattern (opacity < 5%) */
+  --bg-grid-alpha: 0.0; /* structural pattern (opacity 1-3%) */
+  --bg-depth-1: rgba(0, 0, 0, 0.82); /* layered depth */
+  --bg-depth-2: rgba(0, 0, 0, 0.68);
 
   background: var(--bg-base);
   color: rgba(255, 255, 255, 0.92);
   position: relative;
 }
 
-/* Light per-page background variation (felt, not noticed) */
+/* Per-page background micro-variations (felt, not noticed) */
 body[data-cp-bg="default"] {
-  --bg-accent-1: rgba(56, 189, 248, 0.06);
-  --bg-accent-2: rgba(99, 102, 241, 0.06);
-  --bg-center: 0.045;
+  --bg-accent-1: rgba(56, 189, 248, 0.04);
+  --bg-accent-2: rgba(99, 102, 241, 0.04);
+  --bg-center: 0.038;
   --bg-grid-alpha: 0.0;
+  --bg-depth-1: rgba(0, 0, 0, 0.82);
+  --bg-depth-2: rgba(0, 0, 0, 0.68);
 }
 
 body[data-cp-bg="dashboard"] {
-  --bg-accent-1: rgba(56, 189, 248, 0.07);
-  --bg-accent-2: rgba(99, 102, 241, 0.06);
-  --bg-center: 0.050;
-  --bg-grid-alpha: 0.012;
+  --bg-accent-1: rgba(56, 189, 248, 0.045);
+  --bg-accent-2: rgba(99, 102, 241, 0.04);
+  --bg-center: 0.042;
+  --bg-grid-alpha: 0.016; /* soft grid for overview */
+  --bg-depth-1: rgba(0, 0, 0, 0.80);
+  --bg-depth-2: rgba(0, 0, 0, 0.66);
 }
 
 body[data-cp-bg="practice"] {
-  --bg-accent-1: rgba(56, 189, 248, 0.04);
-  --bg-accent-2: rgba(99, 102, 241, 0.04);
-  --bg-center: 0.040;
+  --bg-accent-1: rgba(56, 189, 248, 0.03);
+  --bg-accent-2: rgba(99, 102, 241, 0.03);
+  --bg-center: 0.035; /* focused, neutral */
   --bg-grid-alpha: 0.0;
+  --bg-depth-1: rgba(0, 0, 0, 0.85);
+  --bg-depth-2: rgba(0, 0, 0, 0.72);
 }
 
 body[data-cp-bg="leaderboard"] {
-  --bg-accent-1: rgba(56, 189, 248, 0.07);
-  --bg-accent-2: rgba(99, 102, 241, 0.07);
-  --bg-center: 0.060; /* slightly brighter center */
-  --bg-grid-alpha: 0.006; /* almost imperceptible */
+  --bg-accent-1: rgba(56, 189, 248, 0.05);
+  --bg-accent-2: rgba(99, 102, 241, 0.05);
+  --bg-center: 0.048; /* slightly brighter center spotlight */
+  --bg-grid-alpha: 0.008; /* barely perceptible */
+  --bg-depth-1: rgba(0, 0, 0, 0.78);
+  --bg-depth-2: rgba(0, 0, 0, 0.64);
 }
 
 body[data-cp-bg="profile"] {
   --bg-accent-1: rgba(148, 163, 184, 0.00);
   --bg-accent-2: rgba(148, 163, 184, 0.00);
-  --bg-center: 0.040; /* cleanest */
+  --bg-center: 0.032; /* cleanest, most neutral */
   --bg-grid-alpha: 0.0;
+  --bg-depth-1: rgba(0, 0, 0, 0.86);
+  --bg-depth-2: rgba(0, 0, 0, 0.74);
+}
+
+body[data-cp-bg="roadmap"] {
+  --bg-accent-1: rgba(56, 189, 248, 0.036);
+  --bg-accent-2: rgba(99, 102, 241, 0.034);
+  --bg-center: 0.040; /* subtle depth for planning */
+  --bg-grid-alpha: 0.010; /* light structure hint */
+  --bg-depth-1: rgba(0, 0, 0, 0.82);
+  --bg-depth-2: rgba(0, 0, 0, 0.70);
 }
 
 body[data-cp-bg="landing"] {
-  --bg-accent-1: rgba(56, 189, 248, 0.07);
-  --bg-accent-2: rgba(99, 102, 241, 0.06);
-  --bg-center: 0.052;
+  --bg-accent-1: rgba(56, 189, 248, 0.048);
+  --bg-accent-2: rgba(99, 102, 241, 0.044);
+  --bg-center: 0.045;
   --bg-grid-alpha: 0.0;
+  --bg-depth-1: rgba(0, 0, 0, 0.80);
+  --bg-depth-2: rgba(0, 0, 0, 0.66);
 }
 
-/* Background layers: fixed, passive, behind all content */
+/* Premium layered background: fixed, passive, behind all content */
 body::before {
   content: '';
   position: fixed;
@@ -82,18 +105,19 @@ body::before {
   pointer-events: none;
   z-index: 0;
   background:
-    /* soft center lift */
-    radial-gradient(900px circle at 50% 18%, rgba(255, 255, 255, var(--bg-center)), transparent 62%),
-    /* cool-toned depth (very low alpha) */
-    radial-gradient(1200px circle at 18% -10%, var(--bg-accent-1), transparent 58%),
-    radial-gradient(1000px circle at 102% 0%, var(--bg-accent-2), transparent 55%),
-    /* darker bottom weight */
-    radial-gradient(1400px circle at 50% 120%, rgba(0, 0, 0, 0.75), transparent 55%),
-    /* vignette edges */
-    radial-gradient(1400px circle at 50% 55%, rgba(0, 0, 0, 0.0), rgba(0, 0, 0, var(--bg-vignette)));
+    /* subtle center lift (very restrained) */
+    radial-gradient(880px circle at 50% 15%, rgba(255, 255, 255, var(--bg-center)), transparent 65%),
+    /* cool-toned accent depth (imperceptible unless intentional) */
+    radial-gradient(1300px circle at 16% -8%, var(--bg-accent-1), transparent 60%),
+    radial-gradient(1100px circle at 104% 2%, var(--bg-accent-2), transparent 58%),
+    /* layered depth at bottom (creates vertical weight) */
+    radial-gradient(1500px circle at 50% 125%, var(--bg-depth-1), transparent 58%),
+    radial-gradient(1200px circle at 50% 110%, var(--bg-depth-2), transparent 52%),
+    /* soft vignette edges (darkens periphery without being obvious) */
+    radial-gradient(1600px circle at 50% 50%, rgba(0, 0, 0, 0.0), rgba(0, 0, 0, var(--bg-vignette)));
 }
 
-/* Structural pattern: a very subtle grid that disappears behind content (opacity < 5%) */
+/* Ultra-subtle structural grid: disappears behind content, adds texture without drawing attention */
 body::after {
   content: '';
   position: fixed;
@@ -103,10 +127,11 @@ body::after {
   background-image:
     linear-gradient(to right, rgba(255, 255, 255, var(--bg-grid-alpha)) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(255, 255, 255, var(--bg-grid-alpha)) 1px, transparent 1px);
-  background-size: 84px 84px;
-  /* fade pattern toward edges so it’s felt, not noticed */
-  -webkit-mask-image: radial-gradient(circle at 50% 10%, rgba(0, 0, 0, 0.55), transparent 72%);
-  mask-image: radial-gradient(circle at 50% 10%, rgba(0, 0, 0, 0.55), transparent 72%);
+  background-size: 96px 96px;
+  background-position: center top;
+  /* fade pattern aggressively: felt in periphery, invisible in focus */
+  -webkit-mask-image: radial-gradient(circle at 50% 8%, rgba(0, 0, 0, 0.48), rgba(0, 0, 0, 0.18) 58%, transparent 75%);
+  mask-image: radial-gradient(circle at 50% 8%, rgba(0, 0, 0, 0.48), rgba(0, 0, 0, 0.18) 58%, transparent 75%);
 }
 
 #root {
@@ -116,20 +141,27 @@ body::after {
   z-index: 1;
 }
 
-/* Calm surface (keep legacy class name to avoid churn across components/pages) */
+/* Premium elevated surface: clear separation from background */
 .glass-card {
-  background: rgba(255, 255, 255, 0.035);
-  backdrop-filter: blur(14px) saturate(140%);
-  -webkit-backdrop-filter: blur(14px) saturate(140%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.038);
+  backdrop-filter: blur(16px) saturate(145%);
+  -webkit-backdrop-filter: blur(16px) saturate(145%);
+  border: 1px solid rgba(255, 255, 255, 0.085);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.03) inset,
-    0 18px 50px rgba(0, 0, 0, 0.35);
+    0 1px 0 rgba(255, 255, 255, 0.035) inset,
+    0 0 0 1px rgba(0, 0, 0, 0.12),
+    0 20px 60px rgba(0, 0, 0, 0.42),
+    0 8px 24px rgba(0, 0, 0, 0.28);
 }
 
 .glass-card:hover {
-  background: rgba(255, 255, 255, 0.045);
-  border-color: rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.048);
+  border-color: rgba(255, 255, 255, 0.105);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.042) inset,
+    0 0 0 1px rgba(0, 0, 0, 0.10),
+    0 24px 70px rgba(0, 0, 0, 0.46),
+    0 10px 28px rgba(0, 0, 0, 0.32);
   transition: background 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
 }
 

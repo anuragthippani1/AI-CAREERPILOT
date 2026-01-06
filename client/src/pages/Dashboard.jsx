@@ -21,6 +21,13 @@ export default function Dashboard() {
     loadDashboard();
   }, []);
 
+  useEffect(() => {
+    document.body.dataset.cpBg = 'dashboard';
+    return () => {
+      delete document.body.dataset.cpBg;
+    };
+  }, []);
+
   const loadDashboard = async () => {
     try {
       setLoading(true);

@@ -513,6 +513,13 @@ export default function CareerRoadmap() {
     setTaskState(loadRoadmapTaskState(userId));
   }, [userId]);
 
+  useEffect(() => {
+    document.body.dataset.cpBg = 'roadmap';
+    return () => {
+      delete document.body.dataset.cpBg;
+    };
+  }, []);
+
   const loadAll = async () => {
     try {
       setError(null);
