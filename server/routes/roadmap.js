@@ -21,7 +21,15 @@ router.get('/:userId',
     const userId = parseInt(req.params.userId);
 
     const [roadmaps] = await db.query(
-      'SELECT * FROM roadmaps WHERE user_id = ? ORDER BY created_at DESC LIMIT 1',
+      `SELECT 
+        r.*,
+        cg.target_role,
+        cg.timeline_months
+      FROM roadmaps r
+      LEFT JOIN career_goals cg ON cg.id = r.career_goal_id
+      WHERE r.user_id = ?
+      ORDER BY r.created_at DESC
+      LIMIT 1`,
       [userId]
     );
 
