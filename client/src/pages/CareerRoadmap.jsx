@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   CheckCircle,
   ChevronDown,
   Lock,
-  Map,
+  Map as MapIcon,
   Target,
   Timer,
   TrendingUp,
@@ -89,6 +89,67 @@ function guessHrefFromText(title, description) {
   return null;
 }
 
+function parseEffortToWeeks(effort) {
+  const raw = (effort || '').toString().toLowerCase();
+  if (!raw) return { weeks: null, scale: 'unknown' };
+
+  const hasMonth = /month/.test(raw);
+  const hasWeek = /week/.test(raw);
+  const hasDay = /day/.test(raw);
+  const hasHour = /(hour|hrs?\b)/.test(raw);
+  const hasMin = /(min|minutes)/.test(raw);
+
+  const nums = raw.match(/\d+(\.\d+)?/g)?.map((n) => Number(n)).filter((n) => Number.isFinite(n)) || [];
+  const min = nums.length > 0 ? Math.min(...nums) : null;
+  const max = nums.length > 0 ? Math.max(...nums) : null;
+
+  if (hasMonth) {
+    const a = min != null ? min * 4 : null;
+    const b = max != null ? max * 4 : null;
+    return { weeks: a != null && b != null ? (a + b) / 2 : a ?? b, scale: 'months' };
+  }
+  if (hasWeek) {
+    return { weeks: min != null && max != null ? (min + max) / 2 : min ?? max, scale: 'weeks' };
+  }
+  if (hasDay) {
+    const a = min != null ? min / 7 : null;
+    const b = max != null ? max / 7 : null;
+    return { weeks: a != null && b != null ? (a + b) / 2 : a ?? b, scale: 'days' };
+  }
+  if (hasHour) return { weeks: 1 / 7, scale: 'hours' }; // normalize: ~1 day
+  if (hasMin) return { weeks: 1 / 14, scale: 'minutes' }; // normalize: ~0.5 day
+  return { weeks: null, scale: 'unknown' };
+}
+
+function formatEffortForPhase(phaseId, effort) {
+  const raw = (effort || '').toString().trim();
+  const parsed = parseEffortToWeeks(raw);
+
+  // Foundations: minutes → weeks (no hours/months shown)
+  if (phaseId === 'foundations') {
+    if (parsed.scale === 'months') return raw.replace(/months?/gi, 'weeks').replace(/\b(\d+)\b/g, (n) => `${Number(n) * 4}`);
+    if (parsed.scale === 'hours') return '1 day';
+    return raw || '1–2 weeks';
+  }
+
+  // Problem Solving & Interview Readiness: weeks-scale only (avoid minutes/hours)
+  if (phaseId === 'problem-solving' || phaseId === 'interview-readiness') {
+    if (!raw) return '1 week';
+    if (parsed.scale === 'weeks') return raw;
+    if (parsed.scale === 'months') return raw.replace(/months?/gi, 'weeks').replace(/\b(\d+)\b/g, (n) => `${Number(n) * 4}`);
+    return '1 week';
+  }
+
+  // Placement Execution: weeks/months ok, but avoid minutes/hours
+  if (phaseId === 'placement-execution') {
+    if (!raw) return '2–4 weeks';
+    if (parsed.scale === 'minutes' || parsed.scale === 'hours') return '1–2 weeks';
+    return raw;
+  }
+
+  return raw || '—';
+}
+
 function buildPhases({ roadmapJson, resume, skills, interviewSummary, practiceProgress, taskState }) {
   const phasesMeta = [
     {
@@ -126,6 +187,22 @@ function buildPhases({ roadmapJson, resume, skills, interviewSummary, practicePr
   const hasPractice =
     (practiceProgress?.solvedCount || 0) > 0 || (practiceProgress?.totalAttempts || 0) > 0;
 
+  const roadmapText = [
+    ...((roadmapJson?.shortTerm || []).map((m) => `${m?.title || ''} ${m?.description || ''}`)),
+    ...((roadmapJson?.mediumTerm || []).map((m) => `${m?.title || ''} ${m?.description || ''}`)),
+    ...((roadmapJson?.longTerm || []).map((m) => `${m?.title || ''} ${m?.description || ''}`)),
+  ]
+    .join(' ')
+    .toLowerCase();
+
+  const roadmapHasDsaBasics =
+    /(arrays|strings|hash|two pointers|sliding window|big[-\s]?o|complexity)/.test(roadmapText) ||
+    /((dsa|data structure|algorithm).{0,40}(basic|basics|fundamental|foundation|core))/.test(roadmapText);
+
+  const roadmapHasAiBasics =
+    /((ai|machine learning|ml|llm|prompt).{0,40}(basic|basics|fundamental|foundation|core))/.test(roadmapText) ||
+    /(llm|prompting|transformer|embedding|evaluation)/.test(roadmapText);
+
   // Required personalization (safe, existing data only)
   if (!hasResume) {
     buckets.foundations.push({
@@ -138,6 +215,7 @@ function buildPhases({ roadmapJson, resume, skills, interviewSummary, practicePr
     });
   }
 
+  // Foundations must stay "blocker removal": resume + skill-gap identification + core basics.
   if (!hasSkills) {
     buckets.foundations.push({
       id: 'core:run-skill-gap',
@@ -148,36 +226,52 @@ function buildPhases({ roadmapJson, resume, skills, interviewSummary, practicePr
       href: '/skills',
     });
   } else {
-    const top = skills
-      .slice(0, 2)
-      .map((s) => s?.skill_name)
-      .filter(Boolean);
-    if (top.length > 0) {
-      buckets.foundations.push({
-        id: `core:close-skill:${slugify(top[0])}`,
-        title: `Close a priority gap: ${top[0]}`,
-        why: 'Reducing a key gap increases pass probability quickly.',
-        effort: '2–4 hrs',
-        outcome: 'You can explain and apply the skill with confidence.',
-        href: '/skills',
-      });
-    }
+    buckets.foundations.push({
+      id: 'core:review-skill-gap',
+      title: 'Review your top skill gaps',
+      why: 'Keeps your roadmap anchored to the highest ROI gaps.',
+      effort: '10 min',
+      outcome: 'A clear priority list for the next phase.',
+      href: '/skills',
+    });
+  }
+
+  if (!roadmapHasDsaBasics || !hasPractice) {
+    buckets.foundations.push({
+      id: 'core:dsa-basics',
+      title: 'Core DSA basics refresh',
+      why: 'A strong foundation prevents avoidable mistakes later.',
+      effort: '1–2 weeks',
+      outcome: 'Confidence with arrays/strings/hashing and complexity basics.',
+      href: '/practice',
+    });
+  }
+
+  if (!roadmapHasAiBasics) {
+    buckets.foundations.push({
+      id: 'core:ai-basics',
+      title: 'Core AI fundamentals (for interviews)',
+      why: 'Helps you explain AI concepts clearly without overcomplicating.',
+      effort: '1 week',
+      outcome: 'You can articulate LLM basics, prompting, and tradeoffs.',
+      href: '/interview',
+    });
   }
 
   buckets['problem-solving'].push({
     id: 'core:practice-3',
-    title: 'Solve 3 coding challenges',
+    title: 'This week: solve 3 coding challenges',
     why: 'Consistency builds speed and pattern recognition.',
-    effort: '45–75 min',
+    effort: '1 week',
     outcome: 'Higher accuracy under time pressure.',
     href: '/practice',
   });
 
   buckets['interview-readiness'].push({
     id: 'core:mock-interview',
-    title: 'Complete 1 mock interview',
+    title: 'This week: complete 1 mock interview',
     why: 'Practice speaking improves clarity and signal.',
-    effort: '10–15 min',
+    effort: '1 week',
     outcome: 'Actionable feedback and a tighter improvement loop.',
     href: '/interview',
   });
@@ -187,7 +281,7 @@ function buildPhases({ roadmapJson, resume, skills, interviewSummary, practicePr
       id: 'core:review-feedback',
       title: 'Review your last interview feedback',
       why: 'Your fastest gains come from repeating feedback patterns.',
-      effort: '10 min',
+      effort: '1 week',
       outcome: 'A short list of behaviors/skills to fix next.',
       href: '/interview',
     });
@@ -197,27 +291,46 @@ function buildPhases({ roadmapJson, resume, skills, interviewSummary, practicePr
     id: 'core:resume-polish',
     title: 'Polish your resume for the target role',
     why: 'A sharper resume increases interview conversion rate.',
-    effort: '20–30 min',
+    effort: '1–2 weeks',
     outcome: 'Clearer impact and stronger ATS signals.',
     href: '/resume',
   });
 
-  // Map roadmap milestones into phases (keep it tight)
+  // Map roadmap milestones into phases with discipline:
+  // - Foundations: ONLY resume/skill-gap/core basics (no long-horizon "land role"/advanced items)
   const inferPhase = (m, segment) => {
     const text = `${m?.title || ''} ${m?.description || ''} ${(m?.actionItems || []).join(' ')}`.toLowerCase();
-    if (/(resume|portfolio|fundamental|foundation|core)/.test(text)) return 'foundations';
-    if (/(leetcode|dsa|algorithm|coding|problems|data structure)/.test(text)) return 'problem-solving';
-    if (/(interview|behavioral|system design|mock)/.test(text)) return 'interview-readiness';
+
+    // Explicit corrections (avoid mis-bucketing)
+    if (/land your target role/.test(text)) return 'placement-execution';
+    if (/advanced ai/.test(text)) return 'interview-readiness';
+
     if (/(apply|offer|network|recruit|job|placement)/.test(text)) return 'placement-execution';
+    if (/(interview|behavioral|system design|mock)/.test(text)) return 'interview-readiness';
+    if (/(leetcode|dsa|algorithm|coding|problems|data structure)/.test(text)) return 'problem-solving';
+
+    // Foundations: strict (resume/skills/basics only)
+    if (/(resume|skill gap|skills?|portfolio)/.test(text)) return 'foundations';
+    if (/(fundamental|foundation|core|basics)/.test(text)) return 'foundations';
+
+    // Fallback by horizon segment
     if (segment === 'short') return 'foundations';
-    if (segment === 'medium') return 'interview-readiness';
-    return 'placement-execution';
+    if (segment === 'medium') return 'problem-solving';
+    return 'interview-readiness';
+  };
+
+  const allowMilestoneInFoundations = (m) => {
+    const text = `${m?.title || ''} ${m?.description || ''} ${(m?.actionItems || []).join(' ')}`.toLowerCase();
+    // Foundations must not contain long-horizon goals or advanced labeling
+    if (/(advanced|land your target role|offer|apply|network|job|placement)/.test(text)) return false;
+    return /(resume|skill|portfolio|fundamental|foundation|core|basics|dsa|algorithm|data structure)/.test(text);
   };
 
   const addMilestones = (arr, segment) => {
     if (!Array.isArray(arr)) return;
     arr.slice(0, 5).forEach((m, idx) => {
       const phaseId = inferPhase(m, segment);
+      if (phaseId === 'foundations' && !allowMilestoneInFoundations(m)) return;
       const outcome =
         Array.isArray(m?.successMetrics) && m.successMetrics.length > 0
           ? m.successMetrics[0]
@@ -226,9 +339,10 @@ function buildPhases({ roadmapJson, resume, skills, interviewSummary, practicePr
         id: `milestone:${phaseId}:${segment}:${idx}:${slugify(m?.title || 'milestone')}`,
         title: m?.title || 'Milestone',
         why: m?.description || 'This milestone builds capability for your target role.',
-        effort:
-          m?.timeline ||
-          (segment === 'short' ? '1–3 weeks' : segment === 'medium' ? '3–6 weeks' : '6–10 weeks'),
+        effort: formatEffortForPhase(
+          phaseId,
+          m?.timeline || (segment === 'short' ? '1–3 weeks' : segment === 'medium' ? '3–6 weeks' : '6–10 weeks')
+        ),
         outcome,
         href: guessHrefFromText(m?.title, m?.description),
       });
@@ -252,7 +366,7 @@ function buildPhases({ roadmapJson, resume, skills, interviewSummary, practicePr
   };
 
   const phases = phasesMeta.map((p) => {
-    const tasks = dedupeAndLimit(buckets[p.id] || []);
+    const tasks = dedupeAndLimit((buckets[p.id] || []).map((t) => ({ ...t, effort: formatEffortForPhase(p.id, t.effort) })));
     const completedCount = tasks.filter((t) => taskState[t.id]?.done).length;
     const totalCount = tasks.length;
     const pct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
@@ -329,7 +443,11 @@ function SignalCard({ title, value, icon: Icon, muted = false }) {
 
 function TaskRow({ task, done, onStart, onComplete }) {
   return (
-    <div className={`rounded-xl border p-4 ${done ? 'bg-white/3 border-white/8' : 'bg-white/5 border-white/10'}`}>
+    <div
+      ref={task?.innerRef}
+      className={`rounded-xl border p-4 ${done ? 'bg-white/3 border-white/8' : 'bg-white/5 border-white/10'}`}
+      data-task-id={task?.id}
+    >
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
@@ -357,6 +475,24 @@ function TaskRow({ task, done, onStart, onComplete }) {
   );
 }
 
+function FocusPointerRow({ title, why, onGo }) {
+  return (
+    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <div className="font-semibold text-white">{title}</div>
+          <div className="text-sm text-white/70 mt-1 line-clamp-1">{why}</div>
+        </div>
+        <div className="flex-shrink-0">
+          <Button size="sm" variant="secondary" onClick={onGo}>
+            Go to task
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function CareerRoadmap() {
   const [userId] = useState(() => getUserIdFromStorageOrUrl() ?? 1);
   const [loading, setLoading] = useState(false);
@@ -371,6 +507,7 @@ export default function CareerRoadmap() {
   const [taskState, setTaskState] = useState(() => loadRoadmapTaskState(userId));
   const [openPhaseId, setOpenPhaseId] = useState(null);
   const navigate = useNavigate();
+  const taskRefs = useRef({});
 
   useEffect(() => {
     setTaskState(loadRoadmapTaskState(userId));
@@ -498,10 +635,11 @@ export default function CareerRoadmap() {
   }, [roadmapJson, resume, skills, interviewSummary, practiceProgress, taskState]);
 
   useEffect(() => {
-    if (!openPhaseId && phasesDerived.defaultOpenPhaseId) {
-      setOpenPhaseId(phasesDerived.defaultOpenPhaseId);
+    const open = openPhaseId ? phasesDerived.phases.find((p) => p.id === openPhaseId) : null;
+    if (!openPhaseId || !open || open.status === 'locked') {
+      if (phasesDerived.defaultOpenPhaseId) setOpenPhaseId(phasesDerived.defaultOpenPhaseId);
     }
-  }, [openPhaseId, phasesDerived.defaultOpenPhaseId]);
+  }, [openPhaseId, phasesDerived.defaultOpenPhaseId, phasesDerived.phases]);
 
   const targetRole = roadmap?.target_role || null;
 
@@ -513,6 +651,27 @@ export default function CareerRoadmap() {
   const allTasks = phasesDerived.phases.flatMap((p) => p.tasks);
   const allDone = allTasks.length > 0 && allTasks.every((t) => taskState[t.id]?.done);
 
+  const taskToPhase = useMemo(() => {
+    const map = new globalThis.Map();
+    phasesDerived.phases.forEach((p) => {
+      p.tasks.forEach((t) => map.set(t.id, p.id));
+    });
+    return map;
+  }, [phasesDerived.phases]);
+
+  const goToTask = (taskId) => {
+    const phaseId = taskToPhase.get(taskId);
+    const phase = phasesDerived.phases.find((p) => p.id === phaseId);
+    if (!phaseId || !phase || phase.status === 'locked') return;
+    setOpenPhaseId(phaseId);
+    setTimeout(() => {
+      const el = taskRefs.current?.[taskId];
+      if (el && typeof el.scrollIntoView === 'function') {
+        el.scrollIntoView({ block: 'center' });
+      }
+    }, 0);
+  };
+
   if (loading) return <PageSkeleton />;
 
   return (
@@ -522,10 +681,17 @@ export default function CareerRoadmap() {
           title={`Your Career Roadmap${targetRole ? ` — ${targetRole}` : ''}`}
           description="Personalized based on your resume, skills, and interview performance"
           actions={
-            <Button onClick={generateRoadmap}>
-              <Map className="w-4 h-4" />
-              {roadmap ? 'Regenerate' : 'Generate'}
-            </Button>
+            <div className="flex flex-col items-end gap-1">
+              <Button onClick={generateRoadmap}>
+                <MapIcon className="w-4 h-4" />
+                {roadmap ? 'Regenerate' : 'Generate'}
+              </Button>
+              {roadmap ? (
+                <div className="text-xs text-white/50 max-w-xs text-right">
+                  Regenerates roadmap using latest data. Your completed progress is preserved.
+                </div>
+              ) : null}
+            </div>
           }
         />
 
@@ -550,7 +716,7 @@ export default function CareerRoadmap() {
           <Card>
             <CardContent className="pt-6">
               <EmptyState
-                icon={Map}
+                icon={MapIcon}
                 title="Upload resume to personalize your roadmap"
                 description="We’ll tailor phases and tasks to your current experience and target role."
                 primaryAction={
@@ -565,7 +731,7 @@ export default function CareerRoadmap() {
           <Card>
             <CardContent className="pt-6">
               <EmptyState
-                icon={Map}
+                icon={MapIcon}
                 title="Upload resume to personalize your roadmap"
                 description="Add your resume first so the roadmap matches your background."
                 primaryAction={
@@ -583,7 +749,7 @@ export default function CareerRoadmap() {
           <Card>
             <CardContent className="pt-6">
               <EmptyState
-                icon={Map}
+                icon={MapIcon}
                 title="Generate your roadmap"
                 description="We’ll create phases and tasks based on your current signals."
                 primaryAction={
@@ -617,18 +783,17 @@ export default function CareerRoadmap() {
               <Card>
                 <CardContent className="pt-6">
                   <h2 className="text-lg font-semibold text-white">Today’s focus</h2>
-                  <p className="text-sm text-white/70 mt-1">1–3 tasks that move you forward right now.</p>
+                  <p className="text-sm text-white/70 mt-1">Pointers to the next 1–3 tasks. The task details live in the phases below.</p>
                   <div className="mt-4 space-y-3">
                     {todaysFocus.length === 0 ? (
                       <div className="text-sm text-white/60">You’re clear for today — pick a phase below to continue.</div>
                     ) : (
                       todaysFocus.map((t) => (
-                        <TaskRow
+                        <FocusPointerRow
                           key={t.id}
-                          task={t}
-                          done={!!taskState[t.id]?.done}
-                          onStart={() => startTask(t)}
-                          onComplete={() => toggleTaskDone(t.id, true)}
+                          title={t.title}
+                          why={t.why}
+                          onGo={() => goToTask(t.id)}
                         />
                       ))
                     )}
@@ -640,6 +805,7 @@ export default function CareerRoadmap() {
             <div className="space-y-4">
               {phasesDerived.phases.map((phase) => {
                 const isOpen = openPhaseId === phase.id;
+                const isLocked = phase.status === 'locked';
                 return (
                   <Card key={phase.id} className={isOpen ? 'ring-1 ring-primary-400/20' : ''}>
                     <CardContent className="pt-6">
@@ -647,7 +813,7 @@ export default function CareerRoadmap() {
                         type="button"
                         className="w-full text-left"
                         onClick={() => {
-                          if (phase.status === 'locked') return;
+                          if (isLocked) return;
                           setOpenPhaseId(isOpen ? null : phase.id);
                         }}
                       >
@@ -655,7 +821,7 @@ export default function CareerRoadmap() {
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
                               <h3 className="text-base font-semibold text-white">{phase.title}</h3>
-                              {phase.status === 'locked' ? <Lock className="w-4 h-4 text-white/40" /> : null}
+                              {isLocked ? <Lock className="w-4 h-4 text-white/40" /> : null}
                             </div>
                             <p className="text-sm text-white/70 mt-1">{phase.purpose}</p>
                           </div>
@@ -674,7 +840,7 @@ export default function CareerRoadmap() {
                         </div>
                       </button>
 
-                      {isOpen ? (
+                      {isOpen && !isLocked ? (
                         <div className="mt-5 space-y-3">
                           {phase.tasks.length === 0 ? (
                             <div className="text-sm text-white/60">No tasks in this phase yet.</div>
@@ -682,7 +848,12 @@ export default function CareerRoadmap() {
                             phase.tasks.map((t) => (
                               <TaskRow
                                 key={t.id}
-                                task={t}
+                                task={{
+                                  ...t,
+                                  innerRef: (el) => {
+                                    if (el) taskRefs.current[t.id] = el;
+                                  },
+                                }}
                                 done={!!taskState[t.id]?.done}
                                 onStart={() => startTask(t)}
                                 onComplete={() => toggleTaskDone(t.id, true)}
