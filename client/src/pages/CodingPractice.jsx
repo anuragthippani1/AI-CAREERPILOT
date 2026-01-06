@@ -223,16 +223,16 @@ export default function CodingPractice() {
         />
 
         {progress ? (
-          <div className="grid sm:grid-cols-3 gap-4">
-            <Card className="p-4">
+          <div className="grid sm:grid-cols-3 gap-4 cp-fade-in">
+            <Card depth className="p-4">
               <div className="text-sm text-white/70">Solved</div>
               <div className="text-2xl font-semibold text-white mt-1">{progress.solvedCount || 0}</div>
             </Card>
-            <Card className="p-4">
+            <Card depth className="p-4">
               <div className="text-sm text-white/70">Attempts</div>
               <div className="text-2xl font-semibold text-white mt-1">{progress.totalAttempts || 0}</div>
             </Card>
-            <Card className="p-4">
+            <Card depth className="p-4">
               <div className="text-sm text-white/70">Accuracy</div>
               <div className="text-2xl font-semibold text-white mt-1">{progress.accuracy || 0}%</div>
             </Card>
@@ -240,7 +240,7 @@ export default function CodingPractice() {
         ) : null}
 
         {/* Filters */}
-        <Card>
+        <Card className="cp-fade-in-delay-1">
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
               <div className="flex-1 relative">

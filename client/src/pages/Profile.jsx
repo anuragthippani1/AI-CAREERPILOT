@@ -121,7 +121,7 @@ export default function Profile() {
         />
 
         {/* Profile Identity Card */}
-        <Card>
+        <Card className="cp-fade-in">
           <CardContent className="p-6">
             <div className="flex items-start justify-between cp-gap-6">
               <div className="flex items-start cp-gap-4">
@@ -191,7 +191,7 @@ export default function Profile() {
 
         {/* Career Signals */}
         {stats ? (
-          <div className="cp-space-y-4">
+          <div className="cp-space-y-4 cp-fade-in-delay-1">
             <h2 className="cp-h2">Career Signals</h2>
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 cp-gap-4">
               <SignalCard
@@ -225,7 +225,7 @@ export default function Profile() {
             </div>
           </div>
         ) : (
-          <Card>
+          <Card className="cp-fade-in-delay-1">
             <CardContent className="pt-6">
               <EmptyState
                 icon={TrendingUp}
@@ -244,7 +244,7 @@ export default function Profile() {
 
         {/* Progress Section */}
         {stats ? (
-          <Card>
+          <Card className="cp-fade-in-delay-2">
             <CardContent className="p-6">
               <div className="cp-space-y-4">
                 <div>
@@ -275,7 +275,7 @@ export default function Profile() {
             </CardContent>
           </Card>
         ) : (
-          <Card>
+          <Card className="cp-fade-in-delay-2">
             <CardContent className="p-6">
               <div className="cp-space-y-4">
                 <div>
@@ -301,7 +301,7 @@ export default function Profile() {
         )}
 
         {/* Achievements */}
-        <Card>
+        <Card className="cp-fade-in-delay-3">
           <CardContent className="p-6">
             <div className="flex items-center cp-gap-2 mb-6">
               <Trophy className="w-5 h-5 text-yellow-400" />
@@ -382,7 +382,7 @@ export default function Profile() {
 
 function SignalCard({ icon, label, value, subValue, explanation }) {
   return (
-    <Card>
+    <Card depth>
       <CardContent className="p-4">
         <div className="flex items-center cp-gap-2 mb-3">
           <div className="text-blue-400">{icon}</div>

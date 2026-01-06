@@ -18,6 +18,7 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  
   /* Premium layered background system (CSS only): deep base + subtle vignette + ultra-light structure */
   --bg-base: #050812;
   --bg-center: 0.038; /* very subtle center lift */
@@ -27,6 +28,19 @@ body {
   --bg-grid-alpha: 0.0; /* structural pattern (opacity 1-3%) */
   --bg-depth-1: rgba(0, 0, 0, 0.82); /* layered depth */
   --bg-depth-2: rgba(0, 0, 0, 0.68);
+
+  /* Enterprise Motion System Tokens */
+  --motion-duration-instant: 100ms;
+  --motion-duration-fast: 160ms;
+  --motion-duration-base: 220ms;
+  --motion-duration-slow: 280ms;
+  --motion-easing-standard: cubic-bezier(0.22, 1, 0.36, 1);
+  --motion-easing-decelerate: cubic-bezier(0.16, 1, 0.3, 1);
+  --motion-easing-accelerate: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --motion-distance-xs: 2px;
+  --motion-distance-sm: 4px;
+  --motion-distance-md: 8px;
+  --motion-distance-lg: 12px;
 
   background: var(--bg-base);
   color: rgba(255, 255, 255, 0.92);
@@ -170,20 +184,153 @@ body::after {
   transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, background 180ms ease;
 }
 
-/* Custom animations */
-@keyframes slide-in {
+/* ============================================
+   ENTERPRISE MOTION SYSTEM
+   Subtle, consistent, premium interaction feedback
+   ============================================ */
+
+/* Card 3D depth on hover (perceptible lift + shadow) */
+.cp-card-depth {
+  transform-style: preserve-3d;
+  transition: 
+    transform var(--motion-duration-fast) var(--motion-easing-accelerate),
+    box-shadow var(--motion-duration-fast) var(--motion-easing-standard);
+}
+
+.cp-card-depth:hover {
+  transform: translateY(calc(-1 * var(--motion-distance-sm))) scale(1.015);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.042) inset,
+    0 0 0 1px rgba(0, 0, 0, 0.10),
+    0 24px 70px rgba(0, 0, 0, 0.48),
+    0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+/* Interactive card with gentle 3D lift */
+.cp-card-interactive {
+  transition: 
+    transform var(--motion-duration-fast) var(--motion-easing-accelerate),
+    box-shadow var(--motion-duration-fast) var(--motion-easing-standard),
+    border-color var(--motion-duration-fast) var(--motion-easing-standard);
+}
+
+.cp-card-interactive:hover {
+  transform: translateY(calc(-1 * var(--motion-distance-xs)));
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.04) inset,
+    0 0 0 1px rgba(0, 0, 0, 0.10),
+    0 20px 60px rgba(0, 0, 0, 0.44),
+    0 8px 24px rgba(0, 0, 0, 0.32);
+}
+
+.cp-card-interactive:active {
+  transform: translateY(0);
+  transition-duration: var(--motion-duration-instant);
+}
+
+/* Button press feedback (tactile response) */
+.cp-button-press {
+  transition: 
+    transform var(--motion-duration-instant) var(--motion-easing-standard),
+    box-shadow var(--motion-duration-instant) var(--motion-easing-standard);
+}
+
+.cp-button-press:active {
+  transform: translateY(1px) scale(0.99);
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.35),
+    0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+/* Page enter animations (consistent, perceptible) */
+@keyframes cp-fade-up {
   from {
-    transform: translateY(-6px);
     opacity: 0;
+    transform: translateY(var(--motion-distance-md));
   }
   to {
-    transform: translateY(0);
     opacity: 1;
+    transform: translateY(0);
   }
 }
 
+@keyframes cp-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(calc(-1 * var(--motion-distance-sm)));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Page-level enter motion (one-time, staggered) */
+.cp-fade-in {
+  animation: cp-fade-up var(--motion-duration-slow) var(--motion-easing-decelerate);
+}
+
+.cp-fade-in-delay-1 {
+  animation: cp-fade-up var(--motion-duration-slow) var(--motion-easing-decelerate);
+  animation-delay: 50ms;
+  animation-fill-mode: backwards;
+}
+
+.cp-fade-in-delay-2 {
+  animation: cp-fade-up var(--motion-duration-slow) var(--motion-easing-decelerate);
+  animation-delay: 100ms;
+  animation-fill-mode: backwards;
+}
+
+.cp-fade-in-delay-3 {
+  animation: cp-fade-up var(--motion-duration-slow) var(--motion-easing-decelerate);
+  animation-delay: 150ms;
+  animation-fill-mode: backwards;
+}
+
+.cp-fade-in-delay-4 {
+  animation: cp-fade-up var(--motion-duration-slow) var(--motion-easing-decelerate);
+  animation-delay: 200ms;
+  animation-fill-mode: backwards;
+}
+
+/* Legacy support */
 .animate-slide-in {
-  animation: slide-in 180ms ease-out;
+  animation: cp-slide-in var(--motion-duration-fast) var(--motion-easing-decelerate);
+}
+
+/* Scroll reveal (trigger once for meaningful sections) */
+.cp-scroll-reveal {
+  opacity: 0;
+  transform: translateY(var(--motion-distance-md));
+  transition: 
+    opacity var(--motion-duration-slow) var(--motion-easing-decelerate),
+    transform var(--motion-duration-slow) var(--motion-easing-decelerate);
+}
+
+.cp-scroll-reveal.cp-revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* State transitions (loading, empty, locked states) */
+.cp-state-fade {
+  transition: opacity var(--motion-duration-base) var(--motion-easing-standard);
+}
+
+.cp-state-fade-scale {
+  transition: 
+    opacity var(--motion-duration-base) var(--motion-easing-standard),
+    transform var(--motion-duration-base) var(--motion-easing-standard);
+}
+
+.cp-state-hidden {
+  opacity: 0;
+}
+
+.cp-state-scale-down {
+  transform: scale(0.96);
 }
 
 /* Modern scrollbar styling - Dark Theme */
@@ -266,11 +413,28 @@ select option {
   }
 }
 
+/* Respect user motion preferences (accessibility first) */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
+  }
+
+  .cp-card-depth:hover,
+  .cp-card-interactive:hover,
+  .cp-button-press:active {
+    transform: none !important;
+  }
+
+  .cp-fade-in,
+  .cp-fade-in-delay-1,
+  .cp-fade-in-delay-2,
+  .cp-fade-in-delay-3,
+  .cp-scroll-reveal {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
   }
 }

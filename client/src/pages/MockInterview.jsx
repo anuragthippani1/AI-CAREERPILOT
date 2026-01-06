@@ -439,7 +439,7 @@ export default function MockInterview() {
           }
         />
         {isComplete ? (
-          <Card>
+          <Card className="cp-fade-in">
             <CardContent className="pt-6">
             <div className="text-center mb-8">
               <div className="w-16 h-16 bg-green-500/10 border border-green-500/25 rounded-2xl flex items-center justify-center mx-auto mb-4">
@@ -694,7 +694,7 @@ function StatCard({ icon, label, value, color = 'blue' }) {
   };
 
   return (
-    <Card className="p-6">
+    <Card depth className="p-6">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm text-white/70 mb-1">{label}</p>

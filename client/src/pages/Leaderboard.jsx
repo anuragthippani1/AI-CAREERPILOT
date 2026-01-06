@@ -183,7 +183,7 @@ export default function Leaderboard() {
         />
 
         {/* Tabs */}
-        <div className="glass-card rounded-xl p-1 mb-6 flex gap-1">
+        <div className="glass-card rounded-xl p-1 mb-6 flex gap-1 cp-fade-in">
           <button
             onClick={() => setActiveTab('xp')}
             className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-colors ${
@@ -247,7 +247,7 @@ export default function Leaderboard() {
 
         {/* Top 3 */}
         {leaderboard.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 cp-fade-in-delay-1">
             {top3.map((u, idx) => {
               const place = idx + 1;
               const isYou = userId && parseInt(u.id, 10) === userId;

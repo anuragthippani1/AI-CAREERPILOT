@@ -1,9 +1,10 @@
 import { cn } from '../../utils/cn';
 
-export function Card({ className, interactive = false, highlighted = false, ...props }) {
+export function Card({ className, interactive = false, highlighted = false, depth = false, ...props }) {
   const base =
     'glass-card rounded-xl border border-white/10 ' +
-    (interactive ? 'modern-card hover:border-white/15' : '') +
+    (interactive ? 'cp-card-interactive hover:border-white/15' : '') +
+    (depth ? 'cp-card-depth' : '') +
     (highlighted ? 'ring-1 ring-primary-400/25' : '');
 
   return <div className={cn(base, className)} {...props} />;

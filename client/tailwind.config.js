@@ -4,6 +4,27 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  safelist: [
+    // Card & Surface Motion
+    'cp-card-depth',
+    'cp-card-interactive',
+    // Button & Control Feedback
+    'cp-button-press',
+    // Page Enter Motion
+    'cp-fade-in',
+    'cp-fade-in-delay-1',
+    'cp-fade-in-delay-2',
+    'cp-fade-in-delay-3',
+    'cp-fade-in-delay-4',
+    // Scroll Reveal
+    'cp-scroll-reveal',
+    'cp-revealed',
+    // State Transitions
+    'cp-state-fade',
+    'cp-state-fade-scale',
+    'cp-state-hidden',
+    'cp-state-scale-down',
+  ],
   theme: {
     extend: {
       fontFamily: {

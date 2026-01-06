@@ -1,7 +1,7 @@
 import { cn } from '../../utils/cn';
 
 const base =
-  'inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors duration-150 ' +
+  'inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors duration-150 cp-button-press ' +
   'disabled:opacity-50 disabled:cursor-not-allowed cp-focus-ring';
 
 const variants = {

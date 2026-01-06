@@ -89,7 +89,7 @@ export default function Dashboard() {
           title="Dashboard"
           description={
             user
-              ? `${getGreeting()}, ${user.name || 'User'}. Here’s your progress and the next best step.`
+              ? `${getGreeting()}, ${user.name || 'User'}. Here's your progress and the next best step.`
               : 'Your progress and the next best step.'
           }
           actions={
@@ -110,7 +110,7 @@ export default function Dashboard() {
           }
         />
         {/* Top Section */}
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-3 gap-6 cp-fade-in">
           {/* Greeting Card */}
           <Card className="md:col-span-2">
             <CardContent className="pt-6">
@@ -290,7 +290,7 @@ export default function Dashboard() {
 
 function StatCard({ icon, label, value }) {
   return (
-    <Card className="p-4">
+    <Card depth className="p-4">
       <div className="flex items-center gap-3 mb-2">
         <div className="text-primary-300">{icon}</div>
         <span className="text-sm text-white/70">{label}</span>
@@ -316,7 +316,7 @@ function ActionCard({ icon, title, description, link, hasData }) {
   return (
     <Link
       to={link}
-      className="glass-card rounded-xl p-6 border border-white/10 group modern-card hover:border-white/15 transition-colors"
+      className="glass-card rounded-xl p-6 border border-white/10 group cp-card-interactive hover:border-white/15 transition-colors"
     >
       <div className="flex items-start gap-4">
         <div className="text-primary-300 transition-colors">

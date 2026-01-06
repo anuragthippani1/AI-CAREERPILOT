@@ -703,7 +703,7 @@ export default function CareerRoadmap() {
         />
 
         {/* Key signals */}
-        <div className="grid sm:grid-cols-3 gap-4">
+        <div className="grid sm:grid-cols-3 gap-4 cp-fade-in">
           <SignalCard title="Current level" value={level} icon={TrendingUp} muted={level === '—'} />
           <SignalCard title="Estimated duration" value={estimatedDuration || '—'} icon={Timer} muted={!estimatedDuration || estimatedDuration === '—'} />
           <SignalCard title="Placement readiness" value={readiness == null ? '—' : `${readiness}%`} icon={Target} muted={readiness == null} />
@@ -787,9 +787,9 @@ export default function CareerRoadmap() {
                 </CardContent>
               </Card>
             ) : (
-              <Card>
+              <Card className="cp-fade-in-delay-1">
                 <CardContent className="pt-6">
-                  <h2 className="text-lg font-semibold text-white">Today’s focus</h2>
+                  <h2 className="text-lg font-semibold text-white">Today's focus</h2>
                   <p className="text-sm text-white/70 mt-1">Pointers to the next 1–3 tasks. The task details live in the phases below.</p>
                   <div className="mt-4 space-y-3">
                     {todaysFocus.length === 0 ? (
@@ -809,7 +809,7 @@ export default function CareerRoadmap() {
               </Card>
             )}
 
-            <div className="space-y-4">
+            <div className="space-y-4 cp-fade-in-delay-2">
               {phasesDerived.phases.map((phase) => {
                 const isOpen = openPhaseId === phase.id;
                 const isLocked = phase.status === 'locked';
