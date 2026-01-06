@@ -5,6 +5,12 @@ import QuestionPanel from '../components/QuestionPanel';
 import TestResults from '../components/TestResults';
 import XPNotification from '../components/XPNotification';
 import { practiceAPI, technicalChallengesAPI } from '../services/api';
+import PageHeader from '../components/ui/PageHeader';
+import Button from '../components/ui/Button';
+import { Card, CardContent } from '../components/ui/Card';
+import EmptyState from '../components/ui/EmptyState';
+import Badge from '../components/ui/Badge';
+import { Skeleton } from '../components/ui/Skeleton';
 
 export default function CodingPractice() {
   const [userId] = useState(1); // Demo user
@@ -188,17 +194,17 @@ export default function CodingPractice() {
     }
   };
 
-  const getDifficultyColor = (difficulty) => {
-    switch (difficulty?.toLowerCase()) {
-      case 'easy': return 'text-green-700 bg-green-50';
-      case 'medium': return 'text-yellow-700 bg-yellow-50';
-      case 'hard': return 'text-red-700 bg-red-50';
-      default: return 'text-gray-700 bg-gray-50';
+  const difficultyVariant = (difficulty) => {
+    switch ((difficulty || '').toLowerCase()) {
+      case 'easy': return 'success';
+      case 'medium': return 'warning';
+      case 'hard': return 'danger';
+      default: return 'neutral';
     }
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="cp-page">
       {/* XP Notification */}
       {xpNotification && (
         <XPNotification
@@ -210,67 +216,57 @@ export default function CodingPractice() {
         />
       )}
 
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-blue-50 rounded-xl">
-                <Code className="w-6 h-6 text-blue-600" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Coding Practice</h1>
-                <p className="text-gray-600 text-sm">Solve problems from GeeksforGeeks & LeetCode</p>
-              </div>
-            </div>
-            {progress && (
-              <div className="flex items-center gap-4 bg-white border border-gray-200 p-4 rounded-xl shadow-sm">
-                <div className="text-center">
-                  <div className="text-xl font-bold text-gray-900">{progress.solvedCount || 0}</div>
-                  <div className="text-xs text-gray-600">Solved</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-xl font-bold text-gray-900">{progress.totalAttempts || 0}</div>
-                  <div className="text-xs text-gray-600">Attempts</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-xl font-bold text-gray-900">{progress.accuracy || 0}%</div>
-                  <div className="text-xs text-gray-600">Accuracy</div>
-                </div>
-              </div>
-            )}
-          </div>
+      <div className="cp-page-inner max-w-7xl space-y-6">
+        <PageHeader
+          title="Practice"
+          description="Solve curated coding challenges with hints, tests, and instant feedback."
+        />
 
-          {/* Filters */}
-          <div className="bg-white border border-gray-200 p-4 rounded-xl shadow-sm">
-            <div className="flex items-center gap-4">
+        {progress ? (
+          <div className="grid sm:grid-cols-3 gap-4">
+            <Card className="p-4">
+              <div className="text-sm text-white/70">Solved</div>
+              <div className="text-2xl font-semibold text-white mt-1">{progress.solvedCount || 0}</div>
+            </Card>
+            <Card className="p-4">
+              <div className="text-sm text-white/70">Attempts</div>
+              <div className="text-2xl font-semibold text-white mt-1">{progress.totalAttempts || 0}</div>
+            </Card>
+            <Card className="p-4">
+              <div className="text-sm text-white/70">Accuracy</div>
+              <div className="text-2xl font-semibold text-white mt-1">{progress.accuracy || 0}%</div>
+            </Card>
+          </div>
+        ) : null}
+
+        {/* Filters */}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
               <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
                 <input
                   type="text"
-                  placeholder="Search questions..."
+                  placeholder="Search challenges…"
                   value={filters.search}
                   onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-                  className="w-full pl-10 pr-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="cp-input pl-9"
                 />
               </div>
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-200 transition-colors flex items-center gap-2 text-sm font-medium"
-              >
-                <Filter className="w-5 h-5" />
+              <Button variant="secondary" onClick={() => setShowFilters(!showFilters)}>
+                <Filter className="w-4 h-4" />
                 Filters
-              </button>
+              </Button>
             </div>
 
-            {showFilters && (
-              <div className="mt-4 grid grid-cols-2 gap-4">
+            {showFilters ? (
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm text-gray-400 mb-2">Difficulty</label>
+                  <label className="block text-sm text-white/70 mb-2">Difficulty</label>
                   <select
                     value={filters.difficulty}
                     onChange={(e) => setFilters({ ...filters, difficulty: e.target.value })}
-                    className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="cp-select"
                   >
                     <option value="">All</option>
                     <option value="easy">Easy</option>
@@ -279,13 +275,13 @@ export default function CodingPractice() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-700 mb-2">Topic</label>
+                  <label className="block text-sm text-white/70 mb-2">Topic</label>
                   <select
                     value={filters.topic}
                     onChange={(e) => setFilters({ ...filters, topic: e.target.value })}
-                    className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="cp-select"
                   >
-                    <option value="">All Topics</option>
+                    <option value="">All topics</option>
                     <option value="Arrays">Arrays</option>
                     <option value="Strings">Strings</option>
                     <option value="Hashing">Hashing</option>
@@ -302,53 +298,65 @@ export default function CodingPractice() {
                   </select>
                 </div>
               </div>
-            )}
-          </div>
-        </div>
+            ) : null}
+          </CardContent>
+        </Card>
 
         <div className="grid grid-cols-12 gap-6">
           {/* Questions List */}
           <div className="col-span-3">
-            <div className="bg-white border border-gray-200 p-4 rounded-xl h-[calc(100vh-250px)] overflow-y-auto shadow-sm">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Problems</h2>
+            <Card className="h-[calc(100vh-250px)] overflow-hidden">
+              <CardContent className="pt-6 h-full flex flex-col">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-white">Challenges</h2>
+                <span className="text-xs text-white/50">{questions.length} items</span>
+              </div>
               {loading ? (
-                <div className="text-center text-gray-400 py-8">Loading...</div>
-              ) : error ? (
-                <div className="text-center text-red-600 py-8">{error}</div>
-              ) : questions.length === 0 ? (
-                <div className="text-center text-gray-400 py-8">
-                  No challenges found. If you just set up the project, run the DB schema + seed (see `setup_database.sh`).
-                </div>
-              ) : (
                 <div className="space-y-2">
+                  <Skeleton className="h-10 rounded-lg" />
+                  <Skeleton className="h-10 rounded-lg" />
+                  <Skeleton className="h-10 rounded-lg" />
+                  <Skeleton className="h-10 rounded-lg" />
+                </div>
+              ) : error ? (
+                <div className="bg-red-500/10 border border-red-500/25 rounded-lg p-4 text-sm text-red-200">
+                  {error}
+                </div>
+              ) : questions.length === 0 ? (
+                <EmptyState
+                  icon={BookOpen}
+                  title="No challenges yet"
+                  description="Seed the database (see setup docs) or clear filters to see available problems."
+                />
+              ) : (
+                <div className="space-y-2 overflow-y-auto pr-1">
                   {questions.map((q) => (
                     <button
                       key={q.id}
                       onClick={() => setSelectedQuestion(q)}
-                      className={`w-full text-left p-3 rounded-lg transition-all border ${
+                      className={`w-full text-left p-3 rounded-lg transition-colors border ${
                         selectedQuestion?.id === q.id
-                          ? 'bg-blue-50 border-blue-200 text-gray-900'
-                          : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700'
+                          ? 'bg-white/8 border-white/15 text-white'
+                          : 'bg-white/5 border-white/10 hover:border-white/15 hover:bg-white/6 text-white/80'
                       }`}
                     >
                       <div className="flex items-start justify-between mb-1">
                         <span className="font-medium text-sm">{q.title}</span>
-                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${getDifficultyColor(q.difficulty)}`}>
-                          {q.difficulty}
-                        </span>
+                        <Badge variant={difficultyVariant(q.difficulty)}>{q.difficulty}</Badge>
                       </div>
                       <div className="flex flex-wrap gap-1 mt-2">
                         {q.topics?.slice(0, 2).map((topic, i) => (
-                          <span key={i} className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded">
+                          <Badge key={i} variant="neutral" className="text-[11px]">
                             {topic}
-                          </span>
+                          </Badge>
                         ))}
                       </div>
                     </button>
                   ))}
                 </div>
               )}
-            </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Main Content */}
@@ -360,22 +368,20 @@ export default function CodingPractice() {
                   <QuestionPanel question={selectedQuestion} hint={hint} explanation={explanation} />
                   {selectedQuestion && (
                     <div className="mt-4 flex gap-2">
-                      <button
-                        onClick={handleGetHint}
-                        className="flex-1 px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-200 transition-colors flex items-center justify-center gap-2 text-sm font-medium"
-                      >
+                      <Button variant="secondary" onClick={handleGetHint} className="flex-1">
                         <Lightbulb className="w-4 h-4" />
                         Get Hint
-                      </button>
+                      </Button>
                     </div>
                   )}
                 </div>
 
                 {/* Code Editor */}
                 <div className="flex flex-col">
-                  <div className="bg-white border border-gray-200 p-4 rounded-xl flex-1 flex flex-col shadow-sm">
+                  <Card className="flex-1 flex flex-col overflow-hidden">
+                    <CardContent className="pt-6 flex-1 flex flex-col">
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-semibold text-gray-900">Code Editor</h3>
+                      <h3 className="text-lg font-semibold text-white">Editor</h3>
                       <select
                         value={language}
                         onChange={(e) => {
@@ -385,7 +391,7 @@ export default function CodingPractice() {
                             setCode(template);
                           }
                         }}
-                        className="px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="cp-select w-auto"
                       >
                         <option value="python">Python</option>
                         <option value="javascript">JavaScript</option>
@@ -404,17 +410,13 @@ export default function CodingPractice() {
                     </div>
 
                     {error && (
-                      <div className="mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-300 text-sm">
+                      <div className="mb-4 p-3 bg-red-500/10 border border-red-500/25 rounded-lg text-red-200 text-sm">
                         {error}
                       </div>
                     )}
 
                     <div className="flex gap-2">
-                      <button
-                        onClick={handleRunCode}
-                        disabled={executing || !code.trim()}
-                        className="flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm font-medium border border-gray-300"
-                      >
+                      <Button variant="secondary" onClick={handleRunCode} disabled={executing || !code.trim()} className="flex-1">
                         {executing ? (
                           <>
                             <Clock className="w-4 h-4 animate-spin" />
@@ -426,12 +428,8 @@ export default function CodingPractice() {
                             Run Code
                           </>
                         )}
-                      </button>
-                      <button
-                        onClick={handleSubmit}
-                        disabled={executing || !code.trim()}
-                        className="flex-1 px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm font-semibold shadow-sm hover:shadow-md"
-                      >
+                      </Button>
+                      <Button onClick={handleSubmit} disabled={executing || !code.trim()} className="flex-1">
                         {executing ? (
                           <>
                             <Clock className="w-4 h-4 animate-spin" />
@@ -443,9 +441,10 @@ export default function CodingPractice() {
                             Submit
                           </>
                         )}
-                      </button>
+                      </Button>
                     </div>
-                  </div>
+                    </CardContent>
+                  </Card>
 
                   {/* Test Results */}
                   {testResults && (
@@ -456,10 +455,15 @@ export default function CodingPractice() {
                 </div>
               </div>
             ) : (
-              <div className="bg-white border border-gray-200 p-8 rounded-xl text-center shadow-sm">
-                <BookOpen className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600">Select a question to start practicing</p>
-              </div>
+              <Card>
+                <CardContent className="pt-6">
+                  <EmptyState
+                    icon={BookOpen}
+                    title="Select a challenge"
+                    description="Pick a problem from the left to start practicing."
+                  />
+                </CardContent>
+              </Card>
             )}
           </div>
         </div>

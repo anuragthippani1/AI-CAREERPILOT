@@ -2,6 +2,12 @@ import { useState, useEffect } from 'react';
 import { MessageSquare, Send, Loader, CheckCircle, AlertCircle, Clock, BarChart3, TrendingUp, FileText, Calendar, Target, Award } from 'lucide-react';
 import { interviewAPI } from '../services/api';
 import XPNotification from '../components/XPNotification';
+import PageHeader from '../components/ui/PageHeader';
+import Button from '../components/ui/Button';
+import { Card, CardContent } from '../components/ui/Card';
+import EmptyState from '../components/ui/EmptyState';
+import Badge from '../components/ui/Badge';
+import { PageSkeleton } from '../components/ui/Skeleton';
 
 export default function MockInterview() {
   const [userId] = useState(1);
@@ -199,19 +205,19 @@ export default function MockInterview() {
 
   if (showHistory) {
     return (
-      <div className="min-h-screen">
-        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-xl font-bold text-gray-900">Interview History & Analytics</h1>
-            <button
-              onClick={() => setShowHistory(false)}
-              className="px-4 py-2 text-gray-700 hover:text-gray-900 font-medium text-sm hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              Back to Interview
-            </button>
-          </div>
+      <div className="cp-page">
+        <main className="cp-page-inner max-w-6xl space-y-6">
+          <PageHeader
+            title="Interview history"
+            description="Review recent performance and track trends over time."
+            actions={
+              <Button variant="secondary" onClick={() => setShowHistory(false)}>
+                Back to interview
+              </Button>
+            }
+          />
           {overallStats && (
-            <div className="grid md:grid-cols-4 gap-6 mb-8">
+            <div className="grid md:grid-cols-4 gap-4">
               <StatCard
                 icon={<Award className="w-6 h-6" />}
                 label="Average Score"
@@ -239,137 +245,135 @@ export default function MockInterview() {
             </div>
           )}
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Interviews</h2>
-            <div className="space-y-4">
-              {interviewHistory.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">No interview history yet</p>
-              ) : (
-                interviewHistory.map((session) => (
-                  <div key={session.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900">{session.role_title}</h3>
-                        <p className="text-sm text-gray-600 mt-1">
-                          {new Date(session.created_at).toLocaleDateString()} at {new Date(session.created_at).toLocaleTimeString()}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-blue-600">
-                          {session.overall_score ? `${Math.round(session.overall_score)}%` : 'N/A'}
+          <Card>
+            <CardContent className="pt-6">
+              <h2 className="text-lg font-semibold text-white mb-4">Recent interviews</h2>
+              <div className="space-y-3">
+                {interviewHistory.length === 0 ? (
+                  <EmptyState
+                    icon={MessageSquare}
+                    title="No interviews yet"
+                    description="Start a mock interview to begin building history and trends."
+                    primaryAction={
+                      <Button onClick={() => setShowHistory(false)}>Start an interview</Button>
+                    }
+                  />
+                ) : (
+                  interviewHistory.map((session) => {
+                    const statusVariant =
+                      session.status === 'completed'
+                        ? 'success'
+                        : session.status === 'in_progress'
+                          ? 'warning'
+                          : 'neutral';
+                    return (
+                      <div
+                        key={session.id}
+                        className="rounded-xl border border-white/10 bg-white/5 p-4"
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="min-w-0">
+                            <h3 className="font-semibold text-white truncate">{session.role_title}</h3>
+                            <p className="text-sm text-white/60 mt-1">
+                              {new Date(session.created_at).toLocaleDateString()} •{' '}
+                              {new Date(session.created_at).toLocaleTimeString()}
+                            </p>
+                          </div>
+                          <div className="text-right flex-shrink-0">
+                            <div className="text-2xl font-semibold text-white">
+                              {session.overall_score ? `${Math.round(session.overall_score)}%` : '—'}
+                            </div>
+                            <Badge variant={statusVariant}>{session.status}</Badge>
+                          </div>
                         </div>
-                        <span className={`text-xs px-2 py-1 rounded ${
-                          session.status === 'completed' ? 'bg-green-100 text-green-800' :
-                          session.status === 'in_progress' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
-                          {session.status}
-                        </span>
                       </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
+                    );
+                  })
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </main>
       </div>
     );
   }
 
-  if (!sessionId && !loading) {
+  if (!sessionId) {
     return (
-      <div className="min-h-screen">
-        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-4xl">
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-xl font-bold text-gray-900">AI Mock Interview Platform</h1>
-            {interviewHistory.length > 0 && (
-              <button
-                onClick={() => setShowHistory(true)}
-                className="px-4 py-2 text-gray-700 hover:text-gray-900 font-medium flex items-center gap-2 text-sm hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <BarChart3 className="w-5 h-5" />
-                View History
-              </button>
-            )}
-          </div>
+      <div className="cp-page">
+        <main className="cp-page-inner max-w-4xl space-y-6">
+          <PageHeader
+            title="Mock interview"
+            description="Practice structured interviews and get detailed feedback. One session takes ~10 minutes."
+            actions={
+              interviewHistory.length > 0 ? (
+                <Button variant="secondary" onClick={() => setShowHistory(true)}>
+                  <BarChart3 className="w-4 h-4" />
+                  History
+                </Button>
+              ) : null
+            }
+          />
           {overallStats && (
-            <div className="grid sm:grid-cols-3 gap-4 mb-6">
-              <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600">Average Score</p>
-                    <p className="text-2xl font-bold text-gray-900">{overallStats.averageScore}%</p>
-                  </div>
-                  <Award className="w-8 h-8 text-blue-600" />
+            <div className="grid sm:grid-cols-3 gap-4">
+              <Card className="p-4">
+                <div className="text-sm text-white/70">Average score</div>
+                <div className="text-2xl font-semibold text-white mt-1">{overallStats.averageScore}%</div>
+              </Card>
+              <Card className="p-4">
+                <div className="text-sm text-white/70">Total interviews</div>
+                <div className="text-2xl font-semibold text-white mt-1">{overallStats.totalInterviews}</div>
+              </Card>
+              <Card className="p-4">
+                <div className="text-sm text-white/70">Trend</div>
+                <div className="text-2xl font-semibold text-white mt-1">
+                  {overallStats.trend > 0 ? '+' : ''}
+                  {overallStats.trend}
                 </div>
-              </div>
-              <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600">Total Interviews</p>
-                    <p className="text-2xl font-bold text-gray-900">{overallStats.totalInterviews}</p>
-                  </div>
-                  <FileText className="w-8 h-8 text-green-600" />
-                </div>
-              </div>
-              <div className={`bg-white border border-gray-200 rounded-lg p-4 shadow-sm`}>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600">Trend</p>
-                    <p className={`text-2xl font-bold ${overallStats.trend > 0 ? 'text-green-600' : 'text-red-600'}`}>{overallStats.trend > 0 ? '+' : ''}{overallStats.trend}</p>
-                  </div>
-                  <TrendingUp className={`w-8 h-8 ${overallStats.trend > 0 ? 'text-green-600' : 'text-red-600'}`} />
-                </div>
-              </div>
+              </Card>
             </div>
           )}
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:p-8">
+          <Card>
+            <CardContent className="pt-6">
             <div className="mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Start New Interview Session</h2>
-              <p className="text-gray-600">Practice with AI-powered interviews tailored to your target role</p>
+              <h2 className="text-lg font-semibold text-white">Start a new session</h2>
+              <p className="text-sm text-white/70 mt-1">Choose a role and interview type. You’ll get one question at a time.</p>
             </div>
 
             <div className="space-y-6">
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <Target className="w-4 h-4 inline mr-1" />
-                    Target Role *
+                  <label className="block text-sm font-medium text-white/80 mb-2">
+                    Target role <span className="text-white/40">*</span>
                   </label>
                   <input
                     type="text"
                     value={roleTitle}
                     onChange={(e) => setRoleTitle(e.target.value)}
-                    placeholder="e.g., Senior Software Engineer"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="e.g., Frontend Engineer (React)"
+                    className="cp-input"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <Calendar className="w-4 h-4 inline mr-1" />
-                    Company (Optional)
-                  </label>
+                  <label className="block text-sm font-medium text-white/80 mb-2">Company (optional)</label>
                   <input
                     type="text"
                     value={companyName}
                     onChange={(e) => setCompanyName(e.target.value)}
-                    placeholder="e.g., Google, Microsoft"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="e.g., Google"
+                    className="cp-input"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Interview Type
-                </label>
+                <label className="block text-sm font-medium text-white/80 mb-2">Interview type</label>
                 <select
                   value={interviewType}
                   onChange={(e) => setInterviewType(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="cp-select"
                 >
                   <option value="technical">Technical Interview</option>
                   <option value="behavioral">Behavioral Interview</option>
@@ -380,17 +384,13 @@ export default function MockInterview() {
               </div>
 
               {error && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-2">
-                  <AlertCircle className="w-5 h-5 text-red-600" />
-                  <p className="text-red-800">{error}</p>
+                <div className="bg-red-500/10 border border-red-500/25 rounded-lg p-4 flex items-start gap-2">
+                  <AlertCircle className="w-5 h-5 text-red-300 mt-0.5" />
+                  <p className="text-red-200 text-sm">{error}</p>
                 </div>
               )}
 
-              <button
-                onClick={startInterview}
-                disabled={loading}
-                className="w-full bg-gray-900 hover:bg-gray-800 text-white font-semibold py-3.5 px-6 rounded-lg transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
+              <Button onClick={startInterview} disabled={loading} className="w-full">
                 {loading ? (
                   <>
                     <Loader className="w-5 h-5 animate-spin" />
@@ -402,16 +402,17 @@ export default function MockInterview() {
                     Start Interview Session
                   </>
                 )}
-              </button>
+              </Button>
             </div>
-          </div>
+            </CardContent>
+          </Card>
         </main>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="cp-page">
       {/* XP Notification */}
       {xpNotification && (
         <XPNotification
@@ -423,84 +424,79 @@ export default function MockInterview() {
         />
       )}
 
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-5xl">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">
-              {companyName ? `${companyName} - ` : ''}{roleTitle} Interview
-            </h1>
-            <p className="text-sm text-gray-600 mt-1">
-              {interviewType.charAt(0).toUpperCase() + interviewType.slice(1)} Interview Session
-            </p>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 text-gray-600">
-              <Clock className="w-5 h-5" />
-              <span className="font-mono">{formatTime(elapsedTime)}</span>
+      <main className="cp-page-inner max-w-5xl space-y-6">
+        <PageHeader
+          title={`${companyName ? `${companyName} — ` : ''}${roleTitle || 'Interview'} `}
+          description={`${interviewType.charAt(0).toUpperCase() + interviewType.slice(1)} session • Question ${questionNumber} / ${totalQuestions || '?'}`}
+          actions={
+            <div className="flex items-center gap-2">
+              <Badge variant="neutral">{formatTime(elapsedTime)}</Badge>
+              <Button variant="secondary" onClick={() => setShowHistory(true)}>
+                <BarChart3 className="w-4 h-4" />
+                History
+              </Button>
             </div>
-            <div className="text-sm text-gray-600">
-              Question {questionNumber} / {totalQuestions || '?'}
-            </div>
-          </div>
-        </div>
+          }
+        />
         {isComplete ? (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:p-8">
+          <Card>
+            <CardContent className="pt-6">
             <div className="text-center mb-8">
-              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="w-12 h-12 text-green-600" />
+              <div className="w-16 h-16 bg-green-500/10 border border-green-500/25 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="w-10 h-10 text-green-300" />
               </div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">Interview Session Complete!</h2>
-              <p className="text-gray-600">Total time: {formatTime(elapsedTime)}</p>
+              <h2 className="text-2xl font-semibold text-white mb-2">Session complete</h2>
+              <p className="text-white/70">Total time: {formatTime(elapsedTime)}</p>
             </div>
 
             {feedback && (
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 mb-6">
-                <h3 className="font-semibold text-gray-900 mb-4 text-lg">Final Assessment</h3>
+              <div className="bg-white/5 border border-white/10 rounded-xl p-6 mb-6">
+                <h3 className="font-semibold text-white mb-4 text-lg">Final assessment</h3>
                 <div className="grid md:grid-cols-2 gap-4 mb-4">
-                  <div className="bg-white rounded-lg p-4">
-                    <p className="text-sm text-gray-600 mb-1">Overall Performance</p>
-                    <p className="text-3xl font-bold text-blue-600">{feedback.overallScore || 0}/100</p>
+                  <div className="bg-black/20 border border-white/10 rounded-lg p-4">
+                    <p className="text-sm text-white/70 mb-1">Overall performance</p>
+                    <p className="text-3xl font-semibold text-white">{feedback.overallScore || 0}/100</p>
                   </div>
-                  <div className="bg-white rounded-lg p-4">
-                    <p className="text-sm text-gray-600 mb-1">Session Duration</p>
-                    <p className="text-3xl font-bold text-gray-900">{formatTime(elapsedTime)}</p>
+                  <div className="bg-black/20 border border-white/10 rounded-lg p-4">
+                    <p className="text-sm text-white/70 mb-1">Session duration</p>
+                    <p className="text-3xl font-semibold text-white">{formatTime(elapsedTime)}</p>
                   </div>
                 </div>
                 {xpNotification && (
-                  <div className="bg-white rounded-lg p-4 mb-4">
-                    <p className="text-sm text-gray-600 mb-1">XP Earned</p>
-                    <p className="text-2xl font-bold text-green-600">
+                  <div className="bg-black/20 border border-white/10 rounded-lg p-4 mb-4">
+                    <p className="text-sm text-white/70 mb-1">XP earned</p>
+                    <p className="text-2xl font-semibold text-white">
                       +{xpNotification.xpGained || 0} XP
                     </p>
                     {xpNotification.leveledUp && (
-                      <p className="text-sm text-gray-600 mt-1">
-                        🎉 Level Up! You're now Level {xpNotification.newLevel}
+                      <p className="text-sm text-white/70 mt-1">
+                        Level up: you’re now Level {xpNotification.newLevel}
                       </p>
                     )}
                   </div>
                 )}
                 {xpNotification?.unlockedAchievements && xpNotification.unlockedAchievements.length > 0 && (
-                  <div className="bg-white rounded-lg p-4 mb-4">
-                    <p className="text-sm font-semibold text-gray-900 mb-2">Achievements Unlocked:</p>
+                  <div className="bg-black/20 border border-white/10 rounded-lg p-4 mb-4">
+                    <p className="text-sm font-semibold text-white mb-2">Achievements unlocked</p>
                     <div className="space-y-2">
                       {xpNotification.unlockedAchievements.map((achievement, i) => (
                         <div key={i} className="flex items-center gap-2">
-                          <Award className="w-4 h-4 text-yellow-500" />
-                          <span className="text-sm text-gray-700">{achievement.name}</span>
-                          <span className="text-xs text-gray-500">+{achievement.xpReward} XP</span>
+                          <Award className="w-4 h-4 text-yellow-300" />
+                          <span className="text-sm text-white/80">{achievement.name}</span>
+                          <span className="text-xs text-white/50">+{achievement.xpReward} XP</span>
                         </div>
                       ))}
                     </div>
                   </div>
                 )}
                 {feedback.summary && (
-                  <p className="text-gray-700">{feedback.summary}</p>
+                  <p className="text-white/75">{feedback.summary}</p>
                 )}
               </div>
             )}
 
             <div className="flex gap-4">
-              <button
+              <Button
                 onClick={() => {
                   setSessionId(null);
                   setCurrentQuestion(null);
@@ -509,45 +505,40 @@ export default function MockInterview() {
                   setQuestionNumber(1);
                   setAnswer('');
                 }}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+                className="flex-1"
               >
                 Start New Interview
-              </button>
-              <button
-                onClick={() => setShowHistory(true)}
-                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-6 rounded-lg transition-colors"
-              >
-                View History
-              </button>
+              </Button>
+              <Button variant="secondary" onClick={() => setShowHistory(true)} className="flex-1">
+                View history
+              </Button>
             </div>
-          </div>
+            </CardContent>
+          </Card>
         ) : (
           <div className="space-y-6">
             {currentQuestion && (
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <Card>
+                <CardContent className="pt-6">
                 <div className="flex items-start gap-4 mb-4">
-                  <div className="bg-blue-50 rounded-full p-3">
-                    <MessageSquare className="w-6 h-6 text-blue-600" />
+                  <div className="bg-white/5 border border-white/10 rounded-xl p-3">
+                    <MessageSquare className="w-6 h-6 text-primary-200" />
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded">
-                        Question {questionNumber}
-                      </span>
+                      <Badge variant="info">Question {questionNumber}</Badge>
                       {currentQuestion.questionType && (
-                        <span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded">
-                          {currentQuestion.questionType}
-                        </span>
+                        <Badge variant="neutral">{currentQuestion.questionType}</Badge>
                       )}
                     </div>
-                    <p className="text-xl font-semibold text-gray-900 mb-2">{currentQuestion.question}</p>
+                    <p className="text-xl font-semibold text-white mb-2">{currentQuestion.question}</p>
                     {currentQuestion.context && (
-                      <p className="text-sm text-gray-600">{currentQuestion.context}</p>
+                      <p className="text-sm text-white/70">{currentQuestion.context}</p>
                     )}
                     {currentQuestion.hints && currentQuestion.hints.length > 0 && (
-                      <div className="mt-3 p-3 bg-blue-50 rounded-lg">
-                        <p className="text-xs font-medium text-blue-900 mb-1">💡 Hints:</p>
-                        <ul className="text-xs text-blue-800 space-y-1">
+                      <div className="mt-3 p-3 bg-primary-500/10 border border-primary-400/20 rounded-lg">
+                        <p className="text-xs font-medium text-white mb-1">Hints</p>
+                        <ul className="text-xs text-white/75 space-y-1">
                           {currentQuestion.hints.map((hint, i) => (
                             <li key={i}>• {hint}</li>
                           ))}
@@ -556,14 +547,16 @@ export default function MockInterview() {
                     )}
                   </div>
                 </div>
-              </div>
+                </CardContent>
+              </Card>
             )}
 
             {feedback && (
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <h3 className="font-semibold text-gray-900 mb-4 text-lg flex items-center gap-2">
-                  <BarChart3 className="w-5 h-5 text-blue-600" />
-                  Performance Feedback
+              <Card>
+                <CardContent className="pt-6">
+                <h3 className="font-semibold text-white mb-4 text-lg flex items-center gap-2">
+                  <BarChart3 className="w-5 h-5 text-primary-200" />
+                  Feedback
                 </h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                   <ScoreCard label="Clarity" value={feedback.clarity} />
@@ -571,25 +564,25 @@ export default function MockInterview() {
                   <ScoreCard label="Relevance" value={feedback.relevance} />
                   <ScoreCard label="Communication" value={feedback.communication} />
                 </div>
-                <div className="mb-4 p-4 bg-gray-50 rounded-lg">
-                  <p className="text-sm font-medium text-gray-700 mb-2">Overall Score</p>
+                <div className="mb-4 p-4 bg-white/5 border border-white/10 rounded-lg">
+                  <p className="text-sm font-medium text-white/80 mb-2">Overall score</p>
                   <div className="flex items-center gap-2">
-                    <div className="flex-1 bg-gray-200 rounded-full h-3">
+                    <div className="flex-1 bg-white/5 border border-white/10 rounded-full h-3 overflow-hidden">
                       <div 
-                        className="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all"
+                        className="bg-primary-500/80 h-3 rounded-full transition-all duration-200"
                         style={{ width: `${feedback.overallScore || 0}%` }}
                       />
                     </div>
-                    <span className="text-lg font-bold text-gray-900">{feedback.overallScore || 0}/100</span>
+                    <span className="text-lg font-semibold text-white">{feedback.overallScore || 0}/100</span>
                   </div>
                 </div>
                 {feedback.strengths && feedback.strengths.length > 0 && (
                   <div className="mb-4">
-                    <p className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4 text-green-600" />
+                    <p className="text-sm font-medium text-white/80 mb-2 flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-green-300" />
                       Strengths
                     </p>
-                    <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
+                    <ul className="list-disc list-inside text-sm text-white/70 space-y-1">
                       {feedback.strengths.map((strength, i) => (
                         <li key={i}>{strength}</li>
                       ))}
@@ -598,11 +591,11 @@ export default function MockInterview() {
                 )}
                 {feedback.improvements && feedback.improvements.length > 0 && (
                   <div className="mb-4">
-                    <p className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                      <Target className="w-4 h-4 text-orange-600" />
-                      Areas for Improvement
+                    <p className="text-sm font-medium text-white/80 mb-2 flex items-center gap-2">
+                      <Target className="w-4 h-4 text-yellow-300" />
+                      Improvements
                     </p>
-                    <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
+                    <ul className="list-disc list-inside text-sm text-white/70 space-y-1">
                       {feedback.improvements.map((improvement, i) => (
                         <li key={i}>{improvement}</li>
                       ))}
@@ -610,44 +603,42 @@ export default function MockInterview() {
                   </div>
                 )}
                 {feedback.comments && (
-                  <div className="p-4 bg-blue-50 rounded-lg">
-                    <p className="text-sm text-gray-700">{feedback.comments}</p>
+                  <div className="p-4 bg-primary-500/10 border border-primary-400/20 rounded-lg">
+                    <p className="text-sm text-white/75">{feedback.comments}</p>
                   </div>
                 )}
-              </div>
+                </CardContent>
+              </Card>
             )}
 
             {!isComplete && currentQuestion && (
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Your Answer
+              <Card>
+                <CardContent className="pt-6">
+                <label className="block text-sm font-medium text-white/80 mb-2">
+                  Your answer
                 </label>
                 <textarea
                   value={answer}
                   onChange={(e) => setAnswer(e.target.value)}
                   rows={8}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-4 font-sans"
-                  placeholder="Type your detailed answer here. Be specific and provide examples..."
+                  className="cp-input w-full px-4 py-3 mb-4 font-sans min-h-[180px]"
+                  placeholder="Write a structured answer. Be specific and use examples."
                 />
                 <div className="flex items-center justify-between mb-4">
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-white/50">
                     {answer.length} characters
                   </p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-white/50">
                     Recommended: 150-300 words
                   </p>
                 </div>
                 {error && (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4 flex items-center gap-2">
-                    <AlertCircle className="w-5 h-5 text-red-600" />
-                    <p className="text-red-800 text-sm">{error}</p>
+                  <div className="bg-red-500/10 border border-red-500/25 rounded-lg p-3 mb-4 flex items-start gap-2">
+                    <AlertCircle className="w-5 h-5 text-red-300 mt-0.5" />
+                    <p className="text-red-200 text-sm">{error}</p>
                   </div>
                 )}
-                <button
-                  onClick={submitAnswer}
-                  disabled={loading || !answer.trim()}
-                  className="w-full bg-gray-900 hover:bg-gray-800 text-white font-semibold py-3.5 px-6 rounded-lg transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
+                <Button onClick={submitAnswer} disabled={loading || !answer.trim()} className="w-full">
                   {loading ? (
                     <>
                       <Loader className="w-5 h-5 animate-spin" />
@@ -659,8 +650,9 @@ export default function MockInterview() {
                       Submit Answer & Continue
                     </>
                   )}
-                </button>
-              </div>
+                </Button>
+                </CardContent>
+              </Card>
             )}
           </div>
         )}
@@ -671,19 +663,20 @@ export default function MockInterview() {
 
 function ScoreCard({ label, value }) {
   const percentage = value || 0;
-  const colorClass = percentage >= 80 ? 'text-green-600' : percentage >= 60 ? 'text-blue-600' : 'text-orange-600';
+  const colorClass =
+    percentage >= 80 ? 'text-green-200' : percentage >= 60 ? 'text-primary-200' : 'text-yellow-200';
   
   return (
-    <div className="bg-gray-50 rounded-lg p-4">
-      <p className="text-xs text-gray-600 mb-2">{label}</p>
+    <div className="bg-white/5 border border-white/10 rounded-lg p-4">
+      <p className="text-xs text-white/60 mb-2">{label}</p>
       <div className="flex items-end gap-2">
-        <p className={`text-2xl font-bold ${colorClass}`}>{value || 0}</p>
-        <span className="text-xs text-gray-500 mb-1">/100</span>
+        <p className={`text-2xl font-semibold ${colorClass}`}>{value || 0}</p>
+        <span className="text-xs text-white/40 mb-1">/100</span>
       </div>
-      <div className="mt-2 bg-gray-200 rounded-full h-1.5">
+      <div className="mt-2 bg-white/5 border border-white/10 rounded-full h-1.5 overflow-hidden">
         <div 
-          className={`h-1.5 rounded-full transition-all ${
-            percentage >= 80 ? 'bg-green-500' : percentage >= 60 ? 'bg-blue-500' : 'bg-orange-500'
+          className={`h-1.5 rounded-full transition-all duration-200 ${
+            percentage >= 80 ? 'bg-green-400/80' : percentage >= 60 ? 'bg-primary-400/80' : 'bg-yellow-400/80'
           }`}
           style={{ width: `${percentage}%` }}
         />
@@ -694,23 +687,23 @@ function ScoreCard({ label, value }) {
 
 function StatCard({ icon, label, value, color = 'blue' }) {
   const colorClasses = {
-    blue: 'bg-blue-50 text-blue-600',
-    green: 'bg-green-50 text-green-600',
-    red: 'bg-red-50 text-red-600',
-    purple: 'bg-purple-50 text-purple-600',
+    blue: 'bg-primary-500/10 text-primary-200 border border-primary-400/20',
+    green: 'bg-green-500/10 text-green-200 border border-green-500/20',
+    red: 'bg-red-500/10 text-red-200 border border-red-500/20',
+    purple: 'bg-purple-500/10 text-purple-200 border border-purple-500/20',
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <Card className="p-6">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm text-gray-600 mb-1">{label}</p>
-          <p className="text-3xl font-bold text-gray-900">{value}</p>
+          <p className="text-sm text-white/70 mb-1">{label}</p>
+          <p className="text-3xl font-semibold text-white">{value}</p>
         </div>
         <div className={colorClasses[color] + ' rounded-lg p-3'}>
           {icon}
         </div>
       </div>
-    </div>
+    </Card>
   );
 }

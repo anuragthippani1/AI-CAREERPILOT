@@ -65,3 +65,4 @@ SET @sql := IF(@idx_exists = 0, 'ALTER TABLE users ADD INDEX idx_level (level)',
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 
+

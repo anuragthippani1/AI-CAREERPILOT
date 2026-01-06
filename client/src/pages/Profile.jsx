@@ -1,6 +1,11 @@
 import { useState, useEffect } from 'react';
 import { User, Edit2, Award, TrendingUp, Calendar, Code, MessageSquare, Save, X, Trophy, Star, Flame } from 'lucide-react';
 import { userAPI } from '../services/api';
+import PageHeader from '../components/ui/PageHeader';
+import Button from '../components/ui/Button';
+import { Card, CardContent } from '../components/ui/Card';
+import EmptyState from '../components/ui/EmptyState';
+import { PageSkeleton } from '../components/ui/Skeleton';
 
 export default function Profile() {
   const [userId] = useState(1); // Demo user
@@ -76,29 +81,46 @@ export default function Profile() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading profile...</p>
-        </div>
-      </div>
-    );
+    return <PageSkeleton />;
   }
 
   return (
-    <div className="min-h-screen">
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-6xl">
-        <h1 className="text-xl font-bold text-gray-900 mb-6">Profile</h1>
+    <div className="cp-page">
+      <main className="cp-page-inner max-w-6xl space-y-6">
+        <PageHeader
+          title="Profile"
+          description="Manage your details and track progress across interviews and practice."
+          actions={
+            editing ? (
+              <>
+                <Button onClick={handleSave}>
+                  <Save className="w-4 h-4" />
+                  Save
+                </Button>
+                <Button variant="secondary" onClick={handleCancel}>
+                  <X className="w-4 h-4" />
+                  Cancel
+                </Button>
+              </>
+            ) : (
+              <Button onClick={() => setEditing(true)}>
+                <Edit2 className="w-4 h-4" />
+                Edit profile
+              </Button>
+            )
+          }
+        />
+
         {/* Profile Header */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+        <Card>
+          <CardContent className="pt-6">
           <div className="flex items-start justify-between mb-6">
             <div className="flex items-center gap-4">
-              <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
+              <div className="w-16 h-16 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-white text-xl font-semibold overflow-hidden">
                 {user?.avatar_url ? (
-                  <img src={user.avatar_url} alt={user.name} className="w-20 h-20 rounded-full object-cover" />
+                  <img src={user.avatar_url} alt={user.name} className="w-full h-full object-cover" />
                 ) : (
-                  <User className="w-10 h-10" />
+                  <User className="w-8 h-8 text-white/70" />
                 )}
               </div>
               <div>
@@ -108,20 +130,20 @@ export default function Profile() {
                       type="text"
                       value={editForm.name}
                       onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                      className="text-2xl font-bold text-gray-900 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                      className="cp-input text-lg font-semibold"
                       placeholder="Name"
                     />
                     <input
                       type="text"
                       value={editForm.title}
                       onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
-                      className="text-lg text-gray-600 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                      className="cp-input"
                       placeholder="Title (e.g., Software Engineer)"
                     />
                     <textarea
                       value={editForm.bio}
                       onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
-                      className="text-sm text-gray-600 border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-blue-500"
+                      className="cp-input min-h-[90px]"
                       placeholder="Bio"
                       rows={3}
                     />
@@ -129,50 +151,26 @@ export default function Profile() {
                       type="url"
                       value={editForm.avatarUrl}
                       onChange={(e) => setEditForm({ ...editForm, avatarUrl: e.target.value })}
-                      className="text-sm text-gray-600 border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-blue-500"
+                      className="cp-input"
                       placeholder="Avatar URL"
                     />
-                    <div className="flex gap-2">
-                      <button
-                        onClick={handleSave}
-                        className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-semibold hover:bg-gray-800 flex items-center gap-2"
-                      >
-                        <Save className="w-4 h-4" />
-                        Save
-                      </button>
-                      <button
-                        onClick={handleCancel}
-                        className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-200 flex items-center gap-2"
-                      >
-                        <X className="w-4 h-4" />
-                        Cancel
-                      </button>
-                    </div>
                   </div>
                 ) : (
                   <>
-                    <h2 className="text-2xl font-bold text-gray-900">{user?.name || 'User'}</h2>
-                    {user?.title && <p className="text-lg text-gray-600 mt-1">{user.title}</p>}
-                    {user?.bio && <p className="text-sm text-gray-600 mt-2">{user.bio}</p>}
+                    <h2 className="text-xl font-semibold text-white">{user?.name || 'User'}</h2>
+                    {user?.title && <p className="text-sm text-white/70 mt-1">{user.title}</p>}
+                    {user?.bio && <p className="text-sm text-white/70 mt-2">{user.bio}</p>}
                   </>
                 )}
               </div>
             </div>
-            {!editing && (
-              <button
-                onClick={() => setEditing(true)}
-                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-200 flex items-center gap-2"
-              >
-                <Edit2 className="w-4 h-4" />
-                Edit Profile
-              </button>
-            )}
           </div>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* Stats Grid */}
         {stats && (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard
               icon={<Star className="w-6 h-6" />}
               label="Level"
@@ -202,56 +200,61 @@ export default function Profile() {
 
         {/* XP Progress */}
         {stats && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+          <Card>
+            <CardContent className="pt-6">
             <div className="flex items-center justify-between mb-2">
-              <h3 className="text-lg font-semibold text-gray-900">Level Progress</h3>
-              <span className="text-sm text-gray-600">
+              <h3 className="text-lg font-semibold text-white">Level progress</h3>
+              <span className="text-sm text-white/60">
                 {stats.xpNeeded} XP to Level {stats.level + 1}
               </span>
             </div>
-            <div className="w-full bg-gray-100 rounded-full h-3">
+            <div className="w-full bg-white/5 rounded-full h-3 border border-white/10 overflow-hidden">
               <div
-                className="bg-gradient-to-r from-blue-600 to-indigo-600 h-3 rounded-full transition-all duration-500"
+                className="bg-primary-500/80 h-3 rounded-full transition-all duration-200"
                 style={{ width: `${stats.progressToNextLevel}%` }}
               ></div>
             </div>
-            <div className="mt-2 text-sm text-gray-600">
+            <div className="mt-2 text-sm text-white/60">
               Level {stats.level} • {stats.xp} / {stats.xpForNextLevel} XP
             </div>
-          </div>
+            </CardContent>
+          </Card>
         )}
 
         {/* Achievements */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <Card>
+          <CardContent className="pt-6">
           <div className="flex items-center gap-2 mb-4">
-            <Trophy className="w-6 h-6 text-yellow-500" />
-            <h3 className="text-lg font-semibold text-gray-900">Achievements</h3>
-            <span className="text-sm text-gray-600">
-              ({achievements.length} unlocked)
-            </span>
+            <Trophy className="w-5 h-5 text-yellow-300" />
+            <h3 className="text-lg font-semibold text-white">Achievements</h3>
+            <span className="text-sm text-white/60">({achievements.length} unlocked)</span>
           </div>
           {achievements.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">No achievements unlocked yet. Keep practicing!</p>
+            <EmptyState
+              icon={Award}
+              title="No achievements yet"
+              description="Complete your first interview or solve a coding challenge to start unlocking milestones."
+            />
           ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {achievements.map((achievement) => (
                 <div
                   key={achievement.id}
-                  className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                  className="rounded-xl border border-white/10 bg-white/5 p-4 modern-card hover:border-white/15 transition-colors"
                 >
                   <div className="flex items-start gap-3">
-                    <div className="w-12 h-12 bg-yellow-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <Award className="w-6 h-6 text-yellow-600" />
+                    <div className="w-10 h-10 bg-white/5 rounded-lg border border-white/10 flex items-center justify-center flex-shrink-0">
+                      <Award className="w-5 h-5 text-yellow-300" />
                     </div>
                     <div className="flex-1">
-                      <h4 className="font-semibold text-gray-900">{achievement.name}</h4>
-                      <p className="text-sm text-gray-600 mt-1">{achievement.description}</p>
+                      <h4 className="font-semibold text-white">{achievement.name}</h4>
+                      <p className="text-sm text-white/70 mt-1">{achievement.description}</p>
                       <div className="flex items-center gap-2 mt-2">
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-white/60">
                           +{achievement.xpReward} XP
                         </span>
-                        <span className="text-xs text-gray-400">•</span>
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-white/30">•</span>
+                        <span className="text-xs text-white/60">
                           {new Date(achievement.unlockedAt).toLocaleDateString()}
                         </span>
                       </div>
@@ -261,7 +264,8 @@ export default function Profile() {
               ))}
             </div>
           )}
-        </div>
+          </CardContent>
+        </Card>
       </main>
     </div>
   );
@@ -269,14 +273,14 @@ export default function Profile() {
 
 function StatCard({ icon, label, value, subValue }) {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+    <Card className="p-4">
       <div className="flex items-center gap-3 mb-2">
-        <div className="text-blue-600">{icon}</div>
-        <span className="text-sm text-gray-600">{label}</span>
+        <div className="text-primary-300">{icon}</div>
+        <span className="text-sm text-white/70">{label}</span>
       </div>
-      <p className="text-2xl font-bold text-gray-900">{value}</p>
-      {subValue && <p className="text-xs text-gray-500 mt-1">{subValue}</p>}
-    </div>
+      <p className="text-2xl font-semibold text-white">{value}</p>
+      {subValue && <p className="text-xs text-white/60 mt-1">{subValue}</p>}
+    </Card>
   );
 }
 

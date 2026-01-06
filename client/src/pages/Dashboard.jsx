@@ -1,7 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, Target, Map, MessageSquare, Plus, TrendingUp, Calendar, Clock, Sparkles, Code, Trophy, History, Terminal, ArrowRight, Star, Flame, Award, User } from 'lucide-react';
+import { FileText, Target, Map, MessageSquare, Calendar, Clock, Terminal, ArrowRight, Star, Flame, Award, Trophy, User } from 'lucide-react';
 import { userAPI, resumeAPI, roadmapAPI, interviewAPI } from '../services/api';
+import PageHeader from '../components/ui/PageHeader';
+import Button from '../components/ui/Button';
+import { Card, CardContent } from '../components/ui/Card';
+import { PageSkeleton } from '../components/ui/Skeleton';
 
 export default function Dashboard() {
   const [userId] = useState(1); // Demo user
@@ -68,79 +72,84 @@ export default function Dashboard() {
   const progress = roadmap?.progress_percentage || 0;
 
   if (loading) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading your career dashboard...</p>
-        </div>
-      </div>
-    );
+    return <PageSkeleton />;
   }
 
   return (
-    <div className="min-h-screen">
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-white" />
-            </div>
-            <h1 className="text-xl font-bold text-gray-900">CareerPilot Dashboard</h1>
-          </div>
-          <div className="text-sm text-gray-600">
-            {user ? `${getGreeting()}, ${user.name || 'User'}!` : 'Welcome'}
-          </div>
-        </div>
+    <div className="cp-page">
+      <main className="cp-page-inner max-w-6xl space-y-6">
+        <PageHeader
+          title="Dashboard"
+          description={
+            user
+              ? `${getGreeting()}, ${user.name || 'User'}. Here’s your progress and the next best step.`
+              : 'Your progress and the next best step.'
+          }
+          actions={
+            <>
+              <Link to="/interview">
+                <Button>
+                  <MessageSquare className="w-4 h-4" />
+                  Start interview
+                </Button>
+              </Link>
+              <Link to="/practice">
+                <Button variant="secondary">
+                  <Terminal className="w-4 h-4" />
+                  Practice
+                </Button>
+              </Link>
+            </>
+          }
+        />
         {/* Top Section */}
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
+        <div className="grid md:grid-cols-3 gap-6">
           {/* Greeting Card */}
-          <div className="md:col-span-2 bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-            <div className="flex items-center gap-3 mb-4">
-              <Sparkles className="w-5 h-5 text-blue-600" />
-              <h2 className="text-2xl font-bold text-gray-900">
-                {getGreeting()}, {user?.name || 'anurag'}!
-              </h2>
-            </div>
-            <p className="text-gray-600 mb-6">
-              Start your interview preparation journey with our AI-powered platform.
+          <Card className="md:col-span-2">
+            <CardContent className="pt-6">
+            <h2 className="text-xl font-semibold text-white">
+              {user ? `${getGreeting()}, ${user.name || 'User'}` : 'Welcome back'}
+            </h2>
+            <p className="text-sm text-white/70 mt-1">
+              Keep momentum: a small session today compounds over time.
             </p>
             
             {/* XP and Level Display */}
             {userStats && (
-              <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+              <div className="mt-5 p-4 rounded-xl border border-white/10 bg-white/5">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <Star className="w-5 h-5 text-yellow-500" />
-                    <span className="font-semibold text-gray-900">Level {userStats.level}</span>
+                    <Star className="w-4 h-4 text-yellow-300" />
+                    <span className="font-semibold text-white">Level {userStats.level}</span>
                   </div>
-                  <span className="text-sm font-semibold text-gray-700">{userStats.xp.toLocaleString()} XP</span>
+                  <span className="text-sm font-semibold text-white/70">{userStats.xp.toLocaleString()} XP</span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                <div className="w-full bg-white/5 rounded-full h-2.5 mb-2 border border-white/10 overflow-hidden">
                   <div
-                    className="bg-gradient-to-r from-blue-600 to-indigo-600 h-2 rounded-full transition-all duration-500"
+                    className="bg-primary-500/80 h-2.5 rounded-full transition-all duration-200"
                     style={{ width: `${userStats.progressToNextLevel}%` }}
                   ></div>
                 </div>
-                <p className="text-xs text-gray-600">
+                <p className="text-xs text-white/60">
                   {userStats.xpNeeded} XP to Level {userStats.level + 1}
                 </p>
               </div>
             )}
 
-            <div>
+            <div className="mt-5">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-gray-600">Your Progress</span>
-                <span className="text-sm font-semibold text-gray-900">{isNaN(progress) ? '0' : Math.round(progress)}%</span>
+                <span className="text-sm text-white/70">Roadmap progress</span>
+                <span className="text-sm font-semibold text-white">{isNaN(progress) ? '0' : Math.round(progress)}%</span>
               </div>
-              <div className="w-full bg-gray-100 rounded-full h-2.5">
+              <div className="w-full bg-white/5 rounded-full h-2.5 border border-white/10 overflow-hidden">
                 <div
-                  className="bg-gradient-to-r from-blue-600 to-indigo-600 h-2.5 rounded-full transition-all duration-500"
+                  className="bg-primary-500/80 h-2.5 rounded-full transition-all duration-200"
                   style={{ width: `${isNaN(progress) ? 0 : Math.round(progress)}%` }}
                 ></div>
               </div>
             </div>
-          </div>
+            </CardContent>
+          </Card>
 
           {/* Stats Cards */}
           <div className="space-y-4">
@@ -166,15 +175,16 @@ export default function Dashboard() {
 
         {/* Recent Achievements */}
         {recentAchievements.length > 0 && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+          <Card>
+            <CardContent className="pt-6">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <Trophy className="w-5 h-5 text-yellow-500" />
-                <h3 className="text-lg font-semibold text-gray-900">Recent Achievements</h3>
+                <Trophy className="w-5 h-5 text-yellow-300" />
+                <h3 className="text-lg font-semibold text-white">Recent achievements</h3>
               </div>
               <Link
                 to="/profile"
-                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                className="text-sm text-white/70 hover:text-white transition-colors"
               >
                 View All
               </Link>
@@ -183,26 +193,27 @@ export default function Dashboard() {
               {recentAchievements.map((achievement) => (
                 <div
                   key={achievement.id}
-                  className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                  className="rounded-xl border border-white/10 bg-white/5 p-4 modern-card hover:border-white/15 transition-colors"
                 >
                   <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 bg-yellow-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <Award className="w-5 h-5 text-yellow-600" />
+                    <div className="w-10 h-10 bg-white/5 border border-white/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <Award className="w-5 h-5 text-yellow-300" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-semibold text-gray-900 text-sm">{achievement.name}</h4>
-                      <p className="text-xs text-gray-600 mt-1 line-clamp-2">{achievement.description}</p>
-                      <p className="text-xs text-gray-500 mt-2">+{achievement.xpReward} XP</p>
+                      <h4 className="font-semibold text-white text-sm">{achievement.name}</h4>
+                      <p className="text-xs text-white/70 mt-1 line-clamp-2">{achievement.description}</p>
+                      <p className="text-xs text-white/60 mt-2">+{achievement.xpReward} XP</p>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
-          </div>
+            </CardContent>
+          </Card>
         )}
 
         {/* Performance Metrics */}
-        <div className="grid sm:grid-cols-3 gap-6 mb-8">
+        <div className="grid sm:grid-cols-3 gap-6">
           <MetricCard
             label="Total Completed Interviews"
             value={interviewStats.completed}
@@ -218,42 +229,6 @@ export default function Dashboard() {
             value={`${interviewStats.streak} days`}
             hint="Build your streak!"
           />
-        </div>
-
-        {/* Quick Actions */}
-        <div className="mb-8">
-          <div className="flex items-center gap-2 mb-4">
-            <Sparkles className="w-5 h-5 text-blue-600" />
-            <h2 className="text-xl font-bold text-gray-900">Quick Actions</h2>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <QuickActionButton
-              icon={<Plus className="w-6 h-6" />}
-              title="Start Interview"
-              description="Begin a new practice session"
-              link="/interview"
-            />
-            <QuickActionButton
-              icon={<Code className="w-6 h-6" />}
-              title="Technical Challenges"
-              description="Practice coding problems"
-              link="#"
-              disabled
-              comingSoon
-            />
-            <QuickActionButton
-              icon={<Trophy className="w-6 h-6" />}
-              title="Leaderboard"
-              description="See top performers"
-              link="#"
-            />
-            <QuickActionButton
-              icon={<History className="w-6 h-6" />}
-              title="Interview History"
-              description="View your past interviews"
-              link="/interview"
-            />
-          </div>
         </div>
 
         {/* Main Actions Grid */}
@@ -308,67 +283,44 @@ export default function Dashboard() {
 
 function StatCard({ icon, label, value }) {
   return (
-    <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+    <Card className="p-4">
       <div className="flex items-center gap-3 mb-2">
-        <div className="text-blue-600">{icon}</div>
-        <span className="text-sm text-gray-600">{label}</span>
+        <div className="text-primary-300">{icon}</div>
+        <span className="text-sm text-white/70">{label}</span>
       </div>
-      <p className="text-2xl font-bold text-gray-900">{value}</p>
-    </div>
+      <p className="text-2xl font-semibold text-white">{value}</p>
+    </Card>
   );
 }
 
 function MetricCard({ label, value, hint }) {
   return (
-    <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-      <p className="text-sm text-gray-600 mb-2">{label}</p>
-      <p className="text-3xl font-bold text-gray-900 mb-2">{value}</p>
-      <p className="text-xs text-gray-500">{hint}</p>
-    </div>
+    <Card>
+      <CardContent className="pt-6">
+        <p className="text-sm text-white/70 mb-2">{label}</p>
+        <p className="text-3xl font-semibold text-white mb-2">{value}</p>
+        <p className="text-xs text-white/50">{hint}</p>
+      </CardContent>
+    </Card>
   );
-}
-
-function QuickActionButton({ icon, title, description, link, disabled = false, comingSoon = false }) {
-  const content = (
-    <div className={`bg-white rounded-xl p-5 border border-gray-200 shadow-sm transition-all relative ${
-      disabled ? 'opacity-60 cursor-not-allowed' : 'hover:shadow-md cursor-pointer hover:border-gray-300'
-    } min-h-[120px] flex flex-col justify-between`}>
-      {comingSoon && (
-        <div className="absolute top-2 right-2 bg-yellow-100 text-yellow-800 text-xs font-semibold px-2 py-1 rounded">
-          Coming Soon
-        </div>
-      )}
-      <div className="text-blue-600 mb-3">{icon}</div>
-      <div className="w-full">
-        {title && <h3 className="text-base font-semibold text-gray-900 mb-1">{title}</h3>}
-        {description && <p className="text-xs text-gray-600 leading-relaxed">{description}</p>}
-      </div>
-    </div>
-  );
-
-  if (disabled || link === '#') {
-    return content;
-  }
-
-  return <Link to={link}>{content}</Link>;
 }
 
 function ActionCard({ icon, title, description, link, hasData }) {
   return (
     <Link
       to={link}
-      className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm group hover:shadow-md transition-all"
+      className="glass-card rounded-xl p-6 border border-white/10 group modern-card hover:border-white/15 transition-colors"
     >
       <div className="flex items-start gap-4">
-        <div className="text-blue-600 group-hover:text-blue-700 transition-colors">
+        <div className="text-primary-300 transition-colors">
           {icon}
         </div>
         <div className="flex-1">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
-          <p className="text-gray-600 mb-4 text-sm">{description}</p>
-          <div className="flex items-center text-blue-600 group-hover:text-blue-700 font-medium text-sm">
+          <h3 className="text-lg font-semibold text-white mb-2">{title}</h3>
+          <p className="text-white/70 mb-4 text-sm">{description}</p>
+          <div className="flex items-center text-white/70 group-hover:text-white font-medium text-sm transition-colors">
             {hasData ? 'View Details' : 'Get Started'}
-            <ArrowRight className="w-4 h-4 ml-2" />
+            <ArrowRight className="w-4 h-4 ml-2 text-white/50 group-hover:text-white/80" />
           </div>
         </div>
       </div>

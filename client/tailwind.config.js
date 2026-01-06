@@ -6,6 +6,9 @@ export default {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+      },
       colors: {
         primary: {
           50: '#f0f9ff',
@@ -20,10 +23,14 @@ export default {
           900: '#0c4a6e',
         },
       },
+      boxShadow: {
+        'soft': '0 1px 0 rgba(255,255,255,0.04) inset, 0 18px 50px rgba(0,0,0,0.35)',
+      },
     },
   },
   plugins: [],
 };
+
 
 
 

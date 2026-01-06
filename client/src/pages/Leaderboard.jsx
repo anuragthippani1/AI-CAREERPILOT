@@ -2,6 +2,11 @@ import { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Trophy, Medal, Award, Flame, MessageSquare, Star, Crown, Info } from 'lucide-react';
 import { leaderboardAPI } from '../services/api';
+import PageHeader from '../components/ui/PageHeader';
+import Button from '../components/ui/Button';
+import Badge from '../components/ui/Badge';
+import { Card, CardContent } from '../components/ui/Card';
+import { Skeleton } from '../components/ui/Skeleton';
 
 function getUserIdFromStorageOrUrl() {
   try {
@@ -162,19 +167,13 @@ export default function Leaderboard() {
   };
 
   return (
-    <div className="min-h-screen relative z-10">
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-6xl">
-        <div className="flex items-start justify-between gap-4 mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-white">Leaderboard</h1>
-            <p className="text-white/70 text-sm mt-1">Climb ranks by practicing consistently — small wins add up.</p>
-          </div>
-          {isDemo && (
-            <div className="glass-card px-3 py-1.5 rounded-lg text-xs text-white/90 border border-white/10">
-              Preview / Demo Leaderboard
-            </div>
-          )}
-        </div>
+    <div className="cp-page">
+      <main className="cp-page-inner max-w-6xl space-y-6">
+        <PageHeader
+          title="Leaderboard"
+          description="A snapshot of consistent practice — and where you stand."
+          actions={isDemo ? <Badge variant="neutral">Preview data</Badge> : null}
+        />
 
         {/* Tabs */}
         <div className="glass-card rounded-xl p-1 mb-6 flex gap-1">
@@ -215,10 +214,16 @@ export default function Leaderboard() {
 
         {/* Loading / Error / Empty */}
         {loading && leaderboard.length === 0 && (
-          <div className="glass-card rounded-xl p-10 text-center">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-white/60 mx-auto" />
-            <p className="mt-4 text-white/70">Loading leaderboard…</p>
-          </div>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="space-y-3">
+                <Skeleton className="h-4 w-40" />
+                <Skeleton className="h-12 rounded-xl" />
+                <Skeleton className="h-12 rounded-xl" />
+                <Skeleton className="h-12 rounded-xl" />
+              </div>
+            </CardContent>
+          </Card>
         )}
 
         {!loading && error && leaderboard.length === 0 && (
@@ -227,18 +232,8 @@ export default function Leaderboard() {
             <p className="text-white font-semibold">Leaderboard temporarily unavailable</p>
             <p className="text-white/70 text-sm mt-1">{error}</p>
             <div className="mt-5 flex items-center justify-center gap-2">
-              <button
-                onClick={loadLeaderboard}
-                className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/15 text-white text-sm font-semibold border border-white/10"
-              >
-                Retry
-              </button>
-              <button
-                onClick={() => navigate('/practice')}
-                className="px-4 py-2 rounded-lg bg-blue-500/80 hover:bg-blue-500 text-white text-sm font-semibold"
-              >
-                Practice challenges
-              </button>
+              <Button variant="secondary" onClick={loadLeaderboard}>Retry</Button>
+              <Button onClick={() => navigate('/practice')}>Practice challenges</Button>
             </div>
           </div>
         )}

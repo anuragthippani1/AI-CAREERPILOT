@@ -1,6 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Map, Calendar, CheckCircle, Loader, Target } from 'lucide-react';
 import { roadmapAPI, skillsAPI } from '../services/api';
+import PageHeader from '../components/ui/PageHeader';
+import Button from '../components/ui/Button';
+import { Card, CardContent } from '../components/ui/Card';
+import EmptyState from '../components/ui/EmptyState';
+import { PageSkeleton } from '../components/ui/Skeleton';
 
 function getUserIdFromStorageOrUrl() {
   try {
@@ -117,33 +122,35 @@ export default function CareerRoadmap() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="text-center">
-          <Loader className="w-12 h-12 animate-spin text-white/70 mx-auto mb-4" />
-          <p className="text-white/70">Generating your career roadmap...</p>
-        </div>
-      </div>
-    );
+    return <PageSkeleton />;
   }
 
   return (
-    <div className="min-h-screen">
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-6xl">
-        <h1 className="text-xl font-bold text-white mb-6">Career Roadmap</h1>
+    <div className="cp-page">
+      <main className="cp-page-inner max-w-6xl space-y-6">
+        <PageHeader
+          title="Career roadmap"
+          description="A milestone-based plan you can execute week by week."
+          actions={
+            <Button onClick={generateRoadmap}>
+              <Map className="w-4 h-4" />
+              {roadmap ? 'Regenerate' : 'Generate'}
+            </Button>
+          }
+        />
         {error ? (
-          <div className="glass-card border border-red-500/30 rounded-lg p-6">
-            <p className="text-red-200">{error}</p>
-            <button
-              onClick={generateRoadmap}
-              className="mt-4 bg-blue-500/80 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-sm hover:shadow-md"
-            >
-              Try Generating Roadmap
-            </button>
-          </div>
+          <Card className="border border-red-500/25">
+            <CardContent className="pt-6">
+              <p className="text-red-200 text-sm">{error}</p>
+              <div className="mt-4">
+                <Button onClick={generateRoadmap}>Try again</Button>
+              </div>
+            </CardContent>
+          </Card>
         ) : roadmap ? (
           <div className="space-y-8">
-            <div className="glass-card rounded-xl border border-white/10 p-8">
+            <Card>
+              <CardContent className="pt-6">
               <div className="flex items-center gap-3 mb-6">
                 <Map className="w-8 h-8 text-blue-400" />
                 <div>
@@ -177,7 +184,7 @@ export default function CareerRoadmap() {
               )}
 
               {roadmap.roadmap_json?.recommendations && roadmap.roadmap_json.recommendations.length > 0 && (
-                <div className="mt-8 p-6 bg-white/5 border border-white/10 rounded-lg">
+                <div className="mt-8 p-6 bg-white/5 border border-white/10 rounded-xl">
                   <h3 className="font-semibold text-white mb-3">Recommendations</h3>
                   <ul className="space-y-2">
                     {roadmap.roadmap_json.recommendations.map((rec, i) => (
@@ -189,20 +196,25 @@ export default function CareerRoadmap() {
                   </ul>
                 </div>
               )}
-            </div>
+              </CardContent>
+            </Card>
           </div>
         ) : (
-          <div className="glass-card rounded-xl border border-white/10 p-8 text-center">
-            <Map className="w-16 h-16 text-white/40 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-white mb-2">No Roadmap Yet</h3>
-            <p className="text-white/70 mb-6">Generate your personalized career roadmap</p>
-            <button
-              onClick={generateRoadmap}
-              className="bg-blue-500/80 hover:bg-blue-500 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
-            >
-              Generate Roadmap
-            </button>
-          </div>
+          <Card>
+            <CardContent className="pt-6">
+              <EmptyState
+                icon={Map}
+                title="No roadmap yet"
+                description="Generate a personalized roadmap to stay focused and measure progress."
+                primaryAction={
+                  <Button onClick={generateRoadmap}>
+                    <Map className="w-4 h-4" />
+                    Generate roadmap
+                  </Button>
+                }
+              />
+            </CardContent>
+          </Card>
         )}
       </main>
     </div>
