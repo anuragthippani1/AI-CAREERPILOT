@@ -6,6 +6,7 @@ import PageHeader from '../components/ui/PageHeader';
 import Button from '../components/ui/Button';
 import { Card, CardContent } from '../components/ui/Card';
 import { PageSkeleton } from '../components/ui/Skeleton';
+import MotionDebug from '../components/MotionDebug';
 
 export default function Dashboard() {
   const [userId] = useState(1); // Demo user
@@ -84,6 +85,7 @@ export default function Dashboard() {
 
   return (
     <div className="cp-page">
+      <MotionDebug />
       <main className="cp-page-inner max-w-6xl space-y-6">
         <PageHeader
           title="Dashboard"

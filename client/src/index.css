@@ -153,6 +153,9 @@ body::after {
   min-height: 100vh;
   position: relative;
   z-index: 1;
+  /* Global perspective for 3D transforms */
+  perspective: 1200px;
+  transform-style: preserve-3d;
 }
 
 /* Premium elevated surface: clear separation from background */
@@ -164,19 +167,14 @@ body::after {
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.035) inset,
     0 0 0 1px rgba(0, 0, 0, 0.12),
-    0 20px 60px rgba(0, 0, 0, 0.42),
-    0 8px 24px rgba(0, 0, 0, 0.28);
+    0 18px 50px rgba(0, 0, 0, 0.38),
+    0 8px 22px rgba(0, 0, 0, 0.26);
+  transition: background 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
 }
 
 .glass-card:hover {
   background: rgba(255, 255, 255, 0.048);
   border-color: rgba(255, 255, 255, 0.105);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.042) inset,
-    0 0 0 1px rgba(0, 0, 0, 0.10),
-    0 24px 70px rgba(0, 0, 0, 0.46),
-    0 10px 28px rgba(0, 0, 0, 0.32);
-  transition: background 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
 }
 
 /* Modern Card Hover Effects */
@@ -189,25 +187,33 @@ body::after {
    Subtle, consistent, premium interaction feedback
    ============================================ */
 
-/* Card 3D depth on hover (perceptible lift + shadow) */
+/* Card 3D depth on hover (clearly perceptible lift + shadow delta) */
 .cp-card-depth {
   transform-style: preserve-3d;
+  will-change: transform, box-shadow;
   transition: 
     transform var(--motion-duration-fast) var(--motion-easing-accelerate),
     box-shadow var(--motion-duration-fast) var(--motion-easing-standard);
 }
 
 .cp-card-depth:hover {
-  transform: translateY(calc(-1 * var(--motion-distance-sm))) scale(1.015);
+  transform: translateY(-6px) scale(1.02);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.042) inset,
-    0 0 0 1px rgba(0, 0, 0, 0.10),
-    0 24px 70px rgba(0, 0, 0, 0.48),
-    0 10px 30px rgba(0, 0, 0, 0.35);
+    0 1px 0 rgba(255, 255, 255, 0.05) inset,
+    0 0 0 1px rgba(0, 0, 0, 0.08),
+    0 28px 80px rgba(0, 0, 0, 0.52),
+    0 12px 35px rgba(0, 0, 0, 0.38);
 }
 
-/* Interactive card with gentle 3D lift */
+.cp-card-depth:active {
+  transform: translateY(-2px) scale(1.01);
+  transition-duration: var(--motion-duration-instant);
+}
+
+/* Interactive card with perceptible 3D lift */
 .cp-card-interactive {
+  transform-style: preserve-3d;
+  will-change: transform, box-shadow;
   transition: 
     transform var(--motion-duration-fast) var(--motion-easing-accelerate),
     box-shadow var(--motion-duration-fast) var(--motion-easing-standard),
@@ -215,39 +221,44 @@ body::after {
 }
 
 .cp-card-interactive:hover {
-  transform: translateY(calc(-1 * var(--motion-distance-xs)));
-  border-color: rgba(255, 255, 255, 0.14);
+  transform: translateY(-4px) scale(1.01);
+  border-color: rgba(255, 255, 255, 0.16);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.04) inset,
-    0 0 0 1px rgba(0, 0, 0, 0.10),
-    0 20px 60px rgba(0, 0, 0, 0.44),
-    0 8px 24px rgba(0, 0, 0, 0.32);
+    0 1px 0 rgba(255, 255, 255, 0.045) inset,
+    0 0 0 1px rgba(0, 0, 0, 0.08),
+    0 24px 70px rgba(0, 0, 0, 0.48),
+    0 10px 30px rgba(0, 0, 0, 0.36);
 }
 
 .cp-card-interactive:active {
-  transform: translateY(0);
+  transform: translateY(-1px);
   transition-duration: var(--motion-duration-instant);
 }
 
-/* Button press feedback (tactile response) */
+/* Button press feedback (clearly tactile response) */
 .cp-button-press {
+  will-change: transform;
   transition: 
     transform var(--motion-duration-instant) var(--motion-easing-standard),
     box-shadow var(--motion-duration-instant) var(--motion-easing-standard);
 }
 
-.cp-button-press:active {
-  transform: translateY(1px) scale(0.99);
-  box-shadow: 
-    0 1px 3px rgba(0, 0, 0, 0.35),
-    0 2px 8px rgba(0, 0, 0, 0.25);
+.cp-button-press:hover {
+  transform: translateY(-1px);
 }
 
-/* Page enter animations (consistent, perceptible) */
+.cp-button-press:active {
+  transform: translateY(2px) scale(0.98);
+  box-shadow: 
+    0 1px 2px rgba(0, 0, 0, 0.4),
+    0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* Page enter animations (clearly perceptible) */
 @keyframes cp-fade-up {
   from {
     opacity: 0;
-    transform: translateY(var(--motion-distance-md));
+    transform: translateY(16px);
   }
   to {
     opacity: 1;
