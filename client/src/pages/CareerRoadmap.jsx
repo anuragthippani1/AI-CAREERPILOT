@@ -635,15 +635,22 @@ export default function CareerRoadmap() {
       setLoading(true);
       setError(null);
 
-      // Try to get skill gap, but don't fail if it doesn't exist
+      // Try to get latest skill gap analysis (use persisted if available, otherwise generate new)
       let skillGap = null;
       try {
-        const skillGapRes = await skillsAPI.analyze({ userId });
-        // Orchestrator response shape: { success, data: { success, data } }
-        const gap = skillGapRes?.data?.data?.data;
-        skillGap = gap || null;
+        // First, try to load the latest persisted analysis
+        const gapAnalysesRes = await skillsAPI.getGapAnalyses(userId);
+        if (gapAnalysesRes?.data?.success && gapAnalysesRes.data.data?.length > 0) {
+          skillGap = gapAnalysesRes.data.data[0].analysis;
+        } else {
+          // No persisted analysis, generate a new one
+          const skillGapRes = await skillsAPI.analyze({ userId });
+          // Orchestrator response shape: { success, data: { success, data } }
+          const gap = skillGapRes?.data?.data?.data;
+          skillGap = gap || null;
+        }
       } catch {
-        // safe fallback
+        // safe fallback - generate roadmap without skill gap
         skillGap = null;
       }
 

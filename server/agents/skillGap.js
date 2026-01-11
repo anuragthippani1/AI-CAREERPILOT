@@ -167,6 +167,9 @@ Analyze the skill gap and provide recommendations in JSON format:
       // Save missing skills to database
       await this.saveMissingSkills(context.userId, gapAnalysis.missingCritical || []);
 
+      // Save complete analysis to database
+      const analysisId = await this.saveAnalysis(context.userId, targetRole, gapAnalysis);
+
       const executionTime = Date.now() - startTime;
       await logAgentAction(
         context.userId,
@@ -180,7 +183,7 @@ Analyze the skill gap and provide recommendations in JSON format:
 
       return {
         success: true,
-        data: gapAnalysis
+        data: { ...gapAnalysis, analysisId }
       };
 
     } catch (error) {
@@ -214,6 +217,29 @@ Analyze the skill gap and provide recommendations in JSON format:
          ON DUPLICATE KEY UPDATE skill_name = skill_name`,
         [userId, skill.skill]
       );
+    }
+  }
+
+  /**
+   * Save complete skill gap analysis to database
+   */
+  async saveAnalysis(userId, targetRole, analysis) {
+    try {
+      const [result] = await db.query(
+        `INSERT INTO skill_gap_analyses 
+         (user_id, target_role, analysis_json, current_match_percentage)
+         VALUES (?, ?, ?, ?)`,
+        [
+          userId,
+          targetRole,
+          JSON.stringify(analysis),
+          analysis.currentMatchPercentage || null
+        ]
+      );
+      return result.insertId;
+    } catch (error) {
+      console.error('Error saving skill gap analysis:', error);
+      throw error;
     }
   }
 }
