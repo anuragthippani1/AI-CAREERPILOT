@@ -22,9 +22,10 @@ export default function SkillGap() {
   const loadAnalysis = async () => {
     try {
       setLoading(true);
-      const [resumeRes, userRes] = await Promise.allSettled([
+      const [resumeRes, userRes, gapAnalysesRes] = await Promise.allSettled([
         resumeAPI.get(userId),
         userAPI.get(userId),
+        skillsAPI.getGapAnalyses(userId),
       ]);
 
       if (resumeRes.status === 'fulfilled' && resumeRes.value.data.data) {
@@ -36,6 +37,22 @@ export default function SkillGap() {
         if (parsedResumeAnalysis) {
           // Store for later analysis (requires a target role/goal)
           setResumeAnalysis(parsedResumeAnalysis);
+          // Pre-fill target role from resume if available
+          if (parsedResumeAnalysis.targetRole && !targetRole) {
+            setTargetRole(parsedResumeAnalysis.targetRole);
+          }
+        }
+      }
+
+      // Load most recent skill gap analysis if available
+      if (gapAnalysesRes.status === 'fulfilled' && gapAnalysesRes.value.data.success) {
+        const analyses = gapAnalysesRes.value.data.data || [];
+        if (analyses.length > 0) {
+          const latest = analyses[0];
+          setAnalysis(latest.analysis);
+          if (latest.targetRole && !targetRole) {
+            setTargetRole(latest.targetRole);
+          }
         }
       }
     } catch (err) {

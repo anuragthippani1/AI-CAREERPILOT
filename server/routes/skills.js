@@ -63,6 +63,48 @@ router.get('/:userId',
   }
 });
 
+// GET /api/skills/gap-analyses/:userId
+// Get skill gap analysis history for a user
+router.get('/gap-analyses/:userId',
+  param('userId').isInt({ min: 1 }).withMessage('User ID must be a positive integer'),
+  async (req, res, next) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          success: false,
+          error: 'Validation failed',
+          details: errors.array()
+        });
+      }
+
+      const db = require('../config/database');
+      const userId = parseInt(req.params.userId);
+
+      const [analyses] = await db.query(
+        `SELECT id, target_role, analysis_json, current_match_percentage, created_at
+         FROM skill_gap_analyses
+         WHERE user_id = ?
+         ORDER BY created_at DESC`,
+        [userId]
+      );
+
+      // Parse JSON for each analysis
+      const parsedAnalyses = analyses.map(a => ({
+        id: a.id,
+        targetRole: a.target_role,
+        currentMatchPercentage: a.current_match_percentage,
+        createdAt: a.created_at,
+        analysis: typeof a.analysis_json === 'string' ? JSON.parse(a.analysis_json) : a.analysis_json
+      }));
+
+      res.json({ success: true, data: parsedAnalyses });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
 module.exports = router;
 
 

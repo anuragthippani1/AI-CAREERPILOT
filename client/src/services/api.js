@@ -21,6 +21,7 @@ export const resumeAPI = {
 export const skillsAPI = {
   analyze: (data) => api.post('/skills/analyze', data),
   get: (userId) => api.get(`/skills/${userId}`),
+  getGapAnalyses: (userId) => api.get(`/skills/gap-analyses/${userId}`),
 };
 
 // Roadmap API
