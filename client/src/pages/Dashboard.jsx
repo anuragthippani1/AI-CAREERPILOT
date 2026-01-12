@@ -17,6 +17,7 @@ export default function Dashboard() {
   const [userStats, setUserStats] = useState(null);
   const [recentAchievements, setRecentAchievements] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     loadDashboard();
@@ -32,6 +33,7 @@ export default function Dashboard() {
   const loadDashboard = async () => {
     try {
       setLoading(true);
+      setError(null);
       const [userRes, resumeRes, roadmapRes, interviewRes, statsRes, achievementsRes] = await Promise.allSettled([
         userAPI.get(userId),
         resumeAPI.get(userId),
@@ -50,7 +52,7 @@ export default function Dashboard() {
         // Get 3 most recent achievements
         setRecentAchievements(achievements.slice(0, 3));
       }
-      
+
       if (interviewRes.status === 'fulfilled' && interviewRes.value.data.success) {
         const sessions = interviewRes.value.data.data || [];
         const completed = sessions.filter(s => s.status === 'completed');
@@ -65,6 +67,7 @@ export default function Dashboard() {
       }
     } catch (error) {
       console.error('Error loading dashboard:', error);
+      setError('Failed to load dashboard data. Please check the backend/API connection and try again.');
     } finally {
       setLoading(false);
     }
@@ -111,6 +114,22 @@ export default function Dashboard() {
             </>
           }
         />
+
+        {error && (
+          <Card>
+            <CardContent className="pt-6">
+              <div className="bg-red-500/10 border border-red-500/25 rounded-lg p-4 flex items-start gap-2">
+                <AlertCircle className="w-5 h-5 text-red-300 mt-0.5" />
+                <p className="text-red-200 text-sm flex-1">{error}</p>
+              </div>
+              <div className="mt-4">
+                <Button variant="secondary" onClick={loadDashboard}>
+                  Retry loading dashboard
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
         {/* Top Section */}
         <div className="grid md:grid-cols-3 gap-6 cp-fade-in">
           {/* Greeting Card */}

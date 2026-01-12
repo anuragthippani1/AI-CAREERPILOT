@@ -39,12 +39,13 @@ CareerPilot is an AI-powered Career Operating System that helps professionals pr
 - Identifies missing critical skills with priority levels
 - Provides learning resources and estimated time to acquire skills
 - Tracks existing strengths
+- **Persists analysis history** so you can see trends in your match score over time
 
 ### 🗺️ Career Roadmaps
 - Personalized step-by-step career roadmaps
 - Short-term (0-3 months), medium-term (3-6 months), and long-term (6-12+ months) goals
 - Actionable milestones with timelines
-- Progress tracking
+- **Server-backed task progress tracking** (persists across sessions and regenerations)
 
 ### 💬 AI Mock Interviews
 - **5 Interview Types**: Technical, Behavioral, Mixed, System Design, Leadership
