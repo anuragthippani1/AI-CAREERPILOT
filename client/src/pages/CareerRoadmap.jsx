@@ -506,6 +506,8 @@ export default function CareerRoadmap() {
   const [interviewSummary, setInterviewSummary] = useState({ completed: 0, avgScore: null });
 
   const [taskState, setTaskState] = useState({});
+  const [taskStateLastSyncedAt, setTaskStateLastSyncedAt] = useState(null);
+  const [dataLastLoadedAt, setDataLastLoadedAt] = useState(null);
   const [openPhaseId, setOpenPhaseId] = useState(null);
   const navigate = useNavigate();
   const taskRefs = useRef({});
@@ -520,6 +522,7 @@ export default function CareerRoadmap() {
           setTaskState(backendState);
           // Update cache
           saveRoadmapTaskStateToCache(userId, backendState);
+          setTaskStateLastSyncedAt(new Date().toISOString());
         }
       } catch (error) {
         console.warn('Failed to load task state from backend, using cache:', error);
@@ -573,6 +576,8 @@ export default function CareerRoadmap() {
             : null;
         setInterviewSummary({ completed: completed.length, avgScore: avg });
       }
+
+      setDataLastLoadedAt(new Date().toISOString());
     } catch (e) {
       setError(e?.response?.data?.error || e?.message || 'Failed to load roadmap');
     } finally {
@@ -712,6 +717,43 @@ export default function CareerRoadmap() {
   const allTasks = phasesDerived.phases.flatMap((p) => p.tasks);
   const allDone = allTasks.length > 0 && allTasks.every((t) => taskState[t.id]?.done);
 
+  const roadmapAnalytics = useMemo(() => {
+    if (!allTasks || allTasks.length === 0) {
+      return {
+        total: 0,
+        completed: 0,
+        completionRate: null,
+        completedThisWeek: 0,
+      };
+    }
+
+    const now = Date.now();
+    const weekAgo = now - 7 * 24 * 60 * 60 * 1000;
+
+    let completed = 0;
+    let completedThisWeek = 0;
+
+    allTasks.forEach((t) => {
+      const state = taskState[t.id];
+      if (state?.done) {
+        completed += 1;
+        if (state.doneAt && state.doneAt >= weekAgo) {
+          completedThisWeek += 1;
+        }
+      }
+    });
+
+    const completionRate =
+      allTasks.length > 0 ? Math.round((completed / allTasks.length) * 100) : null;
+
+    return {
+      total: allTasks.length,
+      completed,
+      completionRate,
+      completedThisWeek,
+    };
+  }, [allTasks, taskState]);
+
   const taskToPhase = useMemo(() => {
     const map = new globalThis.Map();
     phasesDerived.phases.forEach((p) => {
@@ -719,6 +761,28 @@ export default function CareerRoadmap() {
     });
     return map;
   }, [phasesDerived.phases]);
+
+  const formattedTaskLastSynced = useMemo(() => {
+    if (!taskStateLastSyncedAt) return null;
+    try {
+      const d = new Date(taskStateLastSyncedAt);
+      if (Number.isNaN(d.getTime())) return null;
+      return d.toLocaleString();
+    } catch {
+      return null;
+    }
+  }, [taskStateLastSyncedAt]);
+
+  const formattedDataLastLoaded = useMemo(() => {
+    if (!dataLastLoadedAt) return null;
+    try {
+      const d = new Date(dataLastLoadedAt);
+      if (Number.isNaN(d.getTime())) return null;
+      return d.toLocaleString();
+    } catch {
+      return null;
+    }
+  }, [dataLastLoadedAt]);
 
   const goToTask = (taskId) => {
     const phaseId = taskToPhase.get(taskId);
@@ -748,8 +812,18 @@ export default function CareerRoadmap() {
                 {roadmap ? 'Regenerate' : 'Generate'}
               </Button>
               {roadmap ? (
-                <div className="text-xs text-white/50 max-w-xs text-right">
-                  Regenerates roadmap using latest data. Your completed progress is preserved.
+                <div className="text-xs text-white/50 max-w-xs text-right space-y-0.5">
+                  <p>
+                    Regenerates roadmap using latest data. Your completed progress is preserved.
+                  </p>
+                  <div className="flex flex-col items-end gap-0.5 text-[11px] text-white/40">
+                    {formattedDataLastLoaded && (
+                      <span>Roadmap signals loaded: {formattedDataLastLoaded}</span>
+                    )}
+                    {formattedTaskLastSynced && (
+                      <span>Task progress synced: {formattedTaskLastSynced}</span>
+                    )}
+                  </div>
                 </div>
               ) : null}
             </div>
@@ -762,6 +836,42 @@ export default function CareerRoadmap() {
           <SignalCard title="Estimated duration" value={estimatedDuration || '—'} icon={Timer} muted={!estimatedDuration || estimatedDuration === '—'} />
           <SignalCard title="Placement readiness" value={readiness == null ? '—' : `${readiness}%`} icon={Target} muted={readiness == null} />
         </div>
+
+        {/* Progress insights */}
+        <Card className="cp-fade-in-delay-1">
+          <CardContent className="pt-5 pb-4">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <h2 className="text-sm font-semibold text-white">Roadmap progress</h2>
+                <p className="text-xs text-white/60 mt-1">
+                  Based on all tracked tasks across phases.
+                </p>
+              </div>
+              <div className="flex items-center gap-6 text-sm">
+                <div className="text-right">
+                  <div className="text-xs text-white/50">Tasks completed</div>
+                  <div className="text-sm font-semibold text-white">
+                    {roadmapAnalytics.completed}/{roadmapAnalytics.total}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-xs text-white/50">Overall</div>
+                  <div className="text-sm font-semibold text-white">
+                    {roadmapAnalytics.completionRate != null
+                      ? `${roadmapAnalytics.completionRate}%`
+                      : '—'}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-xs text-white/50">Last 7 days</div>
+                  <div className="text-sm font-semibold text-white">
+                    {roadmapAnalytics.completedThisWeek}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {error ? (
           <Card className="border border-red-500/25">
