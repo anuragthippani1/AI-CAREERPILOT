@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Target, AlertCircle, CheckCircle, Loader, ArrowRight } from 'lucide-react';
 import { skillsAPI, resumeAPI, userAPI } from '../services/api';
@@ -11,9 +11,11 @@ export default function SkillGap() {
   const [userId] = useState(1);
   const [loading, setLoading] = useState(false);
   const [analysis, setAnalysis] = useState(null);
+  const [history, setHistory] = useState([]);
   const [targetRole, setTargetRole] = useState('');
   const [resumeAnalysis, setResumeAnalysis] = useState(null);
   const [error, setError] = useState(null);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState(null);
 
   useEffect(() => {
     loadAnalysis();
@@ -21,6 +23,7 @@ export default function SkillGap() {
 
   const loadAnalysis = async () => {
     try {
+      setError(null);
       setLoading(true);
       const [resumeRes, userRes, gapAnalysesRes] = await Promise.allSettled([
         resumeAPI.get(userId),
@@ -47,16 +50,22 @@ export default function SkillGap() {
       // Load most recent skill gap analysis if available
       if (gapAnalysesRes.status === 'fulfilled' && gapAnalysesRes.value.data.success) {
         const analyses = gapAnalysesRes.value.data.data || [];
+        setHistory(analyses);
         if (analyses.length > 0) {
           const latest = analyses[0];
           setAnalysis(latest.analysis);
+          setLastUpdatedAt(latest.created_at || null);
           if (latest.targetRole && !targetRole) {
             setTargetRole(latest.targetRole);
           }
+        } else {
+          setAnalysis(null);
+          setLastUpdatedAt(null);
         }
       }
     } catch (err) {
       console.error('Error loading analysis:', err);
+      setError(err.response?.data?.error || 'Failed to load skill gap analysis');
     } finally {
       setLoading(false);
     }
@@ -82,13 +91,68 @@ export default function SkillGap() {
         resumeAnalysis: resumeAnalysis || null,
       });
 
-      setAnalysis(response.data.data);
+      // Orchestrator wraps the agent response; prefer a nested data shape if present
+      const payload = response.data?.data;
+      const next =
+        payload && payload.data
+          ? payload.data
+          : payload || response.data;
+
+      setAnalysis(next);
+      setLastUpdatedAt(new Date().toISOString());
+
+      // Refresh history so trend widgets stay in sync
+      try {
+        const refreshed = await skillsAPI.getGapAnalyses(userId);
+        if (refreshed?.data?.success) {
+          setHistory(refreshed.data.data || []);
+        }
+      } catch {
+        // non-blocking
+      }
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to analyze skill gap');
     } finally {
       setLoading(false);
     }
   };
+
+  const analytics = useMemo(() => {
+    if (!analysis) {
+      return {
+        currentMatch: null,
+        previousMatch: null,
+        delta: null,
+        runs: history.length,
+      };
+    }
+
+    const currentMatch = Math.round(analysis.currentMatchPercentage || 0);
+    const previous = history.length > 1 ? history[1] : null;
+    const previousMatch = previous?.analysis?.currentMatchPercentage != null
+      ? Math.round(previous.analysis.currentMatchPercentage)
+      : null;
+    const delta =
+      previousMatch != null ? currentMatch - previousMatch : null;
+
+    return {
+      currentMatch,
+      previousMatch,
+      delta,
+      runs: history.length,
+    };
+  }, [analysis, history]);
+
+  const formattedLastUpdated = useMemo(() => {
+    if (!lastUpdatedAt) return null;
+    try {
+      const d = new Date(lastUpdatedAt);
+      if (Number.isNaN(d.getTime())) return null;
+      return d.toLocaleString();
+    } catch {
+      return null;
+    }
+  }, [lastUpdatedAt]);
 
   return (
     <div className="cp-page">
@@ -97,7 +161,17 @@ export default function SkillGap() {
           title="Skill gap analysis"
           description="Turn your target role into a prioritized learning plan based on your current profile and resume."
         />
-        {!analysis ? (
+
+        {loading && !analysis ? (
+          <Card className="mt-6">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-center gap-3 text-white/70">
+                <Loader className="w-5 h-5 animate-spin" />
+                <span>Loading your latest analysis…</span>
+              </div>
+            </CardContent>
+          </Card>
+        ) : !analysis ? (
           <Card className="mt-6">
             <CardContent className="pt-6">
             <div className="space-y-6">
@@ -145,18 +219,36 @@ export default function SkillGap() {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-6 mt-6">
             <Card className="mt-6">
               <CardContent className="pt-6">
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h2 className="text-xl font-semibold text-white">Your results</h2>
-                  <p className="text-sm text-white/70 mt-1">Focus on the critical gaps first to move fastest.</p>
+                  <p className="text-sm text-white/70 mt-1">
+                    Focus on the critical gaps first to move fastest.
+                  </p>
+
+                  <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-white/60">
+                    {formattedLastUpdated && (
+                      <span>Last updated: {formattedLastUpdated}</span>
+                    )}
+                    {analytics.runs > 1 && analytics.delta != null && (
+                      <span className={analytics.delta >= 0 ? 'text-green-300' : 'text-red-300'}>
+                        {analytics.delta >= 0 ? '▲' : '▼'} {Math.abs(analytics.delta)} pts since last analysis
+                      </span>
+                    )}
+                    {analytics.runs > 0 && (
+                      <span className="text-white/50">
+                        Total analyses run: {analytics.runs}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-right">
                   <p className="text-xs text-white/60">Match score</p>
                   <p className="text-2xl font-semibold text-white">
-                    {Math.round(analysis.currentMatchPercentage || 0)}%
+                    {analytics.currentMatch != null ? `${analytics.currentMatch}%` : '—'}
                   </p>
                 </div>
               </div>
