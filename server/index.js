@@ -90,6 +90,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Routes
+const authRoutes = require('./routes/auth');
 const resumeRoutes = require('./routes/resume');
 const skillsRoutes = require('./routes/skills');
 const roadmapRoutes = require('./routes/roadmap');
@@ -99,13 +100,17 @@ const practiceRoutes = require('./routes/practice');
 const leaderboardRoutes = require('./routes/leaderboard');
 const technicalChallengesRoutes = require('./routes/technicalChallenges');
 
+// Public routes (no authentication required)
+app.use('/api/auth', authRoutes);
+app.use('/api/technical-challenges', technicalChallengesRoutes);
+
+// Protected routes (authentication required)
 app.use('/api/resume', resumeRoutes);
 app.use('/api/skills', skillsRoutes);
 app.use('/api/roadmap', roadmapRoutes);
 app.use('/api/interview', interviewRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/practice', practiceRoutes);
-app.use('/api/technical-challenges', technicalChallengesRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 
 // Health check with detailed status

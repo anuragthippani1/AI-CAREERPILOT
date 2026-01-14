@@ -3,8 +3,9 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs').promises;
-const { body, param, validationResult } = require('express-validator');
+const { body, validationResult } = require('express-validator');
 const orchestrator = require('../agents/orchestrator');
+const { authenticate } = require('../middleware/auth');
 
 // Ensure uploads directory exists
 const uploadsDir = path.join(__dirname, '../../uploads');
@@ -27,13 +28,12 @@ const upload = multer({
 
 // Validation middleware
 const validateResumeAnalyze = [
-  body('userId').optional().isInt({ min: 1 }).withMessage('User ID must be a positive integer'),
   body('targetRole').optional().isString().trim().isLength({ min: 1, max: 200 }).withMessage('Target role must be between 1 and 200 characters'),
   body('text').optional().isString().trim().isLength({ min: 10, max: 50000 }).withMessage('Resume text must be between 10 and 50000 characters'),
 ];
 
 // POST /api/resume/analyze
-router.post('/analyze', upload.single('resume'), validateResumeAnalyze, async (req, res, next) => {
+router.post('/analyze', authenticate, upload.single('resume'), validateResumeAnalyze, async (req, res, next) => {
   try {
     // Check validation errors
     const errors = validationResult(req);
@@ -45,7 +45,7 @@ router.post('/analyze', upload.single('resume'), validateResumeAnalyze, async (r
       });
     }
 
-    const userId = parseInt(req.body.userId) || 1; // Default to user 1 for demo
+    const userId = req.user.id;
     const targetRole = req.body.targetRole?.trim();
 
     let inputData = {
@@ -84,23 +84,11 @@ router.post('/analyze', upload.single('resume'), validateResumeAnalyze, async (r
   }
 });
 
-// GET /api/resume/:userId
-router.get('/:userId', 
-  param('userId').isInt({ min: 1 }).withMessage('User ID must be a positive integer'),
-  async (req, res, next) => {
+// GET /api/resume - Get current user's resume
+router.get('/', authenticate, async (req, res, next) => {
   try {
-    // Check validation errors
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ 
-        success: false,
-        error: 'Validation failed',
-        details: errors.array()
-      });
-    }
-
     const db = require('../config/database');
-    const userId = parseInt(req.params.userId);
+    const userId = req.user.id;
 
     const [resumes] = await db.query(
       'SELECT * FROM resumes WHERE user_id = ? ORDER BY created_at DESC LIMIT 1',

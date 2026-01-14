@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Outlet, Link, NavLink, useLocation } from 'react-router-dom';
-import { Sparkles, LayoutDashboard, FileText, Map, MessageSquare, Terminal, Trophy, Target, User, ChevronDown } from 'lucide-react';
+import { Outlet, Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { Sparkles, LayoutDashboard, FileText, Map, MessageSquare, Terminal, Trophy, Target, User, ChevronDown, LogOut } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 import { cn } from '../utils/cn';
+import Button from './ui/Button';
 
 const primaryNav = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -19,9 +21,16 @@ const moreNav = [
 
 export default function AppLayout() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const [moreOpen, setMoreOpen] = useState(false);
   const moreDesktopRef = useRef(null);
   const moreMobileRef = useRef(null);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   const bg = useMemo(() => {
     const p = location.pathname || '/';
@@ -141,6 +150,20 @@ export default function AppLayout() {
                     </div>
                   </div>
                 ) : null}
+              </div>
+
+              {/* User menu */}
+              <div className="flex items-center gap-3 ml-4 pl-4 border-l border-white/10">
+                <span className="text-sm text-white/70">{user?.name || user?.email}</span>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleLogout}
+                  className="flex items-center gap-2"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Logout
+                </Button>
               </div>
             </nav>
           </div>

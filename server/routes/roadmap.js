@@ -1,24 +1,14 @@
 const express = require('express');
 const router = express.Router();
-const { body, param, validationResult } = require('express-validator');
+const { body, validationResult } = require('express-validator');
 const orchestrator = require('../agents/orchestrator');
+const { authenticate } = require('../middleware/auth');
 
-// GET /api/roadmap/:userId
-router.get('/:userId',
-  param('userId').isInt({ min: 1 }).withMessage('User ID must be a positive integer'),
-  async (req, res, next) => {
+// GET /api/roadmap - Get current user's roadmap
+router.get('/', authenticate, async (req, res, next) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        success: false,
-        error: 'Validation failed',
-        details: errors.array()
-      });
-    }
-
     const db = require('../config/database');
-    const userId = parseInt(req.params.userId);
+    const userId = req.user.id;
 
     const [roadmaps] = await db.query(
       `SELECT 
@@ -56,8 +46,7 @@ router.get('/:userId',
 });
 
 // POST /api/roadmap/generate
-router.post('/generate',
-  body('userId').optional().isInt({ min: 1 }).withMessage('User ID must be a positive integer'),
+router.post('/generate', authenticate,
   body('targetRole').optional().isString().trim().isLength({ min: 1, max: 200 }).withMessage('Target role must be between 1 and 200 characters'),
   body('skillGap').optional(),
   async (req, res, next) => {
@@ -71,7 +60,7 @@ router.post('/generate',
       });
     }
 
-    const userId = req.body.userId || 1;
+    const userId = req.user.id;
     const skillGap = req.body.skillGap;
     const targetRole = req.body.targetRole;
 
@@ -90,23 +79,12 @@ router.post('/generate',
   }
 });
 
-// GET /api/roadmap/tasks/progress/:userId
-// Get all task completions for a user
-router.get('/tasks/progress/:userId',
-  param('userId').isInt({ min: 1 }).withMessage('User ID must be a positive integer'),
-  async (req, res, next) => {
+// GET /api/roadmap/tasks/progress
+// Get all task completions for current user
+router.get('/tasks/progress', authenticate, async (req, res, next) => {
     try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({
-          success: false,
-          error: 'Validation failed',
-          details: errors.array()
-        });
-      }
-
       const db = require('../config/database');
-      const userId = parseInt(req.params.userId);
+      const userId = req.user.id;
 
       const [completions] = await db.query(
         `SELECT task_id, completed, started_at, completed_at
@@ -134,8 +112,7 @@ router.get('/tasks/progress/:userId',
 
 // POST /api/roadmap/tasks/complete
 // Mark a task as complete or incomplete
-router.post('/tasks/complete',
-  body('userId').isInt({ min: 1 }).withMessage('User ID must be a positive integer'),
+router.post('/tasks/complete', authenticate,
   body('taskId').notEmpty().isString().withMessage('Task ID is required'),
   body('completed').isBoolean().withMessage('Completed must be a boolean'),
   body('roadmapId').optional().isInt({ min: 1 }),
@@ -151,7 +128,8 @@ router.post('/tasks/complete',
       }
 
       const db = require('../config/database');
-      const { userId, taskId, completed, roadmapId } = req.body;
+      const userId = req.user.id;
+      const { taskId, completed, roadmapId } = req.body;
 
       // Check if task exists
       const [existing] = await db.query(
@@ -214,8 +192,7 @@ router.post('/tasks/complete',
 
 // POST /api/roadmap/tasks/start
 // Mark a task as started
-router.post('/tasks/start',
-  body('userId').isInt({ min: 1 }).withMessage('User ID must be a positive integer'),
+router.post('/tasks/start', authenticate,
   body('taskId').notEmpty().isString().withMessage('Task ID is required'),
   body('roadmapId').optional().isInt({ min: 1 }),
   async (req, res, next) => {
@@ -230,7 +207,8 @@ router.post('/tasks/start',
       }
 
       const db = require('../config/database');
-      const { userId, taskId, roadmapId } = req.body;
+      const userId = req.user.id;
+      const { taskId, roadmapId } = req.body;
 
       await db.query(
         `INSERT INTO roadmap_task_completions 
