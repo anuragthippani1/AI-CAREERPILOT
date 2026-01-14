@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const orchestrator = require('../agents/orchestrator');
-const { body, param, validationResult } = require('express-validator');
+const { body, validationResult } = require('express-validator');
+const { authenticate } = require('../middleware/auth');
 
 // POST /api/skills/analyze
-router.post('/analyze',
-  body('userId').optional().isInt({ min: 1 }).withMessage('User ID must be a positive integer'),
+router.post('/analyze', authenticate,
   body('resumeAnalysis').optional(),
   async (req, res, next) => {
   try {
@@ -18,7 +18,7 @@ router.post('/analyze',
       });
     }
 
-    const userId = req.body.userId || 1;
+    const userId = req.user.id;
     const resumeAnalysis = req.body.resumeAnalysis;
 
     const result = await orchestrator.orchestrate(userId, 'analyze_skill_gap', {
@@ -35,22 +35,11 @@ router.post('/analyze',
   }
 });
 
-// GET /api/skills/:userId
-router.get('/:userId',
-  param('userId').isInt({ min: 1 }).withMessage('User ID must be a positive integer'),
-  async (req, res, next) => {
+// GET /api/skills - Get current user's skills
+router.get('/', authenticate, async (req, res, next) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        success: false,
-        error: 'Validation failed',
-        details: errors.array()
-      });
-    }
-
     const db = require('../config/database');
-    const userId = parseInt(req.params.userId);
+    const userId = req.user.id;
 
     const [skills] = await db.query(
       'SELECT * FROM skills WHERE user_id = ? ORDER BY created_at DESC',
@@ -63,23 +52,12 @@ router.get('/:userId',
   }
 });
 
-// GET /api/skills/gap-analyses/:userId
-// Get skill gap analysis history for a user
-router.get('/gap-analyses/:userId',
-  param('userId').isInt({ min: 1 }).withMessage('User ID must be a positive integer'),
-  async (req, res, next) => {
+// GET /api/skills/gap-analyses
+// Get skill gap analysis history for current user
+router.get('/gap-analyses', authenticate, async (req, res, next) => {
     try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({
-          success: false,
-          error: 'Validation failed',
-          details: errors.array()
-        });
-      }
-
       const db = require('../config/database');
-      const userId = parseInt(req.params.userId);
+      const userId = req.user.id;
 
       const [analyses] = await db.query(
         `SELECT id, target_role, analysis_json, current_match_percentage, created_at

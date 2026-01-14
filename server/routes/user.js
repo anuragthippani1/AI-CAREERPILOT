@@ -4,6 +4,7 @@ const { body, param, query, validationResult } = require('express-validator');
 const db = require('../config/database');
 const gamification = require('../services/gamification');
 const achievements = require('../services/achievements');
+const { authenticate } = require('../middleware/auth');
 
 // POST /api/user/create
 router.post('/create', async (req, res, next) => {
@@ -29,9 +30,9 @@ router.post('/create', async (req, res, next) => {
 });
 
 // POST /api/user/goal
-router.post('/goal', async (req, res, next) => {
+router.post('/goal', authenticate, async (req, res, next) => {
   try {
-    const userId = req.body.userId || 1;
+    const userId = req.user.id;
     const { targetRole, targetCompany, targetSalary, timelineMonths } = req.body;
 
     if (!targetRole) {
@@ -57,7 +58,12 @@ router.post('/goal', async (req, res, next) => {
   }
 });
 
-// GET /api/user/:userId
+// GET /api/user/me - Get current user profile
+router.get('/me', authenticate, async (req, res) => {
+  res.json({ success: true, data: req.user });
+});
+
+// GET /api/user/:userId - Get user by ID (for leaderboard/public profiles)
 router.get('/:userId', 
   param('userId').isInt({ min: 1 }),
   async (req, res, next) => {
@@ -92,9 +98,8 @@ router.get('/:userId',
   }
 );
 
-// PUT /api/user/:userId/profile - Update user profile
-router.put('/:userId/profile',
-  param('userId').isInt({ min: 1 }),
+// PUT /api/user/profile - Update current user profile
+router.put('/profile', authenticate,
   body('name').optional().trim().isLength({ min: 1, max: 255 }),
   body('bio').optional().trim().isLength({ max: 1000 }),
   body('title').optional().trim().isLength({ max: 255 }),
@@ -110,7 +115,7 @@ router.put('/:userId/profile',
         });
       }
 
-      const userId = parseInt(req.params.userId);
+      const userId = req.user.id;
       const { name, bio, title, avatarUrl } = req.body;
 
       // Build update query dynamically
@@ -161,21 +166,10 @@ router.put('/:userId/profile',
   }
 );
 
-// GET /api/user/:userId/stats - Get user stats
-router.get('/:userId/stats',
-  param('userId').isInt({ min: 1 }),
-  async (req, res, next) => {
+// GET /api/user/stats - Get current user stats
+router.get('/stats', authenticate, async (req, res, next) => {
     try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({
-          success: false,
-          error: 'Validation failed',
-          details: errors.array()
-        });
-      }
-
-      const userId = parseInt(req.params.userId);
+      const userId = req.user.id;
       const stats = await gamification.getUserStats(userId);
 
       res.json({ success: true, data: stats });
@@ -191,9 +185,8 @@ router.get('/:userId/stats',
   }
 );
 
-// GET /api/user/:userId/achievements - Get user achievements
-router.get('/:userId/achievements',
-  param('userId').isInt({ min: 1 }),
+// GET /api/user/achievements - Get current user achievements
+router.get('/achievements', authenticate,
   query('all').optional().isBoolean(),
   async (req, res, next) => {
     try {
@@ -206,7 +199,7 @@ router.get('/:userId/achievements',
         });
       }
 
-      const userId = parseInt(req.params.userId);
+      const userId = req.user.id;
       const showAll = req.query.all === 'true';
 
       if (showAll) {

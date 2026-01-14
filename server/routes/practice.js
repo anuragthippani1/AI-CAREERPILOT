@@ -8,6 +8,7 @@ const codeExecutor = require('../services/codeExecutor');
 const PracticeAgent = require('../agents/practice');
 const gamification = require('../services/gamification');
 const achievements = require('../services/achievements');
+const { authenticate } = require('../middleware/auth');
 
 const practiceAgent = new PracticeAgent();
 
@@ -125,8 +126,7 @@ router.post('/execute',
 );
 
 // POST /api/practice/submit
-router.post('/submit',
-  body('userId').isInt({ min: 1 }),
+router.post('/submit', authenticate,
   body('questionId').isInt({ min: 1 }),
   body('code').notEmpty().isString(),
   body('language').isIn(['python', 'javascript', 'java', 'cpp', 'c', 'typescript', 'go', 'rust']),
@@ -141,7 +141,8 @@ router.post('/submit',
         });
       }
 
-      const { userId, questionId, code, language } = req.body;
+      const userId = req.user.id;
+      const { questionId, code, language } = req.body;
 
       // Get question
       const question = await questionBank.getQuestionById(questionId);
@@ -297,21 +298,10 @@ router.post('/submit',
   }
 );
 
-// GET /api/practice/progress/:userId
-router.get('/progress/:userId',
-  param('userId').isInt({ min: 1 }),
-  async (req, res, next) => {
+// GET /api/practice/progress - Get current user's practice progress
+router.get('/progress', authenticate, async (req, res, next) => {
     try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({
-          success: false,
-          error: 'Validation failed',
-          details: errors.array()
-        });
-      }
-
-      const userId = parseInt(req.params.userId);
+      const userId = req.user.id;
 
       // Get overall progress
       const [progress] = await db.query(
@@ -349,8 +339,7 @@ router.get('/progress/:userId',
 );
 
 // POST /api/practice/hint
-router.post('/hint',
-  body('userId').isInt({ min: 1 }),
+router.post('/hint', authenticate,
   body('questionId').isInt({ min: 1 }),
   body('code').optional().isString(),
   async (req, res, next) => {
@@ -364,7 +353,8 @@ router.post('/hint',
         });
       }
 
-      const { userId, questionId, code } = req.body;
+      const userId = req.user.id;
+      const { questionId, code } = req.body;
 
       // Get user's attempt count
       const [progress] = await db.query(
@@ -387,9 +377,8 @@ router.post('/hint',
   }
 );
 
-// GET /api/practice/code/:userId/:questionId
-router.get('/code/:userId/:questionId',
-  param('userId').isInt({ min: 1 }),
+// GET /api/practice/code/:questionId - Get current user's saved code for a question
+router.get('/code/:questionId', authenticate,
   param('questionId').isInt({ min: 1 }),
   async (req, res, next) => {
     try {
@@ -402,7 +391,7 @@ router.get('/code/:userId/:questionId',
         });
       }
 
-      const userId = parseInt(req.params.userId);
+      const userId = req.user.id;
       const questionId = parseInt(req.params.questionId);
 
       // Get latest session code

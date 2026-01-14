@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Target, AlertCircle, CheckCircle, Loader, ArrowRight } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 import { skillsAPI, resumeAPI, userAPI } from '../services/api';
 import PageHeader from '../components/ui/PageHeader';
 import Button from '../components/ui/Button';
@@ -8,7 +9,7 @@ import { Card, CardContent } from '../components/ui/Card';
 
 export default function SkillGap() {
   const navigate = useNavigate();
-  const [userId] = useState(1);
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [analysis, setAnalysis] = useState(null);
   const [history, setHistory] = useState([]);
@@ -18,17 +19,21 @@ export default function SkillGap() {
   const [lastUpdatedAt, setLastUpdatedAt] = useState(null);
 
   useEffect(() => {
-    loadAnalysis();
-  }, []);
+    if (user) {
+      loadAnalysis();
+    }
+  }, [user]);
 
   const loadAnalysis = async () => {
+    if (!user) return;
+    
     try {
       setError(null);
       setLoading(true);
       const [resumeRes, userRes, gapAnalysesRes] = await Promise.allSettled([
-        resumeAPI.get(userId),
-        userAPI.get(userId),
-        skillsAPI.getGapAnalyses(userId),
+        resumeAPI.get(),
+        userAPI.getMe(),
+        skillsAPI.getGapAnalyses(),
       ]);
 
       if (resumeRes.status === 'fulfilled' && resumeRes.value.data.data) {
@@ -83,11 +88,10 @@ export default function SkillGap() {
     try {
       // Set goal if target role provided
       if (targetRole) {
-        await userAPI.setGoal({ userId, targetRole });
+        await userAPI.setGoal({ targetRole });
       }
 
       const response = await skillsAPI.analyze({
-        userId,
         resumeAnalysis: resumeAnalysis || null,
       });
 

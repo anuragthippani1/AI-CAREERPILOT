@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FileText, Target, Map, MessageSquare, Calendar, Clock, Terminal, ArrowRight, Star, Flame, Award, Trophy, User } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 import { userAPI, resumeAPI, roadmapAPI, interviewAPI } from '../services/api';
 import PageHeader from '../components/ui/PageHeader';
 import Button from '../components/ui/Button';
@@ -9,7 +10,7 @@ import { PageSkeleton } from '../components/ui/Skeleton';
 import MotionDebug from '../components/MotionDebug';
 
 export default function Dashboard() {
-  const [userId] = useState(1); // Demo user
+  const { user: authUser } = useAuth();
   const [user, setUser] = useState(null);
   const [resume, setResume] = useState(null);
   const [roadmap, setRoadmap] = useState(null);
@@ -20,8 +21,10 @@ export default function Dashboard() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    loadDashboard();
-  }, []);
+    if (authUser) {
+      loadDashboard();
+    }
+  }, [authUser]);
 
   useEffect(() => {
     document.body.dataset.cpBg = 'dashboard';
@@ -35,12 +38,12 @@ export default function Dashboard() {
       setLoading(true);
       setError(null);
       const [userRes, resumeRes, roadmapRes, interviewRes, statsRes, achievementsRes] = await Promise.allSettled([
-        userAPI.get(userId),
-        resumeAPI.get(userId),
-        roadmapAPI.get(userId),
-        interviewAPI.getSessions(userId),
-        userAPI.getStats(userId),
-        userAPI.getAchievements(userId),
+        userAPI.getMe(),
+        resumeAPI.get(),
+        roadmapAPI.get(),
+        interviewAPI.getSessions(),
+        userAPI.getStats(),
+        userAPI.getAchievements(),
       ]);
 
       if (userRes.status === 'fulfilled') setUser(userRes.value.data.data);
@@ -64,6 +67,11 @@ export default function Dashboard() {
           averageScore: Math.round(avgScore),
           streak: statsRes.status === 'fulfilled' ? (statsRes.value.data.data?.currentStreak || 0) : 0,
         });
+      }
+
+      // Use auth user if available
+      if (authUser) {
+        setUser(authUser);
       }
     } catch (error) {
       console.error('Error loading dashboard:', error);

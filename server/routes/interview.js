@@ -2,23 +2,22 @@ const express = require('express');
 const router = express.Router();
 const { body, param, validationResult } = require('express-validator');
 const orchestrator = require('../agents/orchestrator');
+const { authenticate } = require('../middleware/auth');
 
 // Validation middleware
 const validateInterviewStart = [
-  body('userId').optional().isInt({ min: 1 }).withMessage('User ID must be a positive integer'),
   body('roleTitle').notEmpty().trim().isLength({ min: 1, max: 200 }).withMessage('Role title is required and must be between 1 and 200 characters'),
   body('type').notEmpty().isIn(['technical', 'behavioral', 'mixed', 'system-design', 'coding', 'leadership']).withMessage('Interview type must be one of: technical, behavioral, mixed, system-design, coding, leadership'),
   body('companyName').optional().trim().isLength({ max: 200 }).withMessage('Company name must be less than 200 characters'),
 ];
 
 const validateInterviewContinue = [
-  body('userId').optional().isInt({ min: 1 }).withMessage('User ID must be a positive integer'),
   body('sessionId').notEmpty().isUUID().withMessage('Valid session ID is required'),
   body('answer').notEmpty().trim().isLength({ min: 1, max: 5000 }).withMessage('Answer is required and must be between 1 and 5000 characters'),
 ];
 
 // POST /api/interview/start
-router.post('/start', validateInterviewStart, async (req, res, next) => {
+router.post('/start', authenticate, validateInterviewStart, async (req, res, next) => {
   try {
     // Check validation errors
     const errors = validationResult(req);
@@ -30,7 +29,7 @@ router.post('/start', validateInterviewStart, async (req, res, next) => {
       });
     }
 
-    const userId = parseInt(req.body.userId) || 1;
+    const userId = req.user.id;
     const roleTitle = req.body.roleTitle.trim();
     const type = req.body.type;
     const companyName = req.body.companyName?.trim();
@@ -56,7 +55,7 @@ router.post('/start', validateInterviewStart, async (req, res, next) => {
 });
 
 // POST /api/interview/continue
-router.post('/continue', validateInterviewContinue, async (req, res, next) => {
+router.post('/continue', authenticate, validateInterviewContinue, async (req, res, next) => {
   try {
     // Check validation errors
     const errors = validationResult(req);
@@ -68,7 +67,7 @@ router.post('/continue', validateInterviewContinue, async (req, res, next) => {
       });
     }
 
-    const userId = parseInt(req.body.userId) || 1;
+    const userId = req.user.id;
     const sessionId = req.body.sessionId;
     const answer = req.body.answer.trim();
 
@@ -141,23 +140,11 @@ router.post('/feedback',
   }
 });
 
-// GET /api/interview/sessions/:userId
-router.get('/sessions/:userId', 
-  param('userId').isInt({ min: 1 }).withMessage('User ID must be a positive integer'),
-  async (req, res, next) => {
+// GET /api/interview/sessions - Get current user's interview sessions
+router.get('/sessions', authenticate, async (req, res, next) => {
   try {
-    // Check validation errors
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ 
-        success: false,
-        error: 'Validation failed',
-        details: errors.array()
-      });
-    }
-
     const db = require('../config/database');
-    const userId = parseInt(req.params.userId);
+    const userId = req.user.id;
 
     const [sessions] = await db.query(
       'SELECT id, session_id, role_title, overall_score, status, created_at, updated_at FROM interview_sessions WHERE user_id = ? ORDER BY created_at DESC',

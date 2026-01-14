@@ -16,28 +16,12 @@ import {
   roadmapAPI,
   skillsAPI,
 } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 import PageHeader from '../components/ui/PageHeader';
 import Button from '../components/ui/Button';
 import { Card, CardContent } from '../components/ui/Card';
 import EmptyState from '../components/ui/EmptyState';
 import { PageSkeleton } from '../components/ui/Skeleton';
-
-function getUserIdFromStorageOrUrl() {
-  try {
-    const params = new URLSearchParams(window.location.search);
-    const fromUrl = params.get('userId');
-    const fromStorage =
-      localStorage.getItem('careerpilot_user_id') ||
-      localStorage.getItem('careerpilotUserId') ||
-      localStorage.getItem('userId');
-
-    const raw = (fromUrl || fromStorage || '').toString().trim();
-    const id = parseInt(raw, 10);
-    return Number.isFinite(id) && id > 0 ? id : null;
-  } catch {
-    return null;
-  }
-}
 
 function taskKey(userId) {
   return `careerpilot_roadmap_tasks_v1_${userId}`;
@@ -495,7 +479,7 @@ function FocusPointerRow({ title, why, onGo }) {
 }
 
 export default function CareerRoadmap() {
-  const [userId] = useState(() => getUserIdFromStorageOrUrl() ?? 1);
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -514,26 +498,28 @@ export default function CareerRoadmap() {
 
   // Load task state from backend (with localStorage fallback)
   useEffect(() => {
+    if (!user) return;
+    
     const loadTaskState = async () => {
       try {
-        const response = await roadmapAPI.getTaskProgress(userId);
+        const response = await roadmapAPI.getTaskProgress();
         if (response.data.success) {
           const backendState = response.data.data || {};
           setTaskState(backendState);
           // Update cache
-          saveRoadmapTaskStateToCache(userId, backendState);
+          saveRoadmapTaskStateToCache(user.id, backendState);
           setTaskStateLastSyncedAt(new Date().toISOString());
         }
       } catch (error) {
         console.warn('Failed to load task state from backend, using cache:', error);
         // Fallback to localStorage
-        const cachedState = loadRoadmapTaskStateFromCache(userId);
+        const cachedState = loadRoadmapTaskStateFromCache(user.id);
         setTaskState(cachedState);
       }
     };
 
     loadTaskState();
-  }, [userId]);
+  }, [user]);
 
   useEffect(() => {
     document.body.dataset.cpBg = 'roadmap';
@@ -548,11 +534,11 @@ export default function CareerRoadmap() {
       setLoading(true);
 
       const [roadmapRes, resumeRes, skillsRes, practiceRes, interviewRes] = await Promise.allSettled([
-        roadmapAPI.get(userId),
-        resumeAPI.get(userId),
-        skillsAPI.get(userId),
-        practiceAPI.getProgress(userId),
-        interviewAPI.getSessions(userId),
+        roadmapAPI.get(),
+        resumeAPI.get(),
+        skillsAPI.get(),
+        practiceAPI.getProgress(),
+        interviewAPI.getSessions(),
       ]);
 
       if (roadmapRes.status === 'fulfilled' && roadmapRes.value?.data?.success) {
@@ -586,22 +572,23 @@ export default function CareerRoadmap() {
   };
 
   useEffect(() => {
-    loadAll();
+    if (user) {
+      loadAll();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
+  }, [user]);
 
   const toggleTaskDone = async (taskId, done) => {
     try {
       // Optimistic update
       setTaskState((prev) => {
         const next = { ...prev, [taskId]: { ...(prev[taskId] || {}), done: !!done, doneAt: done ? Date.now() : null } };
-        saveRoadmapTaskStateToCache(userId, next);
+        if (user) saveRoadmapTaskStateToCache(user.id, next);
         return next;
       });
 
       // Persist to backend
       await roadmapAPI.completeTask({
-        userId,
         taskId,
         completed: done,
         roadmapId: roadmap?.id || null
@@ -617,13 +604,12 @@ export default function CareerRoadmap() {
       // Optimistic update
       setTaskState((prev) => {
         const next = { ...prev, [task.id]: { ...(prev[task.id] || {}), startedAt: prev[task.id]?.startedAt || Date.now() } };
-        saveRoadmapTaskStateToCache(userId, next);
+        if (user) saveRoadmapTaskStateToCache(user.id, next);
         return next;
       });
 
       // Persist to backend
       await roadmapAPI.startTask({
-        userId,
         taskId: task.id,
         roadmapId: roadmap?.id || null
       });
@@ -644,12 +630,12 @@ export default function CareerRoadmap() {
       let skillGap = null;
       try {
         // First, try to load the latest persisted analysis
-        const gapAnalysesRes = await skillsAPI.getGapAnalyses(userId);
+        const gapAnalysesRes = await skillsAPI.getGapAnalyses();
         if (gapAnalysesRes?.data?.success && gapAnalysesRes.data.data?.length > 0) {
           skillGap = gapAnalysesRes.data.data[0].analysis;
         } else {
           // No persisted analysis, generate a new one
-          const skillGapRes = await skillsAPI.analyze({ userId });
+          const skillGapRes = await skillsAPI.analyze({});
           // Orchestrator response shape: { success, data: { success, data } }
           const gap = skillGapRes?.data?.data?.data;
           skillGap = gap || null;
@@ -660,7 +646,6 @@ export default function CareerRoadmap() {
       }
 
       const response = await roadmapAPI.generate({
-        userId,
         skillGap,
         targetRole: roadmap?.target_role || 'Software Engineer',
       });
