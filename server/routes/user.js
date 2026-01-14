@@ -64,6 +64,7 @@ router.get('/me', authenticate, async (req, res) => {
 });
 
 // GET /api/user/:userId - Get user by ID (for leaderboard/public profiles)
+// Public endpoint - only exposes safe profile data (no email or sensitive info)
 router.get('/:userId', 
   param('userId').isInt({ min: 1 }),
   async (req, res, next) => {
@@ -79,8 +80,9 @@ router.get('/:userId',
 
       const userId = parseInt(req.params.userId);
 
+      // Only expose public profile data (no email, no sensitive fields)
       const [users] = await db.query(
-        'SELECT id, email, name, xp, level, current_streak, longest_streak, avatar_url, bio, title, created_at FROM users WHERE id = ?',
+        'SELECT id, name, xp, level, current_streak, longest_streak, avatar_url, bio, title, created_at FROM users WHERE id = ?',
         [userId]
       );
 
@@ -118,7 +120,9 @@ router.put('/profile', authenticate,
       const userId = req.user.id;
       const { name, bio, title, avatarUrl } = req.body;
 
-      // Build update query dynamically
+      // Security: Only allow updating user-editable fields
+      // System-managed fields (xp, level, streaks, etc.) cannot be modified via this endpoint
+      const allowedFields = ['name', 'bio', 'title', 'avatar_url'];
       const updates = [];
       const values = [];
 

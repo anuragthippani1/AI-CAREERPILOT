@@ -71,6 +71,20 @@ router.post('/continue', authenticate, validateInterviewContinue, async (req, re
     const sessionId = req.body.sessionId;
     const answer = req.body.answer.trim();
 
+    // Verify session ownership before continuing
+    const db = require('../config/database');
+    const [sessions] = await db.query(
+      'SELECT id FROM interview_sessions WHERE session_id = ? AND user_id = ?',
+      [sessionId, userId]
+    );
+
+    if (sessions.length === 0) {
+      return res.status(403).json({
+        success: false,
+        error: 'Interview session not found or access denied'
+      });
+    }
+
     const result = await orchestrator.orchestrate(userId, 'continue_interview', {
       sessionId,
       answer
