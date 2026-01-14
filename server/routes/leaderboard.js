@@ -22,9 +22,9 @@ router.get('/',
       const limit = parseInt(req.query.limit) || 20;
       const offset = (page - 1) * limit;
 
-      // Get top users by XP
+      // Get top users by XP (public data only - no email)
       const [users] = await db.query(
-        `SELECT id, name, email, xp, level, current_streak, longest_streak, avatar_url, title
+        `SELECT id, name, xp, level, current_streak, longest_streak, avatar_url, title
          FROM users
          WHERE xp > 0
          ORDER BY xp DESC, level DESC, current_streak DESC
@@ -80,12 +80,12 @@ router.get('/interviews',
       const offset = (page - 1) * limit;
 
       const [users] = await db.query(
-        `SELECT u.id, u.name, u.email, u.avatar_url, u.title,
+        `SELECT u.id, u.name, u.avatar_url, u.title,
          COUNT(CASE WHEN sess.status = 'completed' THEN 1 END) as completed_interviews,
          AVG(CASE WHEN sess.status = 'completed' THEN sess.overall_score END) as avg_score
          FROM users u
          LEFT JOIN interview_sessions sess ON u.id = sess.user_id
-         GROUP BY u.id, u.name, u.email, u.avatar_url, u.title
+         GROUP BY u.id, u.name, u.avatar_url, u.title
          HAVING completed_interviews > 0
          ORDER BY completed_interviews DESC, avg_score DESC
          LIMIT ? OFFSET ?`,
@@ -143,7 +143,7 @@ router.get('/streaks',
       const offset = (page - 1) * limit;
 
       const [users] = await db.query(
-        `SELECT id, name, email, current_streak, longest_streak, avatar_url, title
+        `SELECT id, name, current_streak, longest_streak, avatar_url, title
          FROM users
          WHERE longest_streak > 0
          ORDER BY longest_streak DESC, current_streak DESC

@@ -131,6 +131,20 @@ router.post('/tasks/complete', authenticate,
       const userId = req.user.id;
       const { taskId, completed, roadmapId } = req.body;
 
+      // Verify roadmap ownership if roadmapId is provided
+      if (roadmapId) {
+        const [roadmaps] = await db.query(
+          'SELECT id FROM roadmaps WHERE id = ? AND user_id = ?',
+          [roadmapId, userId]
+        );
+        if (roadmaps.length === 0) {
+          return res.status(403).json({
+            success: false,
+            error: 'Roadmap not found or access denied'
+          });
+        }
+      }
+
       // Check if task exists
       const [existing] = await db.query(
         `SELECT started_at FROM roadmap_task_completions 
@@ -209,6 +223,20 @@ router.post('/tasks/start', authenticate,
       const db = require('../config/database');
       const userId = req.user.id;
       const { taskId, roadmapId } = req.body;
+
+      // Verify roadmap ownership if roadmapId is provided
+      if (roadmapId) {
+        const [roadmaps] = await db.query(
+          'SELECT id FROM roadmaps WHERE id = ? AND user_id = ?',
+          [roadmapId, userId]
+        );
+        if (roadmaps.length === 0) {
+          return res.status(403).json({
+            success: false,
+            error: 'Roadmap not found or access denied'
+          });
+        }
+      }
 
       await db.query(
         `INSERT INTO roadmap_task_completions 
