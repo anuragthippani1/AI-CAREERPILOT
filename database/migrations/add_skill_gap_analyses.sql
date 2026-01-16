@@ -16,5 +16,3 @@ CREATE TABLE IF NOT EXISTS skill_gap_analyses (
     INDEX idx_created_at (created_at),
     INDEX idx_target_role (target_role)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-
