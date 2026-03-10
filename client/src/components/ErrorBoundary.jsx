@@ -31,7 +31,7 @@ export default class ErrorBoundary extends React.Component {
                 {this.state.errorInfo?.componentStack ? `\n\n${this.state.errorInfo.componentStack}` : ''}
               </pre>
             )}
-            <div className="mt-5 flex gap-3">
+            <div className="mt-5 flex flex-wrap gap-3">
               <button
                 type="button"
                 onClick={() => window.location.reload()}
@@ -46,6 +46,12 @@ export default class ErrorBoundary extends React.Component {
               >
                 Try again
               </button>
+              <a
+                href="/"
+                className="px-4 py-2 text-sm font-semibold text-white/80 hover:text-white underline-offset-4 hover:underline cp-focus-ring"
+              >
+                Go back home
+              </a>
             </div>
           </div>
         </div>
