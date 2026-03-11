@@ -25,6 +25,11 @@ export default class ErrorBoundary extends React.Component {
             <p className="mt-2 text-sm text-white/70">
               The app hit an unexpected error. You can refresh the page to recover.
             </p>
+            {import.meta.env.DEV && (
+              <p className="mt-1 text-xs text-white/50">
+                Error details have been logged to the console for debugging.
+              </p>
+            )}
             {import.meta.env.DEV && this.state.error?.message && (
               <pre className="mt-4 text-xs bg-black/20 border border-white/10 rounded-lg p-3 overflow-auto text-white/80">
                 {this.state.error.message}
