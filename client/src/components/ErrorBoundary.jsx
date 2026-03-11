@@ -30,8 +30,9 @@ export default class ErrorBoundary extends React.Component {
                 Error details have been logged to the console for debugging.
               </p>
             )}
-            {import.meta.env.DEV && this.state.error?.message && (
+            {import.meta.env.DEV && this.state.error && (
               <pre className="mt-4 text-xs bg-black/20 border border-white/10 rounded-lg p-3 overflow-auto text-white/80">
+                {this.state.error.name ? `${this.state.error.name}: ` : ''}
                 {this.state.error.message}
                 {this.state.errorInfo?.componentStack ? `\n\n${this.state.errorInfo.componentStack}` : ''}
               </pre>
