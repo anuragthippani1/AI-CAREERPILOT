@@ -20,9 +20,9 @@ export default class ErrorBoundary extends React.Component {
     if (this.state.hasError) {
       return (
         <div className="min-h-screen flex items-center justify-center px-4" role="alert" aria-live="assertive">
-          <div className="max-w-lg w-full glass-card border border-white/10 rounded-xl p-6">
-            <h1 className="text-xl font-semibold text-white">Something went wrong</h1>
-            <p className="mt-2 text-sm text-white/70">
+          <div className="max-w-lg w-full glass-card border border-white/10 rounded-xl p-6" aria-labelledby="app-error-title" aria-describedby="app-error-description">
+            <h1 id="app-error-title" className="text-xl font-semibold text-white">Something went wrong</h1>
+            <p id="app-error-description" className="mt-2 text-sm text-white/70">
               The app hit an unexpected error. You can refresh the page to recover.
             </p>
             {import.meta.env.DEV && (
