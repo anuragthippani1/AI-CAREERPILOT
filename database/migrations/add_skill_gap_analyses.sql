@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS skill_gap_analyses (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_skill_gap_analyses_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     INDEX idx_user_id (user_id),
+    INDEX idx_user_target_role (user_id, target_role),
     INDEX idx_created_at (created_at),
     INDEX idx_target_role (target_role)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
