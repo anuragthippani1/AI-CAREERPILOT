@@ -162,6 +162,8 @@ This will start:
 - **Backend API** on `http://localhost:8000`
 - **Frontend** on `http://localhost:3000`
 
+If `http://localhost:3000` is already in use, Vite may start the frontend on a different port (it will print the exact URL in the terminal).
+
 ### Tailwind / PostCSS note
 
 If you see a Vite CSS error about using `tailwindcss` directly as a PostCSS plugin, make sure the client uses `@tailwindcss/postcss` (Tailwind v4+) and then restart the dev server.
