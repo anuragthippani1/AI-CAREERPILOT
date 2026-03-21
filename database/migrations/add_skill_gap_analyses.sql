@@ -1,5 +1,6 @@
 -- Migration: Add skill gap analyses persistence
 -- Stores complete AI-generated skill gap analysis results (not just individual skills)
+-- Includes indexes optimized for user-scoped history and role-based lookups
 CREATE TABLE IF NOT EXISTS skill_gap_analyses (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
