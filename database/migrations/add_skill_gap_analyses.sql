@@ -5,8 +5,8 @@
 CREATE TABLE IF NOT EXISTS skill_gap_analyses (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
-    target_role VARCHAR(255) NOT NULL,
-    analysis_json JSON NOT NULL,
+    target_role VARCHAR(255) NOT NULL COMMENT 'Role title used for this analysis',
+    analysis_json JSON NOT NULL COMMENT 'Full skill-gap analysis payload from the AI',
     current_match_percentage DECIMAL(5,2) COMMENT 'Overall role match score (0-100)',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
