@@ -4,12 +4,12 @@
 -- Includes indexes optimized for user-scoped history and role-based lookups
 CREATE TABLE IF NOT EXISTS skill_gap_analyses (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
+    user_id INT NOT NULL COMMENT 'Owning user (FK to users.id)',
     target_role VARCHAR(255) NOT NULL COMMENT 'Role title used for this analysis',
     analysis_json JSON NOT NULL COMMENT 'Full skill-gap analysis payload from the AI',
     current_match_percentage DECIMAL(5,2) COMMENT 'Overall role match score (0-100)',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'When this analysis was stored',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Last modification time',
     CONSTRAINT fk_skill_gap_analyses_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     INDEX idx_user_id (user_id),
     INDEX idx_user_target_role (user_id, target_role),
