@@ -168,6 +168,10 @@ If `http://localhost:3000` is already in use, Vite may start the frontend on a d
 
 If you see a Vite CSS error about using `tailwindcss` directly as a PostCSS plugin, make sure the client uses `@tailwindcss/postcss` (Tailwind v4+) and then restart the dev server.
 
+### Stopping dev servers
+
+To stop the running dev servers, press `Ctrl+C` in the terminal where `npm run dev` is running.
+
 ## 🧠 Architecture
 
 ### Agentic Architecture
