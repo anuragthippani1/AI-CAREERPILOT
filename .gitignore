@@ -11,8 +11,6 @@ build/
 .env.production.local
 uploads/
 
-*.md
-
 
 
 
