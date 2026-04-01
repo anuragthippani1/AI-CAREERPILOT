@@ -25,6 +25,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "render:build": "npm install && npm run build",
     "preview": "vite preview",
     "start": "vite"
   }
