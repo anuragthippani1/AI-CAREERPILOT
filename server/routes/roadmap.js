@@ -48,6 +48,14 @@ router.get('/', authenticate, async (req, res, next) => {
 // POST /api/roadmap/generate
 router.post('/generate', authenticate,
   body('targetRole').optional().isString().trim().isLength({ min: 1, max: 200 }).withMessage('Target role must be between 1 and 200 characters'),
+  body('dreamRole').optional().isString().trim().isLength({ min: 1, max: 200 }).withMessage('Dream role must be between 1 and 200 characters'),
+  body('currentRoleOrEducation').optional().isString().trim().isLength({ min: 1, max: 200 }).withMessage('Current role or education must be between 1 and 200 characters'),
+  body('currentSkills').optional().custom((value) => {
+    if (typeof value === 'string') return true;
+    if (Array.isArray(value) && value.every((s) => typeof s === 'string')) return true;
+    throw new Error('Current skills must be a comma-separated string or an array of strings');
+  }),
+  body('experienceLevel').optional().isIn(['beginner', 'intermediate', 'advanced']).withMessage('Experience level must be beginner, intermediate, or advanced'),
   body('skillGap').optional(),
   async (req, res, next) => {
   try {
@@ -61,12 +69,24 @@ router.post('/generate', authenticate,
     }
 
     const userId = req.user.id;
-    const skillGap = req.body.skillGap;
-    const targetRole = req.body.targetRole;
+    const {
+      skillGap,
+      targetRole,
+      dreamRole,
+      currentRoleOrEducation,
+      currentSkills,
+      experienceLevel,
+    } = req.body;
+
+    const resolvedTargetRole = dreamRole || targetRole;
 
     const result = await orchestrator.orchestrate(userId, 'generate_roadmap', {
       skillGap,
-      targetRole
+      targetRole: resolvedTargetRole,
+      dreamRole,
+      currentRoleOrEducation,
+      currentSkills,
+      experienceLevel,
     });
 
     if (result.success) {

@@ -15,6 +15,7 @@ const primaryNav = [
 ];
 
 const moreNav = [
+  { to: '/roadmap-generator', label: 'AI Roadmap', icon: Sparkles },
   { to: '/skills', label: 'Skill Gap', icon: Target },
   { to: '/leaderboard', label: 'Leaderboard', icon: Trophy },
 ];
@@ -36,6 +37,7 @@ export default function AppLayout() {
     const p = location.pathname || '/';
     if (p.startsWith('/dashboard')) return 'dashboard';
     if (p.startsWith('/practice')) return 'practice';
+    if (p.startsWith('/roadmap-generator')) return 'roadmap';
     if (p.startsWith('/leaderboard')) return 'leaderboard';
     if (p.startsWith('/profile')) return 'profile';
     if (p.startsWith('/interview')) return 'practice'; // focused

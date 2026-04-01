@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard';
 import ResumeUpload from './pages/ResumeUpload';
 import SkillGap from './pages/SkillGap';
 import CareerRoadmap from './pages/CareerRoadmap';
+import AIRoadmapGenerator from './pages/AIRoadmapGenerator';
 import MockInterview from './pages/MockInterview';
 import CodingPractice from './pages/CodingPractice';
 import Profile from './pages/Profile';
@@ -75,6 +76,7 @@ function App() {
         <Route path="/resume" element={<ResumeUpload />} />
         <Route path="/skills" element={<SkillGap />} />
         <Route path="/roadmap" element={<CareerRoadmap />} />
+        <Route path="/roadmap-generator" element={<AIRoadmapGenerator />} />
         <Route path="/interview" element={<MockInterview />} />
         <Route path="/practice" element={<CodingPractice />} />
         <Route path="/profile" element={<Profile />} />
