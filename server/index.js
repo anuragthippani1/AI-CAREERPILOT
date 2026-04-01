@@ -125,10 +125,25 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+const serveFrontend = process.env.NODE_ENV === 'production' && process.env.SERVE_FRONTEND === 'true';
+
+// Friendly root endpoint when backend is deployed separately from frontend.
+if (!serveFrontend) {
+  app.get('/', (req, res) => {
+    res.json({
+      success: true,
+      message: 'CareerPilot backend is running',
+      docs: {
+        health: '/api/health',
+      },
+    });
+  });
+}
+
 // Frontend is deployed separately (Render Static Site).
 // If you *intentionally* want the backend to serve a built SPA, set SERVE_FRONTEND=true
 // and place built assets in ../public.
-if (process.env.NODE_ENV === 'production' && process.env.SERVE_FRONTEND === 'true') {
+if (serveFrontend) {
   app.use(express.static(path.join(__dirname, '../public')));
 
   // Regex avoids Express 5/path-to-regexp wildcard pitfalls.
