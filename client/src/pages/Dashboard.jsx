@@ -1,21 +1,102 @@
-import { useState, useEffect } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, Target, Map, MessageSquare, Calendar, Clock, Terminal, ArrowRight, Star, Flame, Award, Trophy, User, AlertCircle } from 'lucide-react';
+import { FileText, Target, Map, MessageSquare, Calendar, Terminal, ArrowRight, Star, Flame, Award, Trophy, User, AlertCircle, Sparkles } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { userAPI, resumeAPI, roadmapAPI, interviewAPI } from '../services/api';
+import { userAPI, resumeAPI, roadmapAPI, interviewAPI, skillsAPI } from '../services/api';
 import PageHeader from '../components/ui/PageHeader';
 import Button from '../components/ui/Button';
 import { Card, CardContent } from '../components/ui/Card';
 import { PageSkeleton } from '../components/ui/Skeleton';
 import MotionDebug from '../components/MotionDebug';
+import DashboardStatsCard from '../components/dashboard/DashboardStatsCard';
+import ProgressRing from '../components/dashboard/ProgressRing';
+import NextActionCard from '../components/dashboard/NextActionCard';
+import WeeklyProgressChart from '../components/dashboard/WeeklyProgressChart';
+
+function clamp(n, min, max) {
+  return Math.max(min, Math.min(max, n));
+}
+
+function startOfDay(ts) {
+  const d = new Date(ts);
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+
+function buildLast7DaysCounts(doneAtTimestamps = []) {
+  const now = Date.now();
+  const today = startOfDay(now);
+  const days = Array.from({ length: 7 }).map((_, i) => {
+    const dayStart = today - (6 - i) * 24 * 60 * 60 * 1000;
+    return { date: new Date(dayStart).toISOString(), completed: 0, dayStart };
+  });
+  const byDay = new Map(days.map((d) => [d.dayStart, d]));
+
+  doneAtTimestamps.forEach((ts) => {
+    if (!ts) return;
+    const day = startOfDay(ts);
+    const bucket = byDay.get(day);
+    if (bucket) bucket.completed += 1;
+  });
+
+  return days.map(({ date, completed }) => ({ date, completed }));
+}
+
+function deriveNextAction({ resume, skills, roadmap, interviewStats }) {
+  if (!resume) {
+    return {
+      title: 'Upload your resume',
+      description: 'Resume analysis unlocks ATS scoring and more personalized recommendations across the app.',
+      ctaLabel: 'Analyze resume',
+      to: '/resume',
+      icon: FileText,
+    };
+  }
+  if (!skills || skills.length === 0) {
+    return {
+      title: 'Run skill gap analysis',
+      description: 'Identify the highest-leverage missing skills for your target role and prioritize your learning.',
+      ctaLabel: 'Analyze skill gap',
+      to: '/skills',
+      icon: Target,
+    };
+  }
+  if (!roadmap) {
+    return {
+      title: 'Generate your roadmap',
+      description: 'Turn your goal into a clear plan with milestones, projects, and a timeline you can execute.',
+      ctaLabel: 'Generate roadmap',
+      to: '/roadmap-generator',
+      icon: Sparkles,
+    };
+  }
+  if ((interviewStats?.completed || 0) === 0) {
+    return {
+      title: 'Complete your first mock interview',
+      description: 'Practice speaking and get rubric-based feedback to improve quickly.',
+      ctaLabel: 'Start interview',
+      to: '/interview',
+      icon: MessageSquare,
+    };
+  }
+  return {
+    title: 'Practice 2 focused challenges',
+    description: 'Consistency compounds. A short practice session today keeps momentum and improves recall under pressure.',
+    ctaLabel: 'Go to practice',
+    to: '/practice',
+    icon: Terminal,
+  };
+}
 
 export default function Dashboard() {
   const { user: authUser } = useAuth();
   const [user, setUser] = useState(null);
   const [resume, setResume] = useState(null);
+  const [skills, setSkills] = useState([]);
   const [roadmap, setRoadmap] = useState(null);
   const [interviewStats, setInterviewStats] = useState({ completed: 0, averageScore: 0, streak: 0 });
   const [userStats, setUserStats] = useState(null);
+  const [taskProgress, setTaskProgress] = useState({});
   const [recentAchievements, setRecentAchievements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -37,19 +118,23 @@ export default function Dashboard() {
     try {
       setLoading(true);
       setError(null);
-      const [userRes, resumeRes, roadmapRes, interviewRes, statsRes, achievementsRes] = await Promise.allSettled([
+      const [userRes, resumeRes, roadmapRes, interviewRes, statsRes, achievementsRes, skillsRes, taskRes] = await Promise.allSettled([
         userAPI.getMe(),
         resumeAPI.get(),
         roadmapAPI.get(),
         interviewAPI.getSessions(),
         userAPI.getStats(),
         userAPI.getAchievements(),
+        skillsAPI.get(),
+        roadmapAPI.getTaskProgress(),
       ]);
 
       if (userRes.status === 'fulfilled') setUser(userRes.value.data.data);
       if (resumeRes.status === 'fulfilled') setResume(resumeRes.value.data.data);
       if (roadmapRes.status === 'fulfilled') setRoadmap(roadmapRes.value.data.data);
       if (statsRes.status === 'fulfilled') setUserStats(statsRes.value.data.data);
+      if (skillsRes.status === 'fulfilled') setSkills(skillsRes.value.data.data || []);
+      if (taskRes.status === 'fulfilled') setTaskProgress(taskRes.value.data.data || {});
       if (achievementsRes.status === 'fulfilled') {
         const achievements = achievementsRes.value.data.data || [];
         // Get 3 most recent achievements
@@ -62,10 +147,14 @@ export default function Dashboard() {
         const avgScore = completed.length > 0
           ? completed.reduce((sum, s) => sum + (s.overall_score || 0), 0) / completed.length
           : 0;
+        const latestCompleted = completed
+          .slice()
+          .sort((a, b) => new Date(b.updated_at || b.created_at).getTime() - new Date(a.updated_at || a.created_at).getTime())[0] || null;
         setInterviewStats({
           completed: completed.length,
           averageScore: Math.round(avgScore),
           streak: statsRes.status === 'fulfilled' ? (statsRes.value.data.data?.currentStreak || 0) : 0,
+          latestScore: latestCompleted?.overall_score != null ? Math.round(Number(latestCompleted.overall_score) || 0) : null,
         });
       }
 
@@ -89,6 +178,22 @@ export default function Dashboard() {
   };
 
   const progress = roadmap?.progress_percentage || 0;
+  const targetRole = roadmap?.target_role || 'Not set';
+  const atsScore = resume?.ats_score != null ? clamp(Math.round(Number(resume.ats_score) || 0), 0, 100) : null;
+
+  const completedSkillCount = Array.isArray(skills) ? skills.length : 0;
+  const skillCompletionPct = clamp(Math.round((completedSkillCount / 24) * 100), 0, 100);
+
+  const weeklyDoneAt = useMemo(() => {
+    const entries = Object.values(taskProgress || {});
+    return entries.map((e) => e?.doneAt).filter(Boolean);
+  }, [taskProgress]);
+  const weeklyData = useMemo(() => buildLast7DaysCounts(weeklyDoneAt), [weeklyDoneAt]);
+
+  const nextAction = useMemo(
+    () => deriveNextAction({ resume, skills, roadmap, interviewStats }),
+    [resume, skills, roadmap, interviewStats]
+  );
 
   if (loading) {
     return <PageSkeleton />;
@@ -138,74 +243,132 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         )}
-        {/* Top Section */}
-        <div className="grid md:grid-cols-3 gap-6 cp-fade-in">
-          {/* Greeting Card */}
-          <Card className="md:col-span-2">
-            <CardContent className="pt-6">
-            <h2 className="text-xl font-semibold text-white">
-              {user ? `${getGreeting()}, ${user.name || 'User'}` : 'Welcome back'}
-            </h2>
-            <p className="text-sm text-white/70 mt-1">
-              Keep momentum: a small session today compounds over time.
-            </p>
-            
-            {/* XP and Level Display */}
-            {userStats && (
-              <div className="mt-5 p-4 rounded-xl border border-white/10 bg-white/5">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <Star className="w-4 h-4 text-yellow-300" />
-                    <span className="font-semibold text-white">Level {userStats.level}</span>
+        {/* AI Command Center */}
+        <div className="grid lg:grid-cols-3 gap-6 cp-fade-in">
+          <div className="lg:col-span-2 space-y-6">
+            <Card className="overflow-hidden">
+              <CardContent className="pt-6">
+                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
+                  <div className="min-w-0">
+                    <h2 className="text-xl font-semibold text-white">
+                      {user ? `${getGreeting()}, ${user.name || 'User'}` : 'Welcome back'}
+                    </h2>
+                    <p className="text-sm text-white/70 mt-1">
+                      Your AI command center: track what matters and take the next best action.
+                    </p>
+
+                    {userStats ? (
+                      <div className="mt-5 p-4 rounded-xl border border-white/10 bg-white/5">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <Star className="w-4 h-4 text-yellow-300" aria-hidden="true" />
+                            <span className="font-semibold text-white">Level {userStats.level}</span>
+                          </div>
+                          <span className="text-sm font-semibold text-white/70">
+                            {userStats.xp.toLocaleString()} XP
+                          </span>
+                        </div>
+                        <div className="w-full bg-white/5 rounded-full h-2.5 mb-2 border border-white/10 overflow-hidden">
+                          <div
+                            className="bg-primary-500/80 h-2.5 rounded-full transition-all duration-200"
+                            style={{ width: `${clamp(userStats.progressToNextLevel || 0, 0, 100)}%` }}
+                          />
+                        </div>
+                        <p className="text-xs text-white/60">
+                          {userStats.xpNeeded} XP to Level {userStats.level + 1}
+                        </p>
+                      </div>
+                    ) : null}
                   </div>
-                  <span className="text-sm font-semibold text-white/70">{userStats.xp.toLocaleString()} XP</span>
-                </div>
-                <div className="w-full bg-white/5 rounded-full h-2.5 mb-2 border border-white/10 overflow-hidden">
-                  <div
-                    className="bg-primary-500/80 h-2.5 rounded-full transition-all duration-200"
-                    style={{ width: `${userStats.progressToNextLevel}%` }}
-                  ></div>
-                </div>
-                <p className="text-xs text-white/60">
-                  {userStats.xpNeeded} XP to Level {userStats.level + 1}
-                </p>
-              </div>
-            )}
 
-            <div className="mt-5">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-white/70">Roadmap progress</span>
-                <span className="text-sm font-semibold text-white">{isNaN(progress) ? '0' : Math.round(progress)}%</span>
-              </div>
-              <div className="w-full bg-white/5 rounded-full h-2.5 border border-white/10 overflow-hidden">
-                <div
-                  className="bg-primary-500/80 h-2.5 rounded-full transition-all duration-200"
-                  style={{ width: `${isNaN(progress) ? 0 : Math.round(progress)}%` }}
-                ></div>
-              </div>
-            </div>
-            </CardContent>
-          </Card>
+                  <div className="flex flex-wrap gap-4">
+                    <DashboardStatsCard
+                      title="Target role"
+                      value={targetRole}
+                      icon={Map}
+                      hint="This is pulled from your latest roadmap/goal."
+                    />
+                    <DashboardStatsCard
+                      title="Resume ATS"
+                      value={atsScore != null ? `${atsScore}%` : '—'}
+                      icon={FileText}
+                      hint={atsScore != null ? 'Keep iterating for stronger keyword alignment.' : 'Upload a resume to get an ATS score.'}
+                      right={atsScore != null ? <ProgressRing value={atsScore} size={56} stroke={7} /> : null}
+                    />
+                    <DashboardStatsCard
+                      title="Skill completion"
+                      value={`${skillCompletionPct}%`}
+                      icon={Target}
+                      hint={`${completedSkillCount} skills tracked (goal baseline: 24).`}
+                      right={<ProgressRing value={skillCompletionPct} size={56} stroke={7} />}
+                    />
+                    <DashboardStatsCard
+                      title="Roadmap progress"
+                      value={`${isNaN(progress) ? 0 : Math.round(progress)}%`}
+                      icon={Map}
+                      hint="Based on your roadmap progress tracker."
+                      right={<ProgressRing value={isNaN(progress) ? 0 : Math.round(progress)} size={56} stroke={7} />}
+                    />
+                    <DashboardStatsCard
+                      title="Recent interview"
+                      value={interviewStats.latestScore != null ? `${interviewStats.latestScore}%` : '—'}
+                      icon={MessageSquare}
+                      hint={interviewStats.latestScore != null ? 'Last completed mock interview score.' : 'Complete a mock interview to unlock this.'}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-          {/* Stats Cards */}
-          <div className="space-y-4">
-            {userStats && (
-              <StatCard
-                icon={<Flame className="w-5 h-5" />}
-                label="Current Streak"
-                value={`${userStats.currentStreak} days`}
-              />
-            )}
-            <StatCard
-              icon={<Calendar className="w-5 h-5" />}
-              label="Your Interviews"
-              value={interviewStats.completed}
-            />
-            <StatCard
-              icon={<Clock className="w-5 h-5" />}
-              label="Available Interviews"
-              value="139"
-            />
+            <WeeklyProgressChart data={weeklyData} />
+          </div>
+
+          <div className="space-y-6">
+            <NextActionCard {...nextAction} />
+
+            <Card>
+              <CardContent className="pt-6">
+                <h3 className="text-lg font-semibold text-white">Quick actions</h3>
+                <div className="mt-4 grid grid-cols-1 gap-3">
+                  <Link to="/interview" className="glass-card rounded-xl p-4 border border-white/10 hover:border-white/15 transition-colors">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <MessageSquare className="w-5 h-5 text-primary-200" aria-hidden="true" />
+                        <div>
+                          <div className="font-semibold text-white text-sm">Start interview</div>
+                          <div className="text-xs text-white/60">Get rubric-based feedback</div>
+                        </div>
+                      </div>
+                      <ArrowRight className="w-4 h-4 text-white/40" aria-hidden="true" />
+                    </div>
+                  </Link>
+                  <Link to="/practice" className="glass-card rounded-xl p-4 border border-white/10 hover:border-white/15 transition-colors">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Terminal className="w-5 h-5 text-primary-200" aria-hidden="true" />
+                        <div>
+                          <div className="font-semibold text-white text-sm">Practice</div>
+                          <div className="text-xs text-white/60">Solve a focused challenge</div>
+                        </div>
+                      </div>
+                      <ArrowRight className="w-4 h-4 text-white/40" aria-hidden="true" />
+                    </div>
+                  </Link>
+                  <Link to="/roadmap" className="glass-card rounded-xl p-4 border border-white/10 hover:border-white/15 transition-colors">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Map className="w-5 h-5 text-primary-200" aria-hidden="true" />
+                        <div>
+                          <div className="font-semibold text-white text-sm">Roadmap</div>
+                          <div className="text-xs text-white/60">Mark tasks complete</div>
+                        </div>
+                      </div>
+                      <ArrowRight className="w-4 h-4 text-white/40" aria-hidden="true" />
+                    </div>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
 
@@ -314,18 +477,6 @@ export default function Dashboard() {
         </div>
       </main>
     </div>
-  );
-}
-
-function StatCard({ icon, label, value }) {
-  return (
-    <Card depth className="p-4">
-      <div className="flex items-center gap-3 mb-2">
-        <div className="text-primary-300">{icon}</div>
-        <span className="text-sm text-white/70">{label}</span>
-      </div>
-      <p className="text-2xl font-semibold text-white">{value}</p>
-    </Card>
   );
 }
 
