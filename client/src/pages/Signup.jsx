@@ -15,6 +15,7 @@ export default function Signup() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const passwordMismatch = confirmPassword.length > 0 && password !== confirmPassword;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -58,12 +59,13 @@ export default function Signup() {
           <CardContent className="pt-6">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-white/80 mb-2">
+                <label htmlFor="signup-name" className="block text-sm font-medium text-white/80 mb-2">
                   Name
                 </label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" aria-hidden="true" />
                   <input
+                    id="signup-name"
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
@@ -71,17 +73,19 @@ export default function Signup() {
                     className="cp-input pl-10"
                     required
                     disabled={loading}
+                    autoComplete="name"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-white/80 mb-2">
+                <label htmlFor="signup-email" className="block text-sm font-medium text-white/80 mb-2">
                   Email
                 </label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" aria-hidden="true" />
                   <input
+                    id="signup-email"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -89,17 +93,19 @@ export default function Signup() {
                     className="cp-input pl-10"
                     required
                     disabled={loading}
+                    autoComplete="email"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-white/80 mb-2">
+                <label htmlFor="signup-password" className="block text-sm font-medium text-white/80 mb-2">
                   Password
                 </label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" aria-hidden="true" />
                   <input
+                    id="signup-password"
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -108,33 +114,43 @@ export default function Signup() {
                     required
                     disabled={loading}
                     minLength={6}
+                    autoComplete="new-password"
                   />
                 </div>
                 <p className="text-xs text-white/50 mt-1">At least 6 characters</p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-white/80 mb-2">
+                <label htmlFor="signup-confirm-password" className="block text-sm font-medium text-white/80 mb-2">
                   Confirm Password
                 </label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" aria-hidden="true" />
                   <input
+                    id="signup-confirm-password"
                     type="password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="cp-input pl-10"
+                    className={`cp-input pl-10 ${passwordMismatch ? 'border-red-500/40 focus:border-red-500/60' : ''}`}
                     required
                     disabled={loading}
                     minLength={6}
+                    autoComplete="new-password"
+                    aria-invalid={passwordMismatch}
+                    aria-describedby={passwordMismatch ? 'confirm-password-error' : undefined}
                   />
                 </div>
+                {passwordMismatch && (
+                  <p id="confirm-password-error" className="text-xs text-red-300 mt-1">
+                    Passwords do not match.
+                  </p>
+                )}
               </div>
 
               {error && (
-                <div className="bg-red-500/10 border border-red-500/25 rounded-lg p-4 flex items-start gap-2">
-                  <AlertCircle className="w-5 h-5 text-red-300 mt-0.5 flex-shrink-0" />
+                <div role="alert" className="bg-red-500/10 border border-red-500/25 rounded-lg p-4 flex items-start gap-2">
+                  <AlertCircle className="w-5 h-5 text-red-300 mt-0.5 flex-shrink-0" aria-hidden="true" />
                   <p className="text-red-200 text-sm">{error}</p>
                 </div>
               )}
@@ -142,12 +158,12 @@ export default function Signup() {
               <Button type="submit" disabled={loading} className="w-full">
                 {loading ? (
                   <>
-                    <Loader className="w-5 h-5 animate-spin" />
+                    <Loader className="w-5 h-5 animate-spin" aria-hidden="true" />
                     Creating account...
                   </>
                 ) : (
                   <>
-                    <UserPlus className="w-5 h-5" />
+                    <UserPlus className="w-5 h-5" aria-hidden="true" />
                     Create account
                   </>
                 )}
