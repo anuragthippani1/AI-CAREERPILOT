@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, Target, Map, MessageSquare, Calendar, Clock, Terminal, ArrowRight, Star, Flame, Award, Trophy, User } from 'lucide-react';
+import { FileText, Target, Map, MessageSquare, Calendar, Clock, Terminal, ArrowRight, Star, Flame, Award, Trophy, User, AlertCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { userAPI, resumeAPI, roadmapAPI, interviewAPI } from '../services/api';
 import PageHeader from '../components/ui/PageHeader';
