@@ -125,12 +125,14 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Serve static files from React app in production
-if (process.env.NODE_ENV === 'production') {
+// Frontend is deployed separately (Render Static Site).
+// If you *intentionally* want the backend to serve a built SPA, set SERVE_FRONTEND=true
+// and place built assets in ../public.
+if (process.env.NODE_ENV === 'production' && process.env.SERVE_FRONTEND === 'true') {
   app.use(express.static(path.join(__dirname, '../public')));
-  
-  // Handle React routing, return all requests to React app
-  app.get('*', (req, res) => {
+
+  // Regex avoids Express 5/path-to-regexp wildcard pitfalls.
+  app.get(/^(?!\/api\/).*/, (req, res) => {
     res.sendFile(path.join(__dirname, '../public/index.html'));
   });
 }
