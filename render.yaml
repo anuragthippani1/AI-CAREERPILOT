@@ -25,6 +25,11 @@ services:
       - key: FRONTEND_URL
         sync: false
 
+  - type: static
+    name: careerpilot-frontend
+    buildCommand: npm run render:build
+    staticPublishPath: client/dist
+
 
 
 
