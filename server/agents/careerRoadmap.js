@@ -29,6 +29,22 @@ Always provide:
 Format your response as JSON.`;
   }
 
+  normalizeCurrentSkills(currentSkills, resumeAnalysis) {
+    if (Array.isArray(currentSkills)) {
+      return currentSkills.map((s) => String(s).trim()).filter(Boolean);
+    }
+    if (typeof currentSkills === 'string') {
+      return currentSkills
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+    }
+    if (Array.isArray(resumeAnalysis?.skills)) {
+      return resumeAnalysis.skills.map((s) => String(s).trim()).filter(Boolean);
+    }
+    return [];
+  }
+
   /**
    * Generate career roadmap
    */
@@ -54,18 +70,24 @@ Format your response as JSON.`;
         }
       }
 
-      const targetRole = goal.target_role || inputData.targetRole || 'Software Engineer';
+      const targetRole = goal.target_role || inputData.targetRole || inputData.dreamRole || 'Software Engineer';
       const skillGap = inputData.skillGap || {};
       const resumeAnalysis = context.resume?.analysis_json 
         ? (typeof context.resume.analysis_json === 'string' 
             ? JSON.parse(context.resume.analysis_json) 
             : context.resume.analysis_json)
         : null;
+      const currentSkills = this.normalizeCurrentSkills(inputData.currentSkills, resumeAnalysis);
+      const currentRoleOrEducation = inputData.currentRoleOrEducation || resumeAnalysis?.experience?.summary || 'Not specified';
+      const experienceLevel = inputData.experienceLevel || 'intermediate';
 
       // Build context
       let contextText = `Target Role: ${targetRole}\n`;
       if (goal.target_company) contextText += `Target Company: ${goal.target_company}\n`;
       if (goal.timeline_months) contextText += `Timeline: ${goal.timeline_months} months\n`;
+      contextText += `Current Role or Education: ${currentRoleOrEducation}\n`;
+      contextText += `Experience Level: ${experienceLevel}\n`;
+      contextText += `Current Skills: ${currentSkills.join(', ') || 'Not provided'}\n`;
       
       if (skillGap.missingCritical) {
         contextText += `\nMissing Critical Skills: ${skillGap.missingCritical.map(s => s.skill).join(', ')}\n`;
@@ -82,6 +104,47 @@ ${contextText}
 
 Generate a comprehensive career roadmap in JSON format:
 {
+  "currentPositionAnalysis": {
+    "summary": "<string>",
+    "strengths": [<array of strings>],
+    "improvementAreas": [<array of strings>]
+  },
+  "skillGap": {
+    "critical": [<array of strings>],
+    "important": [<array of strings>],
+    "foundational": [<array of strings>]
+  },
+  "recommendedLearningPath": [
+    {
+      "title": "<string>",
+      "focus": "<string>",
+      "resources": [<array of strings>],
+      "estimatedDuration": "<string>"
+    }
+  ],
+  "suggestedProjects": [
+    {
+      "title": "<string>",
+      "description": "<string>",
+      "skills": [<array of strings>],
+      "difficulty": "<beginner|intermediate|advanced>",
+      "timeline": "<string>"
+    }
+  ],
+  "certificationsAndResources": [
+    {
+      "name": "<string>",
+      "provider": "<string>",
+      "reason": "<string>",
+      "timeline": "<string>"
+    }
+  ],
+  "finalTimeline": {
+    "days30": [<array of strings>],
+    "months3": [<array of strings>],
+    "months6": [<array of strings>],
+    "summary": "<string>"
+  },
   "shortTerm": [
     {
       "title": "<string>",
@@ -197,8 +260,99 @@ Generate a comprehensive career roadmap in JSON format:
    */
   generateFallbackRoadmap(targetRole, skillGap, resumeAnalysis) {
     const missingSkills = skillGap?.missingCritical?.map(s => s.skill || s) || ['Cloud Computing', 'System Design'];
+    const knownSkills = Array.isArray(resumeAnalysis?.skills) ? resumeAnalysis.skills : [];
     
     return {
+      currentPositionAnalysis: {
+        summary: `You already have a foundation for transitioning into ${targetRole}, and you can accelerate progress with a focused weekly plan.`,
+        strengths: knownSkills.length > 0 ? knownSkills.slice(0, 5) : ['Consistent learning mindset', 'Foundational technical knowledge'],
+        improvementAreas: missingSkills.slice(0, 4),
+      },
+      skillGap: {
+        critical: missingSkills.slice(0, 3),
+        important: missingSkills.slice(3, 6),
+        foundational: ['Problem solving', 'Communication', 'Project execution'],
+      },
+      recommendedLearningPath: [
+        {
+          title: 'Core fundamentals sprint',
+          focus: `Build core knowledge required for ${targetRole}`,
+          resources: [
+            'Role-specific roadmap (roadmap.sh or equivalent)',
+            'One structured online course',
+            'Daily practice checklist',
+          ],
+          estimatedDuration: '30 days',
+        },
+        {
+          title: 'Intermediate implementation phase',
+          focus: 'Convert knowledge into portfolio-grade execution',
+          resources: [
+            'Two end-to-end projects',
+            'Code reviews with peers/mentors',
+            'Interview prep question bank',
+          ],
+          estimatedDuration: '3 months',
+        },
+        {
+          title: 'Interview and placement readiness',
+          focus: 'Close remaining gaps and maximize interview outcomes',
+          resources: [
+            'Mock interviews',
+            'Targeted system design or role deep-dives',
+            'Application and referral tracker',
+          ],
+          estimatedDuration: '6 months',
+        },
+      ],
+      suggestedProjects: [
+        {
+          title: `${targetRole} Portfolio Project 1`,
+          description: 'Build a practical project that demonstrates your top required skills end-to-end.',
+          skills: missingSkills.slice(0, 3),
+          difficulty: 'intermediate',
+          timeline: '3-4 weeks',
+        },
+        {
+          title: `${targetRole} Portfolio Project 2`,
+          description: 'Add an advanced project with production-level architecture and clear impact metrics.',
+          skills: missingSkills.slice(0, 4),
+          difficulty: 'advanced',
+          timeline: '4-6 weeks',
+        },
+      ],
+      certificationsAndResources: [
+        {
+          name: `${targetRole} Foundations Certificate`,
+          provider: 'Coursera / edX / Udemy',
+          reason: 'Build confidence and structured fundamentals quickly',
+          timeline: '30-45 days',
+        },
+        {
+          name: `${targetRole} Advanced Specialization`,
+          provider: 'Cloud providers / official vendor track',
+          reason: 'Strengthen credibility for interviews and hiring filters',
+          timeline: '2-3 months',
+        },
+      ],
+      finalTimeline: {
+        days30: [
+          'Complete fundamentals course and daily study plan',
+          'Finish first mini-project and update resume',
+          'Create skill-gap checkpoint',
+        ],
+        months3: [
+          'Ship two portfolio projects',
+          'Practice 30+ interview questions',
+          'Complete one relevant certification',
+        ],
+        months6: [
+          'Run weekly mock interviews',
+          'Apply with targeted resume variants',
+          'Secure interview pipeline for target roles',
+        ],
+        summary: `With consistent weekly execution, you can become interview-ready for ${targetRole} in approximately 6 months.`,
+      },
       shortTerm: [
         {
           title: `Master Core ${targetRole} Fundamentals`,
