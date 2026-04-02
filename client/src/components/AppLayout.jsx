@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Outlet, Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Sparkles, LayoutDashboard, FileText, Map, MessageSquare, Terminal, Trophy, Target, User, ChevronDown, LogOut } from 'lucide-react';
+import { Sparkles, LayoutDashboard, FileText, Map as MapIcon, MessageSquare, Terminal, Trophy, Target, User, ChevronDown, LogOut } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { cn } from '../utils/cn';
 import Button from './ui/Button';
@@ -9,7 +9,7 @@ const primaryNav = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/practice', label: 'Practice', icon: Terminal },
   { to: '/interview', label: 'Interview', icon: MessageSquare },
-  { to: '/roadmap', label: 'Roadmap', icon: Map },
+  { to: '/roadmap', label: 'Roadmap', icon: MapIcon },
   { to: '/resume', label: 'Resume', icon: FileText },
   { to: '/profile', label: 'Profile', icon: User },
 ];

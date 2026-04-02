@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Award, FileText, Map, MessageSquare, Sparkles, Target, Terminal } from 'lucide-react';
+import { Award, FileText, Map as MapIcon, MessageSquare, Sparkles, Target, Terminal } from 'lucide-react';
 import { interviewAPI, resumeAPI, roadmapAPI, userAPI } from '../services/api';
 import PageHeader from '../components/ui/PageHeader';
 import Button from '../components/ui/Button';
@@ -169,7 +169,7 @@ export default function LandingPage() {
                 <Link to="/roadmap" className="glass-card rounded-xl border border-white/10 p-4 hover:border-white/15 transition-colors">
                   <div className="flex items-start gap-3">
                     <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
-                      <Map className="w-5 h-5 text-primary-200" />
+                      <MapIcon className="w-5 h-5 text-primary-200" />
                     </div>
                     <div>
                       <div className="font-semibold text-white">Roadmap</div>
