@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, Target, Map, MessageSquare, Calendar, Terminal, ArrowRight, Star, Flame, Award, Trophy, User, AlertCircle, Sparkles } from 'lucide-react';
+import { FileText, Target, Map as MapIcon, MessageSquare, Calendar, Terminal, ArrowRight, Star, Flame, Award, Trophy, User, AlertCircle, Sparkles } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { userAPI, resumeAPI, roadmapAPI, interviewAPI, skillsAPI } from '../services/api';
 import PageHeader from '../components/ui/PageHeader';
@@ -285,7 +285,7 @@ export default function Dashboard() {
                     <DashboardStatsCard
                       title="Target role"
                       value={targetRole}
-                      icon={Map}
+                      icon={MapIcon}
                       hint="This is pulled from your latest roadmap/goal."
                     />
                     <DashboardStatsCard
@@ -305,7 +305,7 @@ export default function Dashboard() {
                     <DashboardStatsCard
                       title="Roadmap progress"
                       value={`${isNaN(progress) ? 0 : Math.round(progress)}%`}
-                      icon={Map}
+                      icon={MapIcon}
                       hint="Based on your roadmap progress tracker."
                       right={<ProgressRing value={isNaN(progress) ? 0 : Math.round(progress)} size={56} stroke={7} />}
                     />
@@ -357,7 +357,7 @@ export default function Dashboard() {
                   <Link to="/roadmap" className="glass-card rounded-xl p-4 border border-white/10 hover:border-white/15 transition-colors">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <Map className="w-5 h-5 text-primary-200" aria-hidden="true" />
+                        <MapIcon className="w-5 h-5 text-primary-200" aria-hidden="true" />
                         <div>
                           <div className="font-semibold text-white text-sm">Roadmap</div>
                           <div className="text-xs text-white/60">Mark tasks complete</div>
@@ -447,7 +447,7 @@ export default function Dashboard() {
             hasData={!!resume}
           />
           <ActionCard
-            icon={<Map className="w-6 h-6" />}
+            icon={<MapIcon className="w-6 h-6" />}
             title="Career Roadmap"
             description={roadmap ? "View your personalized career roadmap" : "Generate your career roadmap"}
             link="/roadmap"
