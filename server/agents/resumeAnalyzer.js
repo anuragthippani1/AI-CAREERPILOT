@@ -3,49 +3,15 @@
  * Parses resume, scores ATS compatibility, suggests improvements
  */
 
-const { getModel } = require('../config/gemini');
 const pdfParse = require('pdf-parse');
 const fs = require('fs').promises;
 const db = require('../config/database');
 const { logAgentAction } = require('../utils/logger');
+const { generateStructuredJson, isRecoverableAiError } = require('../config/aiProvider');
+const { buildResumeIntelligencePrompts } = require('./prompts/resumeIntelligence');
 
 class ResumeAnalyzerAgent {
   constructor() {
-    this.model = getModel('gemini-2.0-flash-lite');
-    this.systemPrompt = `You are a professional Resume Analyzer Agent for CareerPilot.
-Your responsibilities:
-1. Parse and extract structured information from resumes
-2. Score ATS (Applicant Tracking System) compatibility (0-100)
-3. Identify strengths and weaknesses
-4. Suggest role-specific improvements
-5. Extract skills, experience, education
-
-Always provide:
-- ATS Score (0-100)
-- Key Strengths (array)
-- Areas for Improvement (array)
-- Extracted Skills (array)
-- Experience Summary
-- Education Summary
-- Role-Specific Suggestions (if target role provided)
-
-Format your response as JSON.`;
-  }
-
-  isRecoverableAiError(error) {
-    const msg = (error && (error.message || String(error))) || '';
-    const lower = msg.toLowerCase();
-    return (
-      msg.includes('quota') ||
-      msg.includes('429') ||
-      msg.includes('Quota') ||
-      msg.includes('exceeded') ||
-      lower.includes('api key') ||
-      msg.includes('401') ||
-      msg.includes('403') ||
-      lower.includes('unauthorized') ||
-      lower.includes('permission')
-    );
   }
 
   generateFallbackAnalysis(resumeText, targetRole) {
@@ -65,9 +31,14 @@ Format your response as JSON.`;
 
     return {
       atsScore,
+      careerReadinessScore: Math.max(30, Math.min(88, atsScore - 5 + skills.length)),
       strengths: [
         length > 500 ? 'Resume has substantial detail' : 'Resume provided',
         skills.length > 0 ? 'Contains relevant technical keywords' : 'Provides baseline background'
+      ],
+      weaknesses: [
+        'Bullet points may not show quantified business impact',
+        `Resume is not fully optimized for ${targetRole} keywords`
       ],
       improvements: [
         `Tailor your resume more specifically to ${targetRole}`,
@@ -75,6 +46,12 @@ Format your response as JSON.`;
         'Ensure consistent formatting and clear section headings'
       ],
       skills: skills.slice(0, 25),
+      missingKeywords: [
+        targetRole,
+        'system design',
+        'leadership',
+        'performance optimization'
+      ],
       experience: {
         summary: length > 0 ? text.trim().slice(0, 220) + (text.trim().length > 220 ? '…' : '') : 'Not provided',
         years: 0,
@@ -84,11 +61,40 @@ Format your response as JSON.`;
         summary: 'Not extracted (demo fallback)',
         degrees: []
       },
+      projects: [],
+      certifications: [],
       roleSpecificSuggestions: [
         `Add 2-3 bullet points emphasizing ${targetRole} responsibilities`,
         'Highlight the most relevant stack/tools near the top'
       ],
-      overallAssessment: 'AI analysis fallback used (Gemini unavailable). Upload a complete resume and configure GEMINI_API_KEY for best results.'
+      improvedSummary: `Results-driven candidate targeting ${targetRole} with hands-on experience across modern engineering workflows, a foundation in problem solving, and clear potential to grow through focused project execution and role-specific keyword alignment.`,
+      overallAssessment: 'AI analysis fallback used because a primary model was unavailable. The resume has baseline signal, but it needs sharper positioning, stronger quantified impact, and better target-role keyword coverage.'
+    };
+  }
+
+  normalizeAnalysis(rawAnalysis) {
+    return {
+      atsScore: Math.max(0, Math.min(100, Math.round(Number(rawAnalysis?.atsScore || 0)))),
+      careerReadinessScore: Math.max(0, Math.min(100, Math.round(Number(rawAnalysis?.careerReadinessScore || 0)))),
+      strengths: Array.isArray(rawAnalysis?.strengths) ? rawAnalysis.strengths : [],
+      weaknesses: Array.isArray(rawAnalysis?.weaknesses) ? rawAnalysis.weaknesses : [],
+      improvements: Array.isArray(rawAnalysis?.improvements) ? rawAnalysis.improvements : [],
+      skills: Array.isArray(rawAnalysis?.skills) ? rawAnalysis.skills : [],
+      missingKeywords: Array.isArray(rawAnalysis?.missingKeywords) ? rawAnalysis.missingKeywords : [],
+      experience: {
+        summary: rawAnalysis?.experience?.summary || '',
+        years: Number(rawAnalysis?.experience?.years || 0),
+        roles: Array.isArray(rawAnalysis?.experience?.roles) ? rawAnalysis.experience.roles : [],
+      },
+      education: {
+        summary: rawAnalysis?.education?.summary || '',
+        degrees: Array.isArray(rawAnalysis?.education?.degrees) ? rawAnalysis.education.degrees : [],
+      },
+      projects: Array.isArray(rawAnalysis?.projects) ? rawAnalysis.projects : [],
+      certifications: Array.isArray(rawAnalysis?.certifications) ? rawAnalysis.certifications : [],
+      roleSpecificSuggestions: Array.isArray(rawAnalysis?.roleSpecificSuggestions) ? rawAnalysis.roleSpecificSuggestions : [],
+      improvedSummary: rawAnalysis?.improvedSummary || '',
+      overallAssessment: rawAnalysis?.overallAssessment || '',
     };
   }
 
@@ -115,61 +121,30 @@ Format your response as JSON.`;
         throw new Error('No resume text or file provided');
       }
 
-      // Prepare prompt
       const targetRole = context.activeGoal?.target_role || inputData.targetRole || 'Software Engineer';
-      const prompt = `${this.systemPrompt}
+      const { systemPrompt, userPrompt } = buildResumeIntelligencePrompts({
+        targetRole,
+        resumeText,
+      });
 
-Target Role: ${targetRole}
-
-Resume Text:
-${resumeText}
-
-Analyze this resume and provide a comprehensive analysis in JSON format:
-{
-  "atsScore": <number 0-100>,
-  "strengths": [<array of strings>],
-  "improvements": [<array of strings>],
-  "skills": [<array of strings>],
-  "experience": {
-    "summary": "<string>",
-    "years": <number>,
-    "roles": [<array of role titles>]
-  },
-  "education": {
-    "summary": "<string>",
-    "degrees": [<array of degree info>]
-  },
-  "roleSpecificSuggestions": [<array of strings>],
-  "overallAssessment": "<string>"
-}`;
-
-      // Call Gemini
       let analysis;
-      const parseGeminiJson = (text) => {
-        const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-        return JSON.parse(cleaned);
-      };
 
       try {
-        const result = await this.model.generateContent(prompt);
-        const response = await result.response;
-        analysis = parseGeminiJson(response.text());
-      } catch (geminiError) {
-        // Retry once with stricter instruction if parsing fails / AI response is noisy
-        const strictPrompt = `${prompt}\n\nIMPORTANT: Return ONLY valid JSON. No markdown, no commentary, no code fences.`;
-        try {
-          const retryResult = await this.model.generateContent(strictPrompt);
-          const retryResponse = await retryResult.response;
-          analysis = parseGeminiJson(retryResponse.text());
-        } catch (retryError) {
-          if (this.isRecoverableAiError(geminiError) || this.isRecoverableAiError(retryError) || retryError instanceof SyntaxError) {
-            console.warn('Gemini unavailable or returned invalid JSON; using fallback resume analysis for demo.');
-            analysis = this.generateFallbackAnalysis(resumeText, targetRole);
-          } else {
-            throw retryError;
-          }
+        analysis = await generateStructuredJson({
+          systemPrompt,
+          userPrompt,
+          preferredProvider: process.env.AI_PROVIDER || 'openai',
+        });
+      } catch (aiError) {
+        if (isRecoverableAiError(aiError) || aiError instanceof SyntaxError) {
+          console.warn('Primary AI provider unavailable or returned invalid JSON; using fallback resume analysis.');
+          analysis = this.generateFallbackAnalysis(resumeText, targetRole);
+        } else {
+          throw aiError;
         }
       }
+
+      analysis = this.normalizeAnalysis(analysis);
 
       // Save to database
       const resumeId = await this.saveResume(context.userId, resumeText, inputData, analysis);
@@ -261,4 +236,3 @@ Analyze this resume and provide a comprehensive analysis in JSON format:
 }
 
 module.exports = ResumeAnalyzerAgent;
-

@@ -33,6 +33,9 @@ CareerPilot is an AI-powered Career Operating System that helps professionals pr
 - ATS (Applicant Tracking System) compatibility scoring
 - Role-specific improvement recommendations
 - Skills extraction and categorization
+- Improved professional summary generation
+- Missing keyword detection for target roles
+- Project and certification extraction for portfolio planning
 
 ### 🎯 Skill Gap Analysis
 - Compares your current skills vs. target role requirements
@@ -144,6 +147,9 @@ DB_PORT=3306
 
 # AI
 GEMINI_API_KEY=your_gemini_api_key
+AI_PROVIDER=openai
+OPENAI_API_KEY=your_openai_api_key
+OPENAI_MODEL=gpt-4o-mini
 
 # Server
 PORT=8000
