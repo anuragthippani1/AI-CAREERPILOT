@@ -4,6 +4,7 @@ import LandingPage from './pages/LandingPage';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
+import SharedSkillGapSnapshot from './pages/SharedSkillGapSnapshot';
 import ResumeUpload from './pages/ResumeUpload';
 import SkillGap from './pages/SkillGap';
 import CareerRoadmap from './pages/CareerRoadmap';
@@ -49,6 +50,7 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
+      <Route path="/share/skills/:token" element={<SharedSkillGapSnapshot />} />
       <Route
         path="/login"
         element={
@@ -87,4 +89,3 @@ function App() {
 }
 
 export default App;
-

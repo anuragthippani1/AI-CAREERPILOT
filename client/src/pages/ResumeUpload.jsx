@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Upload, FileText, CheckCircle, AlertCircle, Loader } from 'lucide-react';
+import { Upload, FileText, CheckCircle, AlertCircle, Loader, Sparkles, ArrowRight } from 'lucide-react';
 import { resumeAPI } from '../services/api';
 import PageHeader from '../components/ui/PageHeader';
 import Button from '../components/ui/Button';
 import { Card, CardContent } from '../components/ui/Card';
+import ResumeMetricCard from '../components/resume/ResumeMetricCard';
 
 export default function ResumeUpload() {
   const navigate = useNavigate();
@@ -46,11 +47,6 @@ export default function ResumeUpload() {
 
       const response = await resumeAPI.analyze(formData);
       setResult(response.data);
-      
-      // Auto-navigate to skills after successful analysis
-      setTimeout(() => {
-        navigate('/skills');
-      }, 2000);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to analyze resume');
     } finally {
@@ -141,53 +137,142 @@ export default function ResumeUpload() {
               <CheckCircle className="w-6 h-6 text-green-300" />
               <div>
                 <h3 className="font-semibold text-white">Analysis complete</h3>
-                <p className="text-sm text-white/70">Next: Skill Gap Analysis (redirecting shortly)…</p>
+                <p className="text-sm text-white/70">Review the extracted signals below, then continue into skill gap analysis.</p>
               </div>
             </div>
 
             {result.data?.data?.analysis && (
               <Card>
                 <CardContent className="pt-6">
-                <h2 className="text-xl font-semibold text-white mb-6">Summary</h2>
+                <h2 className="text-xl font-semibold text-white mb-6">Resume intelligence report</h2>
                 
-                <div className="grid md:grid-cols-2 gap-6 mb-6">
-                  <div className="rounded-xl border border-white/10 bg-white/5 p-6">
-                    <p className="text-sm text-white/70 mb-2">ATS score</p>
-                    <p className="text-4xl font-semibold text-white">
-                      {Math.round(result.data.data.analysis.atsScore || 0)}%
-                    </p>
+                <div className="grid md:grid-cols-3 gap-4 mb-6">
+                  <ResumeMetricCard
+                    label="ATS score"
+                    value={`${Math.round(result.data.data.analysis.atsScore || 0)}%`}
+                    hint="How well your resume is structured for screening systems."
+                  />
+                  <ResumeMetricCard
+                    label="Career readiness"
+                    value={`${Math.round(result.data.data.analysis.careerReadinessScore || 0)}%`}
+                    hint="A directional readiness estimate for your target role."
+                  />
+                  <ResumeMetricCard
+                    label="Skills extracted"
+                    value={result.data.data.analysis.skills?.length || 0}
+                    hint="Parsed from projects, experience, and education."
+                  />
+                </div>
+
+                <div className="rounded-xl border border-primary-400/20 bg-primary-500/10 p-5 mb-6">
+                  <div className="flex items-center gap-2 text-primary-100">
+                    <Sparkles className="w-4 h-4" />
+                    <span className="font-semibold">Improved summary</span>
                   </div>
-                  <div className="rounded-xl border border-white/10 bg-white/5 p-6">
-                    <p className="text-sm text-white/70 mb-2">Skills extracted</p>
-                    <p className="text-4xl font-semibold text-white">
-                      {result.data.data.analysis.skills?.length || 0}
-                    </p>
+                  <p className="mt-3 text-sm text-white/80">
+                    {result.data.data.analysis.improvedSummary || 'No rewritten summary available.'}
+                  </p>
+                </div>
+
+                <div className="grid lg:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="font-semibold text-white mb-2">Strengths</h3>
+                      <ul className="list-disc list-inside space-y-1 text-white/75">
+                        {result.data.data.analysis.strengths?.map((strength, i) => (
+                          <li key={i}>{strength}</li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div>
+                      <h3 className="font-semibold text-white mb-2">Weaknesses</h3>
+                      <ul className="list-disc list-inside space-y-1 text-white/75">
+                        {result.data.data.analysis.weaknesses?.map((weakness, i) => (
+                          <li key={i}>{weakness}</li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div>
+                      <h3 className="font-semibold text-white mb-2">Improvements</h3>
+                      <ul className="list-disc list-inside space-y-1 text-white/75">
+                        {result.data.data.analysis.improvements?.map((improvement, i) => (
+                          <li key={i}>{improvement}</li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div>
+                      <h3 className="font-semibold text-white mb-2">Missing keywords</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {(result.data.data.analysis.missingKeywords || []).map((keyword) => (
+                          <span
+                            key={keyword}
+                            className="px-3 py-1 rounded-full border border-amber-400/25 bg-amber-400/10 text-sm text-amber-100"
+                          >
+                            {keyword}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="font-semibold text-white mb-2">Projects</h3>
+                      <div className="space-y-3">
+                        {(result.data.data.analysis.projects || []).length > 0 ? (
+                          result.data.data.analysis.projects.map((project, i) => (
+                            <div key={`${project.name}-${i}`} className="rounded-xl border border-white/10 bg-white/5 p-4">
+                              <div className="font-medium text-white">{project.name}</div>
+                              <p className="mt-1 text-sm text-white/70">{project.impact}</p>
+                              <div className="mt-3 flex flex-wrap gap-2">
+                                {(project.technologies || []).map((tech) => (
+                                  <span key={tech} className="px-2 py-1 rounded-md bg-white/5 border border-white/10 text-xs text-white/65">
+                                    {tech}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-sm text-white/60">No portfolio-grade projects were confidently extracted.</p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 className="font-semibold text-white mb-2">Certifications</h3>
+                      <div className="space-y-2">
+                        {(result.data.data.analysis.certifications || []).length > 0 ? (
+                          result.data.data.analysis.certifications.map((cert, i) => (
+                            <div key={`${cert.name}-${i}`} className="rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/75">
+                              <span className="font-medium text-white">{cert.name}</span>
+                              {cert.issuer ? ` · ${cert.issuer}` : ''}
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-sm text-white/60">No certifications detected.</p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 className="font-semibold text-white mb-2">Assessment</h3>
+                      <p className="text-white/75">{result.data.data.analysis.overallAssessment}</p>
+                    </div>
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="font-semibold text-white mb-2">Strengths</h3>
-                    <ul className="list-disc list-inside space-y-1 text-white/75">
-                      {result.data.data.analysis.strengths?.map((strength, i) => (
-                        <li key={i}>{strength}</li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div>
-                    <h3 className="font-semibold text-white mb-2">Improvements</h3>
-                    <ul className="list-disc list-inside space-y-1 text-white/75">
-                      {result.data.data.analysis.improvements?.map((improvement, i) => (
-                        <li key={i}>{improvement}</li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div>
-                    <h3 className="font-semibold text-white mb-2">Assessment</h3>
-                    <p className="text-white/75">{result.data.data.analysis.overallAssessment}</p>
-                  </div>
+                <div className="mt-8 flex flex-col sm:flex-row gap-3">
+                  <Button onClick={() => navigate('/skills')} className="sm:flex-1">
+                    Continue to skill gap analysis
+                    <ArrowRight className="w-4 h-4" />
+                  </Button>
+                  <Button variant="secondary" onClick={() => navigate('/dashboard')} className="sm:flex-1">
+                    Return to dashboard
+                  </Button>
                 </div>
                 </CardContent>
               </Card>
@@ -198,5 +283,4 @@ export default function ResumeUpload() {
     </div>
   );
 }
-
 

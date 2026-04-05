@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Target, AlertCircle, CheckCircle, Loader, ArrowRight } from 'lucide-react';
+import { Target, AlertCircle, CheckCircle, Loader, ArrowRight, Share2, Copy, Check } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { skillsAPI, resumeAPI, userAPI } from '../services/api';
 import PageHeader from '../components/ui/PageHeader';
@@ -17,6 +17,13 @@ export default function SkillGap() {
   const [resumeAnalysis, setResumeAnalysis] = useState(null);
   const [error, setError] = useState(null);
   const [lastUpdatedAt, setLastUpdatedAt] = useState(null);
+  const [shareState, setShareState] = useState({
+    loading: false,
+    error: null,
+    success: false,
+    url: '',
+    metrics: null,
+  });
 
   useEffect(() => {
     if (user) {
@@ -59,7 +66,7 @@ export default function SkillGap() {
         if (analyses.length > 0) {
           const latest = analyses[0];
           setAnalysis(latest.analysis);
-          setLastUpdatedAt(latest.created_at || null);
+          setLastUpdatedAt(latest.createdAt || null);
           if (latest.targetRole && !targetRole) {
             setTargetRole(latest.targetRole);
           }
@@ -104,10 +111,17 @@ export default function SkillGap() {
 
       setAnalysis(next);
       setLastUpdatedAt(new Date().toISOString());
+      setShareState({
+        loading: false,
+        error: null,
+        success: false,
+        url: '',
+        metrics: null,
+      });
 
       // Refresh history so trend widgets stay in sync
       try {
-        const refreshed = await skillsAPI.getGapAnalyses(userId);
+        const refreshed = await skillsAPI.getGapAnalyses();
         if (refreshed?.data?.success) {
           setHistory(refreshed.data.data || []);
         }
@@ -157,6 +171,57 @@ export default function SkillGap() {
       return null;
     }
   }, [lastUpdatedAt]);
+
+  const shareSnapshot = async () => {
+    try {
+      setShareState((current) => ({
+        ...current,
+        loading: true,
+        error: null,
+        success: false,
+      }));
+
+      const response = await skillsAPI.createShareSnapshot();
+      const shareUrl = response?.data?.data?.shareUrl;
+      const metrics = response?.data?.data?.metrics || null;
+
+      if (!shareUrl) {
+        throw new Error('Share link was not created');
+      }
+
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: 'My CareerPilot skill gap snapshot',
+            text: `See how I stack up for ${targetRole || 'my target role'} on CareerPilot.`,
+            url: shareUrl,
+          });
+        } catch (shareError) {
+          if (shareError?.name !== 'AbortError' && navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(shareUrl);
+          }
+        }
+      } else if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareUrl);
+      }
+
+      setShareState({
+        loading: false,
+        error: null,
+        success: true,
+        url: shareUrl,
+        metrics,
+      });
+    } catch (err) {
+      setShareState({
+        loading: false,
+        error: err.response?.data?.error || err.message || 'Failed to create share link',
+        success: false,
+        url: '',
+        metrics: null,
+      });
+    }
+  };
 
   return (
     <div className="cp-page">
@@ -249,13 +314,63 @@ export default function SkillGap() {
                     )}
                   </div>
                 </div>
-                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-right">
-                  <p className="text-xs text-white/60">Match score</p>
-                  <p className="text-2xl font-semibold text-white">
-                    {analytics.currentMatch != null ? `${analytics.currentMatch}%` : '—'}
-                  </p>
+                <div className="flex flex-col items-end gap-3">
+                  <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-right">
+                    <p className="text-xs text-white/60">Match score</p>
+                    <p className="text-2xl font-semibold text-white">
+                      {analytics.currentMatch != null ? `${analytics.currentMatch}%` : '—'}
+                    </p>
+                  </div>
+                  <Button
+                    variant={shareState.success ? 'secondary' : 'primary'}
+                    onClick={shareSnapshot}
+                    disabled={shareState.loading}
+                    className="min-w-[190px]"
+                  >
+                    {shareState.loading ? (
+                      <>
+                        <Loader className="w-4 h-4 animate-spin" />
+                        Creating link...
+                      </>
+                    ) : shareState.success ? (
+                      <>
+                        <Check className="w-4 h-4" />
+                        Link ready
+                      </>
+                    ) : (
+                      <>
+                        <Share2 className="w-4 h-4" />
+                        Share snapshot
+                      </>
+                    )}
+                  </Button>
                 </div>
               </div>
+
+              {(shareState.error || shareState.success) && (
+                <div className={`mb-6 rounded-xl border px-4 py-3 ${
+                  shareState.error
+                    ? 'border-red-500/25 bg-red-500/10'
+                    : 'border-emerald-400/20 bg-emerald-400/10'
+                }`}>
+                  {shareState.error ? (
+                    <p className="text-sm text-red-200">{shareState.error}</p>
+                  ) : (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-sm text-emerald-100">
+                        <Copy className="w-4 h-4" />
+                        Share link copied. Use it to send your score + top gaps publicly.
+                      </div>
+                      <div className="text-xs text-emerald-100/80 break-all">{shareState.url}</div>
+                      {shareState.metrics && (
+                        <div className="text-xs text-emerald-100/80">
+                          `share_clicked`: {shareState.metrics.shareCount} · `share_snapshot_viewed`: {shareState.metrics.viewCount}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div className="mb-6">
                 <h3 className="font-semibold text-white mb-2">Assessment</h3>
@@ -325,5 +440,4 @@ export default function SkillGap() {
     </div>
   );
 }
-
 

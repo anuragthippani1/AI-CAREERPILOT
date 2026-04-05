@@ -40,6 +40,9 @@ export const skillsAPI = {
   analyze: (data) => api.post('/skills/analyze', data),
   get: () => api.get('/skills'),
   getGapAnalyses: () => api.get('/skills/gap-analyses'),
+  createShareSnapshot: () => api.post('/skills/share-snapshot'),
+  getSharedSnapshot: (token) => api.get(`/skills/share/${token}`),
+  trackSharedSnapshotView: (token) => api.post(`/skills/share/${token}/view`),
 };
 
 // Roadmap API
@@ -101,4 +104,3 @@ export const achievementsAPI = {
 };
 
 export default api;
-
