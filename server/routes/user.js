@@ -191,7 +191,10 @@ router.get('/stats', authenticate, async (req, res, next) => {
 
 // GET /api/user/achievements - Get current user achievements
 router.get('/achievements', authenticate,
-  query('all').optional().isBoolean(),
+  query('all')
+    .optional()
+    .toBoolean()
+    .isBoolean(),
   async (req, res, next) => {
     try {
       const errors = validationResult(req);
