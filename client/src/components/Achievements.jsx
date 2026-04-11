@@ -14,7 +14,7 @@ export default function Achievements({ userId }) {
   const loadAchievements = async () => {
     try {
       setLoading(true);
-      const response = await userAPI.getAchievements(userId, true); // Get all achievements
+      const response = await userAPI.getAchievements(true);
       if (response.data.success) {
         setAchievements(response.data.data || []);
       }
