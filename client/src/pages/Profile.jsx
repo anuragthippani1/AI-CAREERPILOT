@@ -39,8 +39,8 @@ export default function Profile() {
       setLoading(true);
       const [userRes, statsRes, achievementsRes] = await Promise.allSettled([
         userAPI.get(userId),
-        userAPI.getStats(userId),
-        userAPI.getAchievements(userId)
+        userAPI.getStats(),
+        userAPI.getAchievements(),
       ]);
 
       if (userRes.status === 'fulfilled') {

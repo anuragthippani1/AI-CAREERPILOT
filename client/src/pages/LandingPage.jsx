@@ -34,11 +34,11 @@ export default function LandingPage() {
       setLoading(true);
       const [userRes, resumeRes, roadmapRes, interviewRes, statsRes, achievementsRes] = await Promise.allSettled([
         userAPI.get(userId),
-        resumeAPI.get(userId),
-        roadmapAPI.get(userId),
-        interviewAPI.getSessions(userId),
-        userAPI.getStats(userId),
-        userAPI.getAchievements(userId),
+        resumeAPI.get(),
+        roadmapAPI.get(),
+        interviewAPI.getSessions(),
+        userAPI.getStats(),
+        userAPI.getAchievements(),
       ]);
 
       if (userRes.status === 'fulfilled') setUser(userRes.value.data.data);

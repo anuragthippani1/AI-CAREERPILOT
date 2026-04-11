@@ -70,7 +70,9 @@ export const userAPI = {
   getMe: () => api.get('/user/me'),
   updateProfile: (data) => api.put('/user/profile', data),
   getStats: () => api.get('/user/stats'),
-  getAchievements: (all = false) => api.get('/user/achievements', { params: { all } }),
+  /** @param {boolean} [all] When true, returns all achievements with unlock status (requires auth). */
+  getAchievements: (all = false) =>
+    api.get('/user/achievements', { params: { all: Boolean(all) } }),
 };
 
 // Practice API
