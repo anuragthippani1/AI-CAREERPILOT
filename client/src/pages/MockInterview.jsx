@@ -45,7 +45,7 @@ export default function MockInterview() {
 
   const loadInterviewHistory = async () => {
     try {
-      const response = await interviewAPI.getSessions(userId);
+      const response = await interviewAPI.getSessions();
       if (response.data.success) {
         setInterviewHistory(response.data.data || []);
         calculateOverallStats(response.data.data || []);
