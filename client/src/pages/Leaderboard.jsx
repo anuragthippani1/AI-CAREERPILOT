@@ -93,7 +93,16 @@ export default function Leaderboard() {
   const [isDemo, setIsDemo] = useState(false);
 
   useEffect(() => {
-    loadLeaderboard();
+    let cancelled = false;
+
+    const run = async () => {
+      await loadLeaderboard(() => cancelled);
+    };
+
+    run();
+    return () => {
+      cancelled = true;
+    };
   }, [activeTab]);
 
   useEffect(() => {
@@ -104,24 +113,29 @@ export default function Leaderboard() {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
+
     const load = async () => {
       try {
         if (!userId) {
-          setUserRank(null);
+          if (!cancelled) setUserRank(null);
           return;
         }
         const response = await leaderboardAPI.getUserRank(userId);
-        if (response?.data?.success) setUserRank(response.data.data);
+        if (!cancelled && response?.data?.success) setUserRank(response.data.data);
       } catch (err) {
         console.error('Error loading user rank:', err);
-        setUserRank(null);
+        if (!cancelled) setUserRank(null);
       }
     };
 
     load();
+    return () => {
+      cancelled = true;
+    };
   }, [userId]);
 
-  const loadLeaderboard = async () => {
+  const loadLeaderboard = async (isCancelled = () => false) => {
     try {
       setLoading(true);
       setError(null);
@@ -133,6 +147,8 @@ export default function Leaderboard() {
       if (activeTab === 'xp') response = await leaderboardAPI.getTopUsers(page, limit);
       if (activeTab === 'interviews') response = await leaderboardAPI.getTopByInterviews(page, limit);
       if (activeTab === 'streaks') response = await leaderboardAPI.getTopByStreaks(page, limit);
+
+      if (isCancelled()) return;
 
       if (response?.data?.success) {
         const rows = Array.isArray(response.data.data) ? response.data.data : [];
@@ -149,10 +165,11 @@ export default function Leaderboard() {
       }
     } catch (err) {
       console.error('Error loading leaderboard:', err);
+      if (isCancelled()) return;
       setLeaderboard([]);
       setError(err?.response?.data?.error || 'Failed to load leaderboard');
     } finally {
-      setLoading(false);
+      if (!isCancelled()) setLoading(false);
     }
   };
 
