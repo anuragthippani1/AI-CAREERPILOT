@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Target, AlertCircle, CheckCircle, Loader, ArrowRight, Share2, Copy, Check } from 'lucide-react';
+import { Target, AlertCircle, CheckCircle, Loader, ArrowRight, Share2, Copy, Check, ExternalLink } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { skillsAPI, resumeAPI, userAPI } from '../services/api';
 import PageHeader from '../components/ui/PageHeader';
@@ -189,6 +189,8 @@ export default function SkillGap() {
         throw new Error('Share link was not created');
       }
 
+      let copied = false;
+
       if (navigator.share) {
         try {
           await navigator.share({
@@ -199,10 +201,12 @@ export default function SkillGap() {
         } catch (shareError) {
           if (shareError?.name !== 'AbortError' && navigator.clipboard?.writeText) {
             await navigator.clipboard.writeText(shareUrl);
+            copied = true;
           }
         }
       } else if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(shareUrl);
+        copied = true;
       }
 
       setShareState({
@@ -211,6 +215,7 @@ export default function SkillGap() {
         success: true,
         url: shareUrl,
         metrics,
+        copied,
       });
     } catch (err) {
       setShareState({
@@ -220,6 +225,16 @@ export default function SkillGap() {
         url: '',
         metrics: null,
       });
+    }
+  };
+
+  const copyShareUrl = async () => {
+    if (!shareState.url || !navigator.clipboard?.writeText) return;
+    try {
+      await navigator.clipboard.writeText(shareState.url);
+      setShareState((current) => ({ ...current, copied: true }));
+    } catch {
+      // Non-blocking
     }
   };
 
@@ -359,9 +374,28 @@ export default function SkillGap() {
                     <div className="space-y-2">
                       <div className="flex items-center gap-2 text-sm text-emerald-100">
                         <Copy className="w-4 h-4" />
-                        Share link copied. Use it to send your score + top gaps publicly.
+                        {shareState.copied
+                          ? 'Share link copied. Use it to send your score + top gaps publicly.'
+                          : 'Share link ready. Copy it to share your score + top gaps publicly.'}
                       </div>
                       <div className="text-xs text-emerald-100/80 break-all">{shareState.url}</div>
+                      <div className="flex flex-wrap items-center gap-2 pt-1">
+                        <Button
+                          variant="secondary"
+                          onClick={copyShareUrl}
+                          className="h-9"
+                          disabled={!shareState.url || !navigator.clipboard?.writeText}
+                        >
+                          <Copy className="w-4 h-4" />
+                          Copy link
+                        </Button>
+                        <a href={shareState.url} target="_blank" rel="noreferrer">
+                          <Button variant="secondary" className="h-9">
+                            <ExternalLink className="w-4 h-4" />
+                            Open snapshot
+                          </Button>
+                        </a>
+                      </div>
                       {shareState.metrics && (
                         <div className="text-xs text-emerald-100/80">
                           `share_clicked`: {shareState.metrics.shareCount} · `share_snapshot_viewed`: {shareState.metrics.viewCount}
