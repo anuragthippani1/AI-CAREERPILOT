@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Trophy, Medal, Award, Flame, MessageSquare, Star, Crown, Info, Search, X } from 'lucide-react';
 import { leaderboardAPI } from '../services/api';
 import PageHeader from '../components/ui/PageHeader';
@@ -84,8 +84,12 @@ function XPInfoTooltip() {
 
 export default function Leaderboard() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [userId] = useState(() => getUserIdFromStorageOrUrl());
-  const [activeTab, setActiveTab] = useState('xp');
+  const [activeTab, setActiveTab] = useState(() => {
+    const fromUrl = String(searchParams.get('tab') || '').trim().toLowerCase();
+    return fromUrl === 'interviews' || fromUrl === 'streaks' || fromUrl === 'xp' ? fromUrl : 'xp';
+  });
   const [leaderboard, setLeaderboard] = useState([]);
   const [userRank, setUserRank] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -105,6 +109,16 @@ export default function Leaderboard() {
       cancelled = true;
     };
   }, [activeTab]);
+
+  useEffect(() => {
+    const current = String(searchParams.get('tab') || '').trim().toLowerCase();
+    if (current === activeTab) return;
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set('tab', activeTab);
+      return next;
+    }, { replace: true });
+  }, [activeTab, searchParams, setSearchParams]);
 
   useEffect(() => {
     document.body.dataset.cpBg = 'leaderboard';
