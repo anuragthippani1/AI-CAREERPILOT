@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Trophy, Medal, Award, Flame, MessageSquare, Star, Crown, Info } from 'lucide-react';
+import { Trophy, Medal, Award, Flame, MessageSquare, Star, Crown, Info, Search, X } from 'lucide-react';
 import { leaderboardAPI } from '../services/api';
 import PageHeader from '../components/ui/PageHeader';
 import Button from '../components/ui/Button';
@@ -91,6 +91,7 @@ export default function Leaderboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isDemo, setIsDemo] = useState(false);
+  const [query, setQuery] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -173,8 +174,18 @@ export default function Leaderboard() {
     }
   };
 
-  const top3 = useMemo(() => leaderboard.slice(0, 3), [leaderboard]);
-  const rest = useMemo(() => leaderboard.slice(3, 50), [leaderboard]);
+  const filteredLeaderboard = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return leaderboard;
+    return leaderboard.filter((u) => {
+      const name = String(u?.name || '').toLowerCase();
+      const title = String(u?.title || '').toLowerCase();
+      return name.includes(q) || title.includes(q);
+    });
+  }, [leaderboard, query]);
+
+  const top3 = useMemo(() => filteredLeaderboard.slice(0, 3), [filteredLeaderboard]);
+  const rest = useMemo(() => filteredLeaderboard.slice(3, 50), [filteredLeaderboard]);
 
   const youInList = useMemo(() => {
     if (!userId) return null;
@@ -235,6 +246,36 @@ export default function Leaderboard() {
             </div>
           </button>
         </div>
+
+        {/* Search */}
+        {leaderboard.length > 0 ? (
+          <div className="glass-card rounded-xl border border-white/10 bg-white/5 px-4 py-3 flex items-center gap-3 cp-fade-in">
+            <Search className="w-4 h-4 text-white/60" aria-hidden="true" />
+            <label className="sr-only" htmlFor="leaderboard-search">
+              Search leaderboard
+            </label>
+            <input
+              id="leaderboard-search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search by name or title..."
+              className="flex-1 bg-transparent outline-none text-sm text-white placeholder:text-white/40"
+            />
+            {query ? (
+              <button
+                type="button"
+                onClick={() => setQuery('')}
+                className="p-1 rounded-lg hover:bg-white/10 text-white/70 hover:text-white"
+                aria-label="Clear search"
+              >
+                <X className="w-4 h-4" aria-hidden="true" />
+              </button>
+            ) : null}
+            <div className="text-xs text-white/55">
+              Showing {Math.min(filteredLeaderboard.length, 50)} of {Math.min(leaderboard.length, 50)}
+            </div>
+          </div>
+        ) : null}
 
         {/* Loading / Error / Empty */}
         {loading && leaderboard.length === 0 && (
