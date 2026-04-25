@@ -95,7 +95,7 @@ export default function Leaderboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isDemo, setIsDemo] = useState(false);
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(() => String(searchParams.get('q') || ''));
 
   useEffect(() => {
     let cancelled = false;
@@ -119,6 +119,23 @@ export default function Leaderboard() {
       return next;
     }, { replace: true });
   }, [activeTab, searchParams, setSearchParams]);
+
+  useEffect(() => {
+    const current = String(searchParams.get('q') || '');
+    const nextValue = String(query || '');
+
+    if (current === nextValue) return;
+
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (nextValue.trim()) {
+        next.set('q', nextValue);
+      } else {
+        next.delete('q');
+      }
+      return next;
+    }, { replace: true });
+  }, [query, searchParams, setSearchParams]);
 
   useEffect(() => {
     document.body.dataset.cpBg = 'leaderboard';
