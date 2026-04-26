@@ -97,6 +97,17 @@ export default function Leaderboard() {
   const [isDemo, setIsDemo] = useState(false);
   const [query, setQuery] = useState(() => String(searchParams.get('q') || ''));
 
+  // Keep UI in sync when user navigates via back/forward (URL -> state).
+  useEffect(() => {
+    const fromUrl = String(searchParams.get('tab') || '').trim().toLowerCase();
+    const nextTab = fromUrl === 'interviews' || fromUrl === 'streaks' || fromUrl === 'xp' ? fromUrl : 'xp';
+    if (nextTab !== activeTab) setActiveTab(nextTab);
+
+    const nextQuery = String(searchParams.get('q') || '');
+    if (nextQuery !== query) setQuery(nextQuery);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -121,20 +132,25 @@ export default function Leaderboard() {
   }, [activeTab, searchParams, setSearchParams]);
 
   useEffect(() => {
-    const current = String(searchParams.get('q') || '');
-    const nextValue = String(query || '');
+    // Debounce URL updates while typing (state -> URL).
+    const handle = window.setTimeout(() => {
+      const current = String(searchParams.get('q') || '');
+      const nextValue = String(query || '');
 
-    if (current === nextValue) return;
+      if (current === nextValue) return;
 
-    setSearchParams((prev) => {
-      const next = new URLSearchParams(prev);
-      if (nextValue.trim()) {
-        next.set('q', nextValue);
-      } else {
-        next.delete('q');
-      }
-      return next;
-    }, { replace: true });
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev);
+        if (nextValue.trim()) {
+          next.set('q', nextValue);
+        } else {
+          next.delete('q');
+        }
+        return next;
+      }, { replace: true });
+    }, 250);
+
+    return () => window.clearTimeout(handle);
   }, [query, searchParams, setSearchParams]);
 
   useEffect(() => {
@@ -330,6 +346,19 @@ export default function Leaderboard() {
             <div className="mt-5 flex items-center justify-center gap-2">
               <Button variant="secondary" onClick={loadLeaderboard}>Retry</Button>
               <Button onClick={() => navigate('/practice')}>Practice challenges</Button>
+            </div>
+          </div>
+        )}
+
+        {!loading && !error && leaderboard.length > 0 && filteredLeaderboard.length === 0 && query.trim() && (
+          <div className="glass-card rounded-xl p-10 text-center cp-fade-in">
+            <Search className="w-14 h-14 text-white/30 mx-auto mb-3" />
+            <p className="text-white font-semibold">No matches found</p>
+            <p className="text-white/70 text-sm mt-1">
+              Try a different name or title, or clear the search to see everyone.
+            </p>
+            <div className="mt-5 flex items-center justify-center gap-2">
+              <Button variant="secondary" onClick={() => setQuery('')}>Clear search</Button>
             </div>
           </div>
         )}
