@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Trophy, Medal, Award, Flame, MessageSquare, Star, Crown, Info, Search, X } from 'lucide-react';
 import { leaderboardAPI } from '../services/api';
@@ -85,6 +85,7 @@ function XPInfoTooltip() {
 export default function Leaderboard() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const searchInputRef = useRef(null);
   const [userId] = useState(() => getUserIdFromStorageOrUrl());
   const [activeTab, setActiveTab] = useState(() => {
     const fromUrl = String(searchParams.get('tab') || '').trim().toLowerCase();
@@ -159,6 +160,33 @@ export default function Leaderboard() {
       delete document.body.dataset.cpBg;
     };
   }, []);
+
+  useEffect(() => {
+    const onKeyDown = (event) => {
+      if (event.defaultPrevented) return;
+
+      // "/" focuses search (like many web apps), unless user is already typing in an input/textarea.
+      if (event.key === '/') {
+        const tag = event.target?.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || event.target?.isContentEditable) return;
+        event.preventDefault();
+        searchInputRef.current?.focus?.();
+        return;
+      }
+
+      // "Escape" clears search if focused, otherwise just blurs.
+      if (event.key === 'Escape') {
+        const isFocused = document.activeElement === searchInputRef.current;
+        if (!isFocused) return;
+        event.preventDefault();
+        if (query) setQuery('');
+        searchInputRef.current?.blur?.();
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [query]);
 
   useEffect(() => {
     let cancelled = false;
@@ -303,6 +331,7 @@ export default function Leaderboard() {
             </label>
             <input
               id="leaderboard-search"
+              ref={searchInputRef}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search by name or title..."
