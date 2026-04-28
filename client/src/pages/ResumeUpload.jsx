@@ -1,11 +1,24 @@
-import { useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Upload, FileText, CheckCircle, AlertCircle, Loader, Sparkles, ArrowRight } from 'lucide-react';
+import { Upload, FileText, CheckCircle, AlertCircle, Loader, Sparkles, ArrowRight, X, CloudUpload } from 'lucide-react';
 import { resumeAPI } from '../services/api';
 import PageHeader from '../components/ui/PageHeader';
 import Button from '../components/ui/Button';
 import { Card, CardContent } from '../components/ui/Card';
 import ResumeMetricCard from '../components/resume/ResumeMetricCard';
+
+function getExtension(name = '') {
+  const safe = String(name || '');
+  const idx = safe.lastIndexOf('.');
+  if (idx === -1) return '';
+  return safe.slice(idx + 1).toLowerCase();
+}
+
+function isSupportedResumeFile(file) {
+  if (!file) return false;
+  const ext = getExtension(file.name);
+  return ext === 'pdf' || ext === 'txt' || ext === 'doc' || ext === 'docx';
+}
 
 export default function ResumeUpload() {
   const navigate = useNavigate();
@@ -15,13 +28,65 @@ export default function ResumeUpload() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const fileInputRef = useRef(null);
+
+  const fileLabel = useMemo(() => {
+    if (!file) return 'PDF, TXT, DOC, DOCX';
+    const sizeMb = file.size ? (file.size / (1024 * 1024)) : 0;
+    return `${file.name}${sizeMb ? ` · ${sizeMb.toFixed(sizeMb >= 10 ? 0 : 1)} MB` : ''}`;
+  }, [file]);
+
+  const setSelectedFile = (nextFile) => {
+    if (!nextFile) return;
+    if (!isSupportedResumeFile(nextFile)) {
+      setFile(null);
+      setError('Unsupported file type. Please upload a PDF, TXT, DOC, or DOCX resume.');
+      return;
+    }
+    // 12MB soft limit to avoid large uploads on free tiers.
+    if (nextFile.size && nextFile.size > 12 * 1024 * 1024) {
+      setFile(null);
+      setError('File is too large. Please upload a resume under 12MB.');
+      return;
+    }
+    setFile(nextFile);
+    setError(null);
+  };
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
     if (selectedFile) {
-      setFile(selectedFile);
-      setError(null);
+      setSelectedFile(selectedFile);
     }
+  };
+
+  const clearFile = () => {
+    setFile(null);
+    setError(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const onDrop = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragOver(false);
+    const dropped = event.dataTransfer?.files?.[0];
+    if (dropped) setSelectedFile(dropped);
+  };
+
+  const onDragOver = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragOver(true);
+  };
+
+  const onDragLeave = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragOver(false);
   };
 
   const handleSubmit = async (e) => {
@@ -80,31 +145,60 @@ export default function ResumeUpload() {
 
               <div>
                 <label className="block text-sm font-medium text-white/80 mb-2">
-                  Upload Resume (PDF, TXT, DOC)
+                  Upload resume ({'PDF, TXT, DOC, DOCX'})
                 </label>
-                <div className="border border-dashed border-white/15 rounded-xl p-8 text-center hover:border-white/25 transition-colors">
+                <div
+                  className={`border border-dashed rounded-xl p-8 text-center transition-colors ${
+                    isDragOver
+                      ? 'border-primary-300/60 bg-primary-500/10'
+                      : 'border-white/15 hover:border-white/25'
+                  }`}
+                  onDrop={onDrop}
+                  onDragOver={onDragOver}
+                  onDragEnter={onDragOver}
+                  onDragLeave={onDragLeave}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => fileInputRef.current?.click?.()}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      fileInputRef.current?.click?.();
+                    }
+                  }}
+                  aria-label="Upload resume"
+                >
                   <input
                     type="file"
                     id="file-upload"
                     onChange={handleFileChange}
                     accept=".pdf,.txt,.doc,.docx"
                     className="hidden"
+                    ref={fileInputRef}
                   />
-                  <label htmlFor="file-upload" className="cursor-pointer">
-                    {file ? (
-                      <div className="space-y-2">
-                        <FileText className="w-12 h-12 text-primary-300 mx-auto" />
-                        <p className="text-white font-medium">{file.name}</p>
-                        <p className="text-sm text-white/60">Click to change file</p>
+                  {file ? (
+                    <div className="space-y-2">
+                      <FileText className="w-12 h-12 text-primary-300 mx-auto" />
+                      <p className="text-white font-medium">{fileLabel}</p>
+                      <div className="flex items-center justify-center gap-2 pt-2">
+                        <Button type="button" variant="secondary" onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click?.(); }}>
+                          <CloudUpload className="w-4 h-4" />
+                          Change file
+                        </Button>
+                        <Button type="button" variant="secondary" onClick={(e) => { e.stopPropagation(); clearFile(); }}>
+                          <X className="w-4 h-4" />
+                          Remove
+                        </Button>
                       </div>
-                    ) : (
-                      <div className="space-y-2">
-                        <Upload className="w-12 h-12 text-white/40 mx-auto" />
-                        <p className="text-white/70">Click to upload (PDF, TXT, DOC)</p>
-                        <p className="text-sm text-white/50">Tip: include impact and metrics for strongest results.</p>
-                      </div>
-                    )}
-                  </label>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <Upload className="w-12 h-12 text-white/40 mx-auto" />
+                      <p className="text-white/80 font-medium">Drag & drop your resume here</p>
+                      <p className="text-sm text-white/60">or click to browse ({'PDF, TXT, DOC, DOCX'})</p>
+                      <p className="text-sm text-white/50">Tip: include impact and metrics for strongest results.</p>
+                    </div>
+                  )}
                 </div>
               </div>
 
