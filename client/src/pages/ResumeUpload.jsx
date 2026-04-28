@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Upload, FileText, CheckCircle, AlertCircle, Loader, Sparkles, ArrowRight, X, CloudUpload } from 'lucide-react';
 import { resumeAPI } from '../services/api';
+import { useToast } from '../contexts/ToastContext';
 import PageHeader from '../components/ui/PageHeader';
 import Button from '../components/ui/Button';
 import { Card, CardContent } from '../components/ui/Card';
@@ -22,6 +23,7 @@ function isSupportedResumeFile(file) {
 
 export default function ResumeUpload() {
   const navigate = useNavigate();
+  const { push: pushToast } = useToast();
   const [userId] = useState(1);
   const [file, setFile] = useState(null);
   const [targetRole, setTargetRole] = useState('');
@@ -93,6 +95,7 @@ export default function ResumeUpload() {
     e.preventDefault();
     if (!file) {
       setError('Please upload a resume file to analyze');
+      pushToast({ variant: 'error', title: 'Upload required', message: 'Please choose a resume file to analyze.' });
       return;
     }
 
@@ -112,8 +115,11 @@ export default function ResumeUpload() {
 
       const response = await resumeAPI.analyze(formData);
       setResult(response.data);
+      pushToast({ variant: 'success', title: 'Resume analyzed', message: 'Your resume intelligence report is ready.' });
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to analyze resume');
+      const msg = err.response?.data?.error || 'Failed to analyze resume';
+      setError(msg);
+      pushToast({ variant: 'error', title: 'Resume analysis failed', message: msg });
     } finally {
       setLoading(false);
     }
