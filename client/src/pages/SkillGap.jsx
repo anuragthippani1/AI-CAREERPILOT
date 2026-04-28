@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Target, AlertCircle, CheckCircle, Loader, ArrowRight, Share2, Copy, Check, ExternalLink } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 import { skillsAPI, resumeAPI, userAPI } from '../services/api';
 import PageHeader from '../components/ui/PageHeader';
 import Button from '../components/ui/Button';
@@ -10,6 +11,7 @@ import { Card, CardContent } from '../components/ui/Card';
 export default function SkillGap() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { push: pushToast } = useToast();
   const [loading, setLoading] = useState(false);
   const [analysis, setAnalysis] = useState(null);
   const [history, setHistory] = useState([]);
@@ -217,14 +219,22 @@ export default function SkillGap() {
         metrics,
         copied,
       });
+
+      pushToast({
+        variant: 'success',
+        title: 'Share link ready',
+        message: copied ? 'Copied to clipboard.' : 'Use the buttons to copy or open the snapshot.',
+      });
     } catch (err) {
+      const msg = err.response?.data?.error || err.message || 'Failed to create share link';
       setShareState({
         loading: false,
-        error: err.response?.data?.error || err.message || 'Failed to create share link',
+        error: msg,
         success: false,
         url: '',
         metrics: null,
       });
+      pushToast({ variant: 'error', title: 'Share failed', message: msg });
     }
   };
 
