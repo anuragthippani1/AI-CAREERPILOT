@@ -426,7 +426,7 @@ function SignalCard({ title, value, icon: Icon, muted = false }) {
   );
 }
 
-function TaskRow({ task, done, onStart, onComplete }) {
+function TaskRow({ task, done, started, onStart, onToggleDone }) {
   return (
     <div
       ref={task?.innerRef}
@@ -436,9 +436,23 @@ function TaskRow({ task, done, onStart, onComplete }) {
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <span className={`inline-flex items-center justify-center w-5 h-5 rounded-md border ${done ? 'border-green-500/30 bg-green-500/10' : 'border-white/10 bg-white/5'}`}>
-              {done ? <CheckCircle className="w-4 h-4 text-green-300" /> : null}
-            </span>
+            <label className="inline-flex items-center justify-center w-5 h-5">
+              <span className="sr-only">{done ? 'Mark task incomplete' : 'Mark task complete'}</span>
+              <input
+                type="checkbox"
+                checked={!!done}
+                onChange={() => onToggleDone?.(!done)}
+                className="sr-only"
+              />
+              <span
+                className={`inline-flex items-center justify-center w-5 h-5 rounded-md border transition-colors ${
+                  done ? 'border-green-500/30 bg-green-500/10' : 'border-white/10 bg-white/5 hover:bg-white/10'
+                }`}
+                aria-hidden="true"
+              >
+                {done ? <CheckCircle className="w-4 h-4 text-green-300" /> : null}
+              </span>
+            </label>
             <h4 className={`font-semibold ${done ? 'text-white/70 line-through' : 'text-white'}`}>{task.title}</h4>
           </div>
           <p className="text-sm text-white/70 mt-2">{task.why}</p>
@@ -446,13 +460,18 @@ function TaskRow({ task, done, onStart, onComplete }) {
             <div><span className="text-white/40">Effort:</span> {task.effort}</div>
             <div className="sm:col-span-2"><span className="text-white/40">Outcome:</span> {task.outcome}</div>
           </div>
+          {started && !done ? (
+            <div className="mt-3 text-xs text-primary-200/80">
+              In progress
+            </div>
+          ) : null}
         </div>
         <div className="flex flex-col gap-2 flex-shrink-0">
           <Button size="sm" onClick={onStart} disabled={done}>
             Start task
           </Button>
-          <Button size="sm" variant="secondary" onClick={onComplete} disabled={done}>
-            Mark as complete
+          <Button size="sm" variant="secondary" onClick={() => onToggleDone?.(!done)}>
+            {done ? 'Mark incomplete' : 'Mark as complete'}
           </Button>
         </div>
       </div>
@@ -1011,8 +1030,9 @@ export default function CareerRoadmap() {
                                   },
                                 }}
                                 done={!!taskState[t.id]?.done}
+                                started={!!taskState[t.id]?.startedAt}
                                 onStart={() => startTask(t)}
-                                onComplete={() => toggleTaskDone(t.id, true)}
+                                onToggleDone={(nextDone) => toggleTaskDone(t.id, nextDone)}
                               />
                             ))
                           )}
