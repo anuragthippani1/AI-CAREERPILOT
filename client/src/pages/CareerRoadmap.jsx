@@ -728,11 +728,20 @@ export default function CareerRoadmap() {
         completed: 0,
         completionRate: null,
         completedThisWeek: 0,
+        streakDays: 0,
       };
     }
 
     const now = Date.now();
     const weekAgo = now - 7 * 24 * 60 * 60 * 1000;
+    const dayMs = 24 * 60 * 60 * 1000;
+    const startOfDay = (ts) => {
+      const d = new Date(ts);
+      d.setHours(0, 0, 0, 0);
+      return d.getTime();
+    };
+    const today = startOfDay(now);
+    const doneDays = new Set();
 
     let completed = 0;
     let completedThisWeek = 0;
@@ -744,8 +753,18 @@ export default function CareerRoadmap() {
         if (state.doneAt && state.doneAt >= weekAgo) {
           completedThisWeek += 1;
         }
+        if (state.doneAt) {
+          doneDays.add(startOfDay(state.doneAt));
+        }
       }
     });
+
+    let streakDays = 0;
+    for (let i = 0; i < 365; i += 1) {
+      const day = today - i * dayMs;
+      if (doneDays.has(day)) streakDays += 1;
+      else break;
+    }
 
     const completionRate =
       allTasks.length > 0 ? Math.round((completed / allTasks.length) * 100) : null;
@@ -755,6 +774,7 @@ export default function CareerRoadmap() {
       completed,
       completionRate,
       completedThisWeek,
+      streakDays,
     };
   }, [allTasks, taskState]);
 
@@ -870,6 +890,12 @@ export default function CareerRoadmap() {
                   <div className="text-xs text-white/50">Last 7 days</div>
                   <div className="text-sm font-semibold text-white">
                     {roadmapAnalytics.completedThisWeek}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-xs text-white/50">Streak</div>
+                  <div className="text-sm font-semibold text-white">
+                    {roadmapAnalytics.streakDays}d
                   </div>
                 </div>
               </div>
