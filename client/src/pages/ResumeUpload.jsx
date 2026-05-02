@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Upload, FileText, CheckCircle, AlertCircle, Loader, Sparkles, ArrowRight, X, CloudUpload } from 'lucide-react';
 import { resumeAPI } from '../services/api';
@@ -32,11 +32,29 @@ export default function ResumeUpload() {
   const [error, setError] = useState(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef(null);
+  const [pdfPreviewUrl, setPdfPreviewUrl] = useState('');
 
   const fileLabel = useMemo(() => {
     if (!file) return 'PDF, TXT, DOC, DOCX';
     const sizeMb = file.size ? (file.size / (1024 * 1024)) : 0;
     return `${file.name}${sizeMb ? ` · ${sizeMb.toFixed(sizeMb >= 10 ? 0 : 1)} MB` : ''}`;
+  }, [file]);
+
+  useEffect(() => {
+    if (pdfPreviewUrl) {
+      return () => URL.revokeObjectURL(pdfPreviewUrl);
+    }
+    return undefined;
+  }, [pdfPreviewUrl]);
+
+  useEffect(() => {
+    if (file && getExtension(file.name) === 'pdf') {
+      const nextUrl = URL.createObjectURL(file);
+      setPdfPreviewUrl(nextUrl);
+      return;
+    }
+
+    setPdfPreviewUrl('');
   }, [file]);
 
   const setSelectedFile = (nextFile) => {
@@ -65,6 +83,7 @@ export default function ResumeUpload() {
 
   const clearFile = () => {
     setFile(null);
+    setPdfPreviewUrl('');
     setError(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -207,6 +226,34 @@ export default function ResumeUpload() {
                   )}
                 </div>
               </div>
+
+              {file && getExtension(file.name) === 'pdf' ? (
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <div className="text-sm font-semibold text-white">PDF preview</div>
+                        <div className="text-xs text-white/60 mt-1">
+                          Quick check before analyzing.
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-4 rounded-xl border border-white/10 bg-white/5 overflow-hidden h-[520px]">
+                      {pdfPreviewUrl ? (
+                        <iframe
+                          title="Resume PDF preview"
+                          src={pdfPreviewUrl}
+                          className="w-full h-full"
+                        />
+                      ) : (
+                        <div className="w-full h-full grid place-items-center text-sm text-white/60">
+                          Generating preview…
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : null}
 
               {error && (
                 <div className="bg-red-500/10 border border-red-500/25 rounded-lg p-4 flex items-start gap-2">
