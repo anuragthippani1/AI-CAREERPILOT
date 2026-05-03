@@ -244,6 +244,7 @@ export default function ResumeUpload() {
                           title="Resume PDF preview"
                           src={pdfPreviewUrl}
                           className="w-full h-full"
+                          referrerPolicy="no-referrer"
                         />
                       ) : (
                         <div className="w-full h-full grid place-items-center text-sm text-white/60">
