@@ -154,7 +154,7 @@ export default function ResumeUpload() {
         {!result ? (
           <Card className="mt-6">
             <CardContent className="pt-6">
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6" aria-busy={loading}>
               <div>
                 <label className="block text-sm font-medium text-white/80 mb-2">
                   Target Role (Optional)
@@ -257,8 +257,12 @@ export default function ResumeUpload() {
               ) : null}
 
               {error && (
-                <div className="bg-red-500/10 border border-red-500/25 rounded-lg p-4 flex items-start gap-2">
-                  <AlertCircle className="w-5 h-5 text-red-300 mt-0.5" />
+                <div
+                  className="bg-red-500/10 border border-red-500/25 rounded-lg p-4 flex items-start gap-2"
+                  role="alert"
+                  id="resume-upload-error"
+                >
+                  <AlertCircle className="w-5 h-5 text-red-300 mt-0.5" aria-hidden="true" />
                   <p className="text-red-200 text-sm">{error}</p>
                 </div>
               )}
