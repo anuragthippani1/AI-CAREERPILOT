@@ -201,7 +201,7 @@ export default function Dashboard() {
 
   return (
     <div className="cp-page">
-      <MotionDebug />
+      {import.meta.env.DEV ? <MotionDebug /> : null}
       <main className="cp-page-inner max-w-6xl space-y-6">
         <PageHeader
           title="Dashboard"

@@ -17,6 +17,7 @@ import {
   skillsAPI,
 } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 import PageHeader from '../components/ui/PageHeader';
 import Button from '../components/ui/Button';
 import { Card, CardContent } from '../components/ui/Card';
@@ -499,6 +500,7 @@ function FocusPointerRow({ title, why, onGo }) {
 
 export default function CareerRoadmap() {
   const { user } = useAuth();
+  const { push: pushToast } = useToast();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -612,9 +614,19 @@ export default function CareerRoadmap() {
         completed: done,
         roadmapId: roadmap?.id || null
       });
+
+      pushToast({
+        variant: 'success',
+        title: done ? 'Task completed' : 'Task reopened',
+        message: done ? 'Nice — momentum adds up.' : 'You can finish it anytime.',
+      });
     } catch (error) {
       console.error('Failed to persist task completion:', error);
-      // Keep optimistic update even if backend fails
+      pushToast({
+        variant: 'error',
+        title: 'Could not save progress',
+        message: 'Your change is saved locally; try again when you are back online.',
+      });
     }
   };
 
