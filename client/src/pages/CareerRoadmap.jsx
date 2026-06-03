@@ -682,14 +682,22 @@ export default function CareerRoadmap() {
       });
 
       if (!response?.data?.success) {
-        setError(response?.data?.error || 'Failed to generate roadmap');
+        const msg = response?.data?.error || 'Failed to generate roadmap';
+        setError(msg);
+        pushToast({ variant: 'error', title: 'Roadmap failed', message: msg });
         return;
       }
 
       await loadAll();
+      pushToast({
+        variant: 'success',
+        title: roadmap ? 'Roadmap updated' : 'Roadmap ready',
+        message: 'Your personalized plan is loaded.',
+      });
     } catch (err) {
       const msg = err?.response?.data?.error || err?.response?.data?.data?.error || err?.message || 'Failed to generate roadmap';
       setError(msg);
+      pushToast({ variant: 'error', title: 'Roadmap failed', message: msg });
     } finally {
       setLoading(false);
     }
