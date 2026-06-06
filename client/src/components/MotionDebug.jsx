@@ -48,10 +48,17 @@ export default function MotionDebug() {
 
   if (!import.meta.env.DEV) return null;
 
+  const totalElements =
+    debugInfo.fadeInElements +
+    debugInfo.depthElements +
+    debugInfo.interactiveElements +
+    debugInfo.buttonPressElements;
+
   return (
     <div
-      className="fixed bottom-4 right-4 bg-black/90 border border-white/30 rounded-lg p-3 text-xs font-mono z-50 max-w-xs shadow-2xl pointer-events-none select-none"
+      className="fixed bottom-4 right-4 bg-black/90 border border-white/30 rounded-lg p-3 text-xs font-mono z-50 max-w-xs shadow-2xl pointer-events-none select-none opacity-90"
       aria-hidden
+      title="Dev-only motion system overlay"
     >
       <div className="text-blue-300 font-semibold mb-2 flex items-center gap-2">
         Motion System Debug
@@ -67,7 +74,7 @@ export default function MotionDebug() {
         {debugInfo.fadeInElements === 0 ? (
           <div className="text-red-400">⚠️ No motion classes!</div>
         ) : (
-          <div className="text-green-400">✓ {debugInfo.fadeInElements + debugInfo.depthElements + debugInfo.interactiveElements + debugInfo.buttonPressElements} elements</div>
+          <div className="text-green-400">✓ {totalElements} elements</div>
         )}
       </div>
       <div className="mt-2 pt-2 border-t border-white/30 text-white/60 text-[10px]">
