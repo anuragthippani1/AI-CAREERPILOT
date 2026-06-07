@@ -21,9 +21,10 @@ export default function MotionDebug() {
       });
     };
 
-    // Check immediately and after a delay (for animations)
+    // Check immediately, after animations, and periodically as the DOM updates
     check();
     const timer = setTimeout(check, 500);
+    const interval = setInterval(check, 3000);
 
     // Add hover detection
     const handleMouseOver = (e) => {
@@ -42,6 +43,7 @@ export default function MotionDebug() {
     return () => {
       clearTimeout(timer);
       clearTimeout(hoverTimer);
+      clearInterval(interval);
       document.removeEventListener('mouseover', handleMouseOver);
     };
   }, []);
