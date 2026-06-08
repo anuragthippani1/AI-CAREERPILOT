@@ -73,10 +73,10 @@ export default function MotionDebug() {
         <div>cp-button-press: <span className="text-yellow-300">{debugInfo.buttonPressElements}</span></div>
       </div>
       <div className="mt-2 pt-2 border-t border-white/30">
-        {debugInfo.fadeInElements === 0 ? (
+        {totalElements === 0 ? (
           <div className="text-red-400">⚠️ No motion classes!</div>
         ) : (
-          <div className="text-green-400">✓ {totalElements} elements</div>
+          <div className="text-green-400">✓ {totalElements} motion elements</div>
         )}
       </div>
       <div className="mt-2 pt-2 border-t border-white/30 text-white/60 text-[10px]">
