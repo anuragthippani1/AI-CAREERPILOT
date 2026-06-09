@@ -80,7 +80,7 @@ export default function MotionDebug() {
         )}
       </div>
       <div className="mt-2 pt-2 border-t border-white/30 text-white/60 text-[10px]">
-        Hover cards to test depth
+        Hover cards to test depth · updated 9 Jun 2026
       </div>
     </div>
   );
