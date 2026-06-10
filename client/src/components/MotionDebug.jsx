@@ -8,10 +8,10 @@ export default function MotionDebug() {
     buttonPressElements: 0,
   });
   const [hoverDetected, setHoverDetected] = useState(false);
+  const [lastScan, setLastScan] = useState(null);
 
   useEffect(() => {
     let hoverTimer;
-    // Check DOM for motion classes
     const check = () => {
       setDebugInfo({
         fadeInElements: document.querySelectorAll('[class*="cp-fade-in"]').length,
@@ -19,6 +19,7 @@ export default function MotionDebug() {
         interactiveElements: document.querySelectorAll('.cp-card-interactive').length,
         buttonPressElements: document.querySelectorAll('.cp-button-press').length,
       });
+      setLastScan(new Date());
     };
 
     // Check immediately, after animations, and periodically as the DOM updates
@@ -80,7 +81,12 @@ export default function MotionDebug() {
         )}
       </div>
       <div className="mt-2 pt-2 border-t border-white/30 text-white/60 text-[10px]">
-        Hover cards to test depth · updated 9 Jun 2026
+        Hover cards to test depth
+        {lastScan && (
+          <span className="block mt-1 text-white/40">
+            Last scan {lastScan.toLocaleTimeString()}
+          </span>
+        )}
       </div>
     </div>
   );
