@@ -9,8 +9,14 @@ export default function MotionDebug() {
   });
   const [hoverDetected, setHoverDetected] = useState(false);
   const [lastScan, setLastScan] = useState(null);
+  const [reducedMotion, setReducedMotion] = useState(false);
 
   useEffect(() => {
+    const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const syncReducedMotion = () => setReducedMotion(motionQuery.matches);
+    syncReducedMotion();
+    motionQuery.addEventListener('change', syncReducedMotion);
+
     let hoverTimer;
     const check = () => {
       setDebugInfo({
@@ -42,6 +48,7 @@ export default function MotionDebug() {
     document.addEventListener('mouseover', handleMouseOver);
 
     return () => {
+      motionQuery.removeEventListener('change', syncReducedMotion);
       clearTimeout(timer);
       clearTimeout(hoverTimer);
       clearInterval(interval);
@@ -68,6 +75,12 @@ export default function MotionDebug() {
         {hoverDetected && <span className="text-green-400 animate-pulse">⚡ HOVER</span>}
       </div>
       <div className="space-y-1 text-white/90">
+        <div>
+          reduced-motion:{' '}
+          <span className={reducedMotion ? 'text-orange-300' : 'text-yellow-300'}>
+            {reducedMotion ? 'on' : 'off'}
+          </span>
+        </div>
         <div>cp-fade-in*: <span className="text-yellow-300">{debugInfo.fadeInElements}</span></div>
         <div>cp-card-depth: <span className="text-yellow-300">{debugInfo.depthElements}</span></div>
         <div>cp-card-interactive: <span className="text-yellow-300">{debugInfo.interactiveElements}</span></div>
