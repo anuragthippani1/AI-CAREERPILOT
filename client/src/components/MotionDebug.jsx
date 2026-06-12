@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 
 export default function MotionDebug() {
   const [debugInfo, setDebugInfo] = useState({
@@ -10,6 +11,7 @@ export default function MotionDebug() {
   const [hoverDetected, setHoverDetected] = useState(false);
   const [lastScan, setLastScan] = useState(null);
   const [reducedMotion, setReducedMotion] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
     const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -28,10 +30,22 @@ export default function MotionDebug() {
       setLastScan(new Date());
     };
 
-    // Check immediately, after animations, and periodically as the DOM updates
+    let debounceTimer;
+    const scheduleCheck = () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(check, 250);
+    };
+
     check();
     const timer = setTimeout(check, 500);
-    const interval = setInterval(check, 3000);
+
+    const observer = new MutationObserver(scheduleCheck);
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['class'],
+    });
 
     // Add hover detection
     const handleMouseOver = (e) => {
@@ -49,12 +63,13 @@ export default function MotionDebug() {
 
     return () => {
       motionQuery.removeEventListener('change', syncReducedMotion);
+      observer.disconnect();
+      clearTimeout(debounceTimer);
       clearTimeout(timer);
       clearTimeout(hoverTimer);
-      clearInterval(interval);
       document.removeEventListener('mouseover', handleMouseOver);
     };
-  }, []);
+  }, [location.pathname]);
 
   if (!import.meta.env.DEV) return null;
 
@@ -75,6 +90,9 @@ export default function MotionDebug() {
         {hoverDetected && <span className="text-green-400 animate-pulse">⚡ HOVER</span>}
       </div>
       <div className="space-y-1 text-white/90">
+        <div>
+          route: <span className="text-yellow-300">{location.pathname}</span>
+        </div>
         <div>
           reduced-motion:{' '}
           <span className={reducedMotion ? 'text-orange-300' : 'text-yellow-300'}>
