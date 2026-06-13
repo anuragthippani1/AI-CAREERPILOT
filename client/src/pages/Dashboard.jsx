@@ -7,7 +7,6 @@ import PageHeader from '../components/ui/PageHeader';
 import Button from '../components/ui/Button';
 import { Card, CardContent } from '../components/ui/Card';
 import { PageSkeleton } from '../components/ui/Skeleton';
-import MotionDebug from '../components/MotionDebug';
 import DashboardStatsCard from '../components/dashboard/DashboardStatsCard';
 import ProgressRing from '../components/dashboard/ProgressRing';
 import NextActionCard from '../components/dashboard/NextActionCard';
@@ -201,7 +200,6 @@ export default function Dashboard() {
 
   return (
     <div className="cp-page">
-      {import.meta.env.DEV ? <MotionDebug /> : null}
       <main className="cp-page-inner max-w-6xl space-y-6">
         <PageHeader
           title="Dashboard"

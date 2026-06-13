@@ -4,6 +4,7 @@ import { Sparkles, LayoutDashboard, FileText, Map as MapIcon, MessageSquare, Ter
 import { useAuth } from '../contexts/AuthContext';
 import { cn } from '../utils/cn';
 import Button from './ui/Button';
+import MotionDebug from './MotionDebug';
 
 const primaryNav = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -248,6 +249,7 @@ export default function AppLayout() {
           </div>
         </div>
       </footer>
+      {import.meta.env.DEV ? <MotionDebug /> : null}
     </div>
   );
 }
