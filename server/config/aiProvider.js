@@ -66,6 +66,8 @@ function isRecoverableAiError(error) {
     lower.includes('quota') ||
     lower.includes('429') ||
     lower.includes('api key') ||
+    lower.includes('not configured') ||
+    lower.includes('no ai provider') ||
     lower.includes('unauthorized') ||
     lower.includes('permission') ||
     lower.includes('rate limit') ||
@@ -110,6 +112,7 @@ async function generateStructuredJson({
       if (!isRecoverableAiError(error)) {
         throw error;
       }
+      // Try the next configured provider before failing.
     }
   }
 

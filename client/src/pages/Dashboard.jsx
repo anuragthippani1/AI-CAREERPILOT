@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { FileText, Target, Map as MapIcon, MessageSquare, Calendar, Terminal, ArrowRight, Star, Flame, Award, Trophy, User, AlertCircle, Sparkles } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { userAPI, resumeAPI, roadmapAPI, interviewAPI, skillsAPI } from '../services/api';
@@ -14,6 +14,30 @@ import WeeklyProgressChart from '../components/dashboard/WeeklyProgressChart';
 
 function clamp(n, min, max) {
   return Math.max(min, Math.min(max, n));
+}
+
+function getResumeAtsScore(resume) {
+  if (!resume) return null;
+
+  if (resume.ats_score != null && resume.ats_score !== '') {
+    return clamp(Math.round(Number(resume.ats_score) || 0), 0, 100);
+  }
+
+  const analysis = typeof resume.analysis_json === 'string'
+    ? (() => {
+        try {
+          return JSON.parse(resume.analysis_json);
+        } catch {
+          return null;
+        }
+      })()
+    : resume.analysis_json;
+
+  if (analysis?.atsScore != null) {
+    return clamp(Math.round(Number(analysis.atsScore) || 0), 0, 100);
+  }
+
+  return null;
 }
 
 function startOfDay(ts) {
@@ -89,6 +113,7 @@ function deriveNextAction({ resume, skills, roadmap, interviewStats }) {
 
 export default function Dashboard() {
   const { user: authUser } = useAuth();
+  const location = useLocation();
   const [user, setUser] = useState(null);
   const [resume, setResume] = useState(null);
   const [skills, setSkills] = useState([]);
@@ -104,7 +129,7 @@ export default function Dashboard() {
     if (authUser) {
       loadDashboard();
     }
-  }, [authUser]);
+  }, [authUser, location.pathname]);
 
   useEffect(() => {
     document.body.dataset.cpBg = 'dashboard';
@@ -178,7 +203,7 @@ export default function Dashboard() {
 
   const progress = roadmap?.progress_percentage || 0;
   const targetRole = roadmap?.target_role || 'Not set';
-  const atsScore = resume?.ats_score != null ? clamp(Math.round(Number(resume.ats_score) || 0), 0, 100) : null;
+  const atsScore = getResumeAtsScore(resume);
 
   const completedSkillCount = Array.isArray(skills) ? skills.length : 0;
   const skillCompletionPct = clamp(Math.round((completedSkillCount / 24) * 100), 0, 100);

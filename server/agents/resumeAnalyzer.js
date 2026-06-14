@@ -3,7 +3,7 @@
  * Parses resume, scores ATS compatibility, suggests improvements
  */
 
-const pdfParse = require('pdf-parse');
+const { PDFParse } = require('pdf-parse');
 const fs = require('fs').promises;
 const db = require('../config/database');
 const { logAgentAction } = require('../utils/logger');
@@ -12,6 +12,16 @@ const { buildResumeIntelligencePrompts } = require('./prompts/resumeIntelligence
 
 class ResumeAnalyzerAgent {
   constructor() {
+  }
+
+  async extractPdfText(fileBuffer) {
+    const parser = new PDFParse({ data: fileBuffer });
+    try {
+      const pdfData = await parser.getText();
+      return pdfData?.text || '';
+    } finally {
+      await parser.destroy();
+    }
   }
 
   generateFallbackAnalysis(resumeText, targetRole) {
@@ -110,8 +120,7 @@ class ResumeAnalyzerAgent {
       if (inputData.filePath) {
         const fileBuffer = await fs.readFile(inputData.filePath);
         if (inputData.fileType === 'application/pdf') {
-          const pdfData = await pdfParse(fileBuffer);
-          resumeText = pdfData.text;
+          resumeText = await this.extractPdfText(fileBuffer);
         } else {
           resumeText = fileBuffer.toString();
         }
@@ -119,6 +128,10 @@ class ResumeAnalyzerAgent {
         resumeText = inputData.text;
       } else {
         throw new Error('No resume text or file provided');
+      }
+
+      if (!resumeText.trim()) {
+        throw new Error('Could not extract text from the uploaded resume. Try a text-based PDF or TXT file.');
       }
 
       const targetRole = context.activeGoal?.target_role || inputData.targetRole || 'Software Engineer';

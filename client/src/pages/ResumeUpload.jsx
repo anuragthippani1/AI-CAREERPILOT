@@ -21,10 +21,17 @@ function isSupportedResumeFile(file) {
   return ext === 'pdf' || ext === 'txt' || ext === 'doc' || ext === 'docx';
 }
 
+function getAnalysisFromResponse(response) {
+  const agentResult = response?.data?.data;
+  if (agentResult?.success && agentResult?.data?.analysis) {
+    return agentResult.data.analysis;
+  }
+  return null;
+}
+
 export default function ResumeUpload() {
   const navigate = useNavigate();
   const { push: pushToast } = useToast();
-  const [userId] = useState(1);
   const [file, setFile] = useState(null);
   const [targetRole, setTargetRole] = useState('');
   const [loading, setLoading] = useState(false);
@@ -124,7 +131,6 @@ export default function ResumeUpload() {
 
     try {
       const formData = new FormData();
-      formData.append('userId', userId);
       if (file) {
         formData.append('resume', file);
       }
@@ -133,7 +139,16 @@ export default function ResumeUpload() {
       }
 
       const response = await resumeAPI.analyze(formData);
-      setResult(response.data);
+      const analysis = getAnalysisFromResponse(response);
+
+      if (!response.data?.success || !analysis) {
+        const msg = response.data?.error || response.data?.data?.error || 'Failed to analyze resume';
+        setError(msg);
+        pushToast({ variant: 'error', title: 'Resume analysis failed', message: msg });
+        return;
+      }
+
+      setResult({ analysis });
       pushToast({ variant: 'success', title: 'Resume analyzed', message: 'Your resume intelligence report is ready.' });
     } catch (err) {
       const msg = err.response?.data?.error || 'Failed to analyze resume';
@@ -293,7 +308,7 @@ export default function ResumeUpload() {
               </div>
             </div>
 
-            {result.data?.data?.analysis && (
+            {result?.analysis && (
               <Card>
                 <CardContent className="pt-6">
                 <h2 className="text-xl font-semibold text-white mb-6">Resume intelligence report</h2>
@@ -301,17 +316,17 @@ export default function ResumeUpload() {
                 <div className="grid md:grid-cols-3 gap-4 mb-6">
                   <ResumeMetricCard
                     label="ATS score"
-                    value={`${Math.round(result.data.data.analysis.atsScore || 0)}%`}
+                    value={`${Math.round(result.analysis.atsScore || 0)}%`}
                     hint="How well your resume is structured for screening systems."
                   />
                   <ResumeMetricCard
                     label="Career readiness"
-                    value={`${Math.round(result.data.data.analysis.careerReadinessScore || 0)}%`}
+                    value={`${Math.round(result.analysis.careerReadinessScore || 0)}%`}
                     hint="A directional readiness estimate for your target role."
                   />
                   <ResumeMetricCard
                     label="Skills extracted"
-                    value={result.data.data.analysis.skills?.length || 0}
+                    value={result.analysis.skills?.length || 0}
                     hint="Parsed from projects, experience, and education."
                   />
                 </div>
@@ -322,7 +337,7 @@ export default function ResumeUpload() {
                     <span className="font-semibold">Improved summary</span>
                   </div>
                   <p className="mt-3 text-sm text-white/80">
-                    {result.data.data.analysis.improvedSummary || 'No rewritten summary available.'}
+                    {result.analysis.improvedSummary || 'No rewritten summary available.'}
                   </p>
                 </div>
 
@@ -331,7 +346,7 @@ export default function ResumeUpload() {
                     <div>
                       <h3 className="font-semibold text-white mb-2">Strengths</h3>
                       <ul className="list-disc list-inside space-y-1 text-white/75">
-                        {result.data.data.analysis.strengths?.map((strength, i) => (
+                        {result.analysis.strengths?.map((strength, i) => (
                           <li key={i}>{strength}</li>
                         ))}
                       </ul>
@@ -340,7 +355,7 @@ export default function ResumeUpload() {
                     <div>
                       <h3 className="font-semibold text-white mb-2">Weaknesses</h3>
                       <ul className="list-disc list-inside space-y-1 text-white/75">
-                        {result.data.data.analysis.weaknesses?.map((weakness, i) => (
+                        {result.analysis.weaknesses?.map((weakness, i) => (
                           <li key={i}>{weakness}</li>
                         ))}
                       </ul>
@@ -349,7 +364,7 @@ export default function ResumeUpload() {
                     <div>
                       <h3 className="font-semibold text-white mb-2">Improvements</h3>
                       <ul className="list-disc list-inside space-y-1 text-white/75">
-                        {result.data.data.analysis.improvements?.map((improvement, i) => (
+                        {result.analysis.improvements?.map((improvement, i) => (
                           <li key={i}>{improvement}</li>
                         ))}
                       </ul>
@@ -358,7 +373,7 @@ export default function ResumeUpload() {
                     <div>
                       <h3 className="font-semibold text-white mb-2">Missing keywords</h3>
                       <div className="flex flex-wrap gap-2">
-                        {(result.data.data.analysis.missingKeywords || []).map((keyword) => (
+                        {(result.analysis.missingKeywords || []).map((keyword) => (
                           <span
                             key={keyword}
                             className="px-3 py-1 rounded-full border border-amber-400/25 bg-amber-400/10 text-sm text-amber-100"
@@ -374,8 +389,8 @@ export default function ResumeUpload() {
                     <div>
                       <h3 className="font-semibold text-white mb-2">Projects</h3>
                       <div className="space-y-3">
-                        {(result.data.data.analysis.projects || []).length > 0 ? (
-                          result.data.data.analysis.projects.map((project, i) => (
+                        {(result.analysis.projects || []).length > 0 ? (
+                          result.analysis.projects.map((project, i) => (
                             <div key={`${project.name}-${i}`} className="rounded-xl border border-white/10 bg-white/5 p-4">
                               <div className="font-medium text-white">{project.name}</div>
                               <p className="mt-1 text-sm text-white/70">{project.impact}</p>
@@ -397,8 +412,8 @@ export default function ResumeUpload() {
                     <div>
                       <h3 className="font-semibold text-white mb-2">Certifications</h3>
                       <div className="space-y-2">
-                        {(result.data.data.analysis.certifications || []).length > 0 ? (
-                          result.data.data.analysis.certifications.map((cert, i) => (
+                        {(result.analysis.certifications || []).length > 0 ? (
+                          result.analysis.certifications.map((cert, i) => (
                             <div key={`${cert.name}-${i}`} className="rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/75">
                               <span className="font-medium text-white">{cert.name}</span>
                               {cert.issuer ? ` · ${cert.issuer}` : ''}
@@ -412,7 +427,7 @@ export default function ResumeUpload() {
 
                     <div>
                       <h3 className="font-semibold text-white mb-2">Assessment</h3>
-                      <p className="text-white/75">{result.data.data.analysis.overallAssessment}</p>
+                      <p className="text-white/75">{result.analysis.overallAssessment}</p>
                     </div>
                   </div>
                 </div>

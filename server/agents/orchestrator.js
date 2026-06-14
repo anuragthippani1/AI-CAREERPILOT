@@ -128,6 +128,27 @@ class AgentOrchestrator {
       }
 
       // Execute chained actions
+      if (!result?.success) {
+        const executionTime = Date.now() - startTime;
+        await logAgentAction(
+          userId,
+          'orchestrator',
+          action,
+          inputData,
+          result,
+          executionTime,
+          'error',
+          result?.error
+        );
+
+        return {
+          success: false,
+          error: result?.error || 'Agent action failed',
+          executionTime,
+          timestamp: new Date().toISOString()
+        };
+      }
+
       for (const nextAction of nextActions) {
         const nextResult = await this.orchestrate(
           userId,
