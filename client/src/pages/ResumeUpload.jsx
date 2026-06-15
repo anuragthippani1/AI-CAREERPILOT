@@ -29,12 +29,30 @@ function getAnalysisFromResponse(response) {
   return null;
 }
 
+function getAnalysisFromResume(resume) {
+  if (!resume) return null;
+
+  const analysis = typeof resume.analysis_json === 'string'
+    ? (() => {
+        try {
+          return JSON.parse(resume.analysis_json);
+        } catch {
+          return null;
+        }
+      })()
+    : resume.analysis_json;
+
+  if (!analysis || analysis.atsScore == null) return null;
+  return analysis;
+}
+
 export default function ResumeUpload() {
   const navigate = useNavigate();
   const { push: pushToast } = useToast();
   const [file, setFile] = useState(null);
   const [targetRole, setTargetRole] = useState('');
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -63,6 +81,31 @@ export default function ResumeUpload() {
 
     setPdfPreviewUrl('');
   }, [file]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadExistingResume = async () => {
+      try {
+        const response = await resumeAPI.get();
+        if (cancelled) return;
+
+        const analysis = getAnalysisFromResume(response.data?.data);
+        if (analysis) {
+          setResult({ analysis });
+        }
+      } catch {
+        // No saved resume yet — show upload form.
+      } finally {
+        if (!cancelled) setInitialLoading(false);
+      }
+    };
+
+    loadExistingResume();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const setSelectedFile = (nextFile) => {
     if (!nextFile) return;
@@ -167,6 +210,14 @@ export default function ResumeUpload() {
           description="Upload your resume to get ATS signals, strengths, and a clear next-step plan."
         />
         {!result ? (
+          initialLoading ? (
+            <Card className="mt-6">
+              <CardContent className="pt-6 flex items-center justify-center gap-3 text-white/70">
+                <Loader className="w-5 h-5 animate-spin" aria-hidden="true" />
+                Loading saved resume analysis…
+              </CardContent>
+            </Card>
+          ) : (
           <Card className="mt-6">
             <CardContent className="pt-6">
             <form onSubmit={handleSubmit} className="space-y-6" aria-busy={loading}>
@@ -298,6 +349,7 @@ export default function ResumeUpload() {
             </form>
             </CardContent>
           </Card>
+          )
         ) : (
           <div className="space-y-6">
             <div className="glass-card border border-green-500/25 rounded-xl p-6 flex items-center gap-3">
