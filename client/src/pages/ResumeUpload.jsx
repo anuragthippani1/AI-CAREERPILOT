@@ -140,6 +140,13 @@ export default function ResumeUpload() {
     }
   };
 
+  const startNewUpload = () => {
+    setResult(null);
+    clearFile();
+    setTargetRole('');
+    setError(null);
+  };
+
   const onDrop = (event) => {
     event.preventDefault();
     event.stopPropagation();
@@ -491,6 +498,10 @@ export default function ResumeUpload() {
                   </Button>
                   <Button variant="secondary" onClick={() => navigate('/dashboard')} className="sm:flex-1">
                     Return to dashboard
+                  </Button>
+                  <Button variant="secondary" onClick={startNewUpload} className="sm:flex-1">
+                    <Upload className="w-4 h-4" />
+                    Upload new resume
                   </Button>
                 </div>
                 </CardContent>
