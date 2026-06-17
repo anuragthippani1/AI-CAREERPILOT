@@ -11,33 +11,10 @@ import DashboardStatsCard from '../components/dashboard/DashboardStatsCard';
 import ProgressRing from '../components/dashboard/ProgressRing';
 import NextActionCard from '../components/dashboard/NextActionCard';
 import WeeklyProgressChart from '../components/dashboard/WeeklyProgressChart';
+import { getResumeAtsScore } from '../utils/resumeAnalysis';
 
 function clamp(n, min, max) {
   return Math.max(min, Math.min(max, n));
-}
-
-function getResumeAtsScore(resume) {
-  if (!resume) return null;
-
-  if (resume.ats_score != null && resume.ats_score !== '') {
-    return clamp(Math.round(Number(resume.ats_score) || 0), 0, 100);
-  }
-
-  const analysis = typeof resume.analysis_json === 'string'
-    ? (() => {
-        try {
-          return JSON.parse(resume.analysis_json);
-        } catch {
-          return null;
-        }
-      })()
-    : resume.analysis_json;
-
-  if (analysis?.atsScore != null) {
-    return clamp(Math.round(Number(analysis.atsScore) || 0), 0, 100);
-  }
-
-  return null;
 }
 
 function startOfDay(ts) {

@@ -7,6 +7,7 @@ import PageHeader from '../components/ui/PageHeader';
 import Button from '../components/ui/Button';
 import { Card, CardContent } from '../components/ui/Card';
 import ResumeMetricCard from '../components/resume/ResumeMetricCard';
+import { getAnalysisFromResume } from '../utils/resumeAnalysis';
 
 function getExtension(name = '') {
   const safe = String(name || '');
@@ -27,23 +28,6 @@ function getAnalysisFromResponse(response) {
     return agentResult.data.analysis;
   }
   return null;
-}
-
-function getAnalysisFromResume(resume) {
-  if (!resume) return null;
-
-  const analysis = typeof resume.analysis_json === 'string'
-    ? (() => {
-        try {
-          return JSON.parse(resume.analysis_json);
-        } catch {
-          return null;
-        }
-      })()
-    : resume.analysis_json;
-
-  if (!analysis || analysis.atsScore == null) return null;
-  return analysis;
 }
 
 export default function ResumeUpload() {
