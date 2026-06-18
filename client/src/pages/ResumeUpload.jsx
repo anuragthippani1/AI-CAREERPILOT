@@ -38,6 +38,7 @@ export default function ResumeUpload() {
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [result, setResult] = useState(null);
+  const [isSavedReport, setIsSavedReport] = useState(false);
   const [error, setError] = useState(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef(null);
@@ -77,6 +78,7 @@ export default function ResumeUpload() {
         const analysis = getAnalysisFromResume(response.data?.data);
         if (analysis) {
           setResult({ analysis });
+          setIsSavedReport(true);
         }
       } catch {
         // No saved resume yet — show upload form.
@@ -126,6 +128,7 @@ export default function ResumeUpload() {
 
   const startNewUpload = () => {
     setResult(null);
+    setIsSavedReport(false);
     clearFile();
     setTargetRole('');
     setError(null);
@@ -183,6 +186,7 @@ export default function ResumeUpload() {
       }
 
       setResult({ analysis });
+      setIsSavedReport(false);
       pushToast({ variant: 'success', title: 'Resume analyzed', message: 'Your resume intelligence report is ready.' });
     } catch (err) {
       const msg = err.response?.data?.error || 'Failed to analyze resume';
@@ -346,8 +350,14 @@ export default function ResumeUpload() {
             <div className="glass-card border border-green-500/25 rounded-xl p-6 flex items-center gap-3">
               <CheckCircle className="w-6 h-6 text-green-300" />
               <div>
-                <h3 className="font-semibold text-white">Analysis complete</h3>
-                <p className="text-sm text-white/70">Review the extracted signals below, then continue into skill gap analysis.</p>
+                <h3 className="font-semibold text-white">
+                  {isSavedReport ? 'Saved resume report' : 'Analysis complete'}
+                </h3>
+                <p className="text-sm text-white/70">
+                  {isSavedReport
+                    ? 'Your latest resume analysis is ready. Upload a new file anytime to refresh your scores.'
+                    : 'Review the extracted signals below, then continue into skill gap analysis.'}
+                </p>
               </div>
             </div>
 
