@@ -435,7 +435,11 @@ export default function Dashboard() {
           <ActionCard
             icon={<FileText className="w-6 h-6" />}
             title="Resume Analysis"
-            description={resume ? "View your resume insights and ATS score" : "Upload and analyze your resume"}
+            description={
+              atsScore != null
+                ? `ATS score ${atsScore}% — view your full resume report`
+                : 'Upload and analyze your resume'
+            }
             link="/resume"
             hasData={!!resume}
           />
