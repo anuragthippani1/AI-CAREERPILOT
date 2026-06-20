@@ -7,7 +7,7 @@ import PageHeader from '../components/ui/PageHeader';
 import Button from '../components/ui/Button';
 import { Card, CardContent } from '../components/ui/Card';
 import ResumeMetricCard from '../components/resume/ResumeMetricCard';
-import { getAnalysisFromResume } from '../utils/resumeAnalysis';
+import { getAnalysisFromResume, getAnalysisFromResponse } from '../utils/resumeAnalysis';
 
 function getExtension(name = '') {
   const safe = String(name || '');
@@ -20,14 +20,6 @@ function isSupportedResumeFile(file) {
   if (!file) return false;
   const ext = getExtension(file.name);
   return ext === 'pdf' || ext === 'txt' || ext === 'doc' || ext === 'docx';
-}
-
-function getAnalysisFromResponse(response) {
-  const agentResult = response?.data?.data;
-  if (agentResult?.success && agentResult?.data?.analysis) {
-    return agentResult.data.analysis;
-  }
-  return null;
 }
 
 export default function ResumeUpload() {
@@ -347,17 +339,30 @@ export default function ResumeUpload() {
           )
         ) : (
           <div className="space-y-6">
-            <div className="glass-card border border-green-500/25 rounded-xl p-6 flex items-center gap-3">
-              <CheckCircle className="w-6 h-6 text-green-300" />
-              <div>
+            <div className="glass-card border border-green-500/25 rounded-xl p-6 flex items-start gap-3">
+              <CheckCircle className="w-6 h-6 text-green-300 mt-0.5 flex-shrink-0" />
+              <div className="flex-1">
                 <h3 className="font-semibold text-white">
                   {isSavedReport ? 'Saved resume report' : 'Analysis complete'}
                 </h3>
-                <p className="text-sm text-white/70">
+                <p className="text-sm text-white/70 mt-1">
                   {isSavedReport
                     ? 'Your latest resume analysis is ready. Upload a new file anytime to refresh your scores.'
                     : 'Review the extracted signals below, then continue into skill gap analysis.'}
                 </p>
+                {result?.analysis && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-green-500/15 border border-green-400/25 text-green-200">
+                      ATS {Math.round(result.analysis.atsScore || 0)}%
+                    </span>
+                    <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-primary-500/15 border border-primary-400/25 text-primary-100">
+                      Readiness {Math.round(result.analysis.careerReadinessScore || 0)}%
+                    </span>
+                    <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-white/5 border border-white/10 text-white/70">
+                      {result.analysis.skills?.length || 0} skills
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 

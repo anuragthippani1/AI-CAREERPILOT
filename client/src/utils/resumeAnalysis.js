@@ -22,6 +22,14 @@ export function getAnalysisFromResume(resume) {
   return analysis;
 }
 
+export function getAnalysisFromResponse(response) {
+  const agentResult = response?.data?.data;
+  if (agentResult?.success && agentResult?.data?.analysis) {
+    return agentResult.data.analysis;
+  }
+  return null;
+}
+
 export function getResumeAtsScore(resume) {
   if (!resume) return null;
 
