@@ -44,3 +44,9 @@ export function getResumeAtsScore(resume) {
 
   return null;
 }
+
+export function getCareerReadinessScore(resume) {
+  const analysis = parseResumeAnalysisJson(resume);
+  if (analysis?.careerReadinessScore == null) return null;
+  return clamp(Math.round(Number(analysis.careerReadinessScore) || 0), 0, 100);
+}

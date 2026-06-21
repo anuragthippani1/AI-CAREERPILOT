@@ -11,7 +11,7 @@ import DashboardStatsCard from '../components/dashboard/DashboardStatsCard';
 import ProgressRing from '../components/dashboard/ProgressRing';
 import NextActionCard from '../components/dashboard/NextActionCard';
 import WeeklyProgressChart from '../components/dashboard/WeeklyProgressChart';
-import { getResumeAtsScore } from '../utils/resumeAnalysis';
+import { getResumeAtsScore, getCareerReadinessScore } from '../utils/resumeAnalysis';
 
 function clamp(n, min, max) {
   return Math.max(min, Math.min(max, n));
@@ -181,6 +181,7 @@ export default function Dashboard() {
   const progress = roadmap?.progress_percentage || 0;
   const targetRole = roadmap?.target_role || 'Not set';
   const atsScore = getResumeAtsScore(resume);
+  const readinessScore = getCareerReadinessScore(resume);
 
   const completedSkillCount = Array.isArray(skills) ? skills.length : 0;
   const skillCompletionPct = clamp(Math.round((completedSkillCount / 24) * 100), 0, 100);
@@ -294,6 +295,13 @@ export default function Dashboard() {
                       icon={FileText}
                       hint={atsScore != null ? 'Keep iterating for stronger keyword alignment.' : 'Upload a resume to get an ATS score.'}
                       right={atsScore != null ? <ProgressRing value={atsScore} size={56} stroke={7} /> : null}
+                    />
+                    <DashboardStatsCard
+                      title="Career readiness"
+                      value={readinessScore != null ? `${readinessScore}%` : '—'}
+                      icon={Sparkles}
+                      hint={readinessScore != null ? 'Directional readiness for your target role.' : 'Analyze your resume to unlock readiness scoring.'}
+                      right={readinessScore != null ? <ProgressRing value={readinessScore} size={56} stroke={7} /> : null}
                     />
                     <DashboardStatsCard
                       title="Skill completion"
@@ -446,9 +454,13 @@ export default function Dashboard() {
           <ActionCard
             icon={<Target className="w-6 h-6" />}
             title="Skill Gap Analysis"
-            description="Identify missing skills for your target role"
+            description={
+              completedSkillCount > 0
+                ? `${completedSkillCount} skills tracked — run gap analysis for your target role`
+                : 'Identify missing skills for your target role'
+            }
             link="/skills"
-            hasData={!!resume}
+            hasData={completedSkillCount > 0}
           />
           <ActionCard
             icon={<MapIcon className="w-6 h-6" />}
