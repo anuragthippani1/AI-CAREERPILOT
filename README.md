@@ -10,21 +10,102 @@
 
 **Transform your career growth into a structured, data-driven journey with AI-powered insights and practice.**
 
-[Features](#-features) • [Quick Start](#-quick-start) • [Architecture](#-architecture) • [API](#-api-endpoints) • [Deployment](#-deployment)
+[What We're Building](#-what-were-building) • [Use Cases](#-use-cases) • [Features](#-features) • [Quick Start](#-quick-start) • [Architecture](#-architecture)
 
 </div>
 
 ---
 
+## 🎯 What We're Building
+
+**CareerPilot** is an **AI Career Operating System** — a single platform where job seekers and early-career professionals can go from *“I want a better role”* to *“I know what to learn, how to practice, and how ready I am.”*
+
+Instead of juggling separate tools for resume checks, LeetCode practice, interview prep, and career planning, CareerPilot connects those steps into one guided workflow:
+
+```
+Upload Resume → Skill Gap Analysis → Career Roadmap → Mock Interview → Coding Practice
+```
+
+Each step feeds the next. Resume analysis extracts skills and ATS signals. Skill gap analysis compares you to a target role. The roadmap turns gaps into milestones you can track. Mock interviews and coding practice help you build confidence before real applications.
+
+### The problem we're solving
+
+| Pain point | How CareerPilot helps |
+|------------|----------------------|
+| Resumes get rejected by ATS with no clear feedback | ATS scoring, keyword gaps, and role-specific rewrite suggestions |
+| Unclear what skills to learn next | Skill gap analysis with priorities and learning direction |
+| Career growth feels unstructured | AI-generated roadmaps with short/medium/long-term milestones |
+| Interview prep is inconsistent | Adaptive mock interviews with rubric-based scoring |
+| Coding practice is disconnected from career goals | Integrated practice with hints, execution, and progress tracking |
+
+### Who it's for
+
+- **Students & new grads** preparing for their first software role
+- **Career switchers** mapping skills from one domain to another
+- **Working professionals** targeting a promotion or role change (e.g. backend → full-stack, IC → lead)
+- **Anyone job hunting** who wants a dashboard view of readiness — not just a resume PDF
+
+---
+
+## 💡 Use Cases
+
+### 1. Resume → Role readiness check
+Upload a PDF or text resume, optionally set a target role (e.g. *Backend Software Engineer*), and get:
+- **ATS score** and **career readiness** estimate
+- Extracted skills, strengths, weaknesses, and missing keywords
+- An improved professional summary you can refine
+
+**Outcome:** Know whether your resume is competitive before you apply.
+
+### 2. Skill gap → learning plan
+Compare your current skills against a dream role. CareerPilot highlights:
+- Critical missing skills with priority
+- Existing strengths to lean on
+- Match score trends over time (history is saved)
+
+**Outcome:** Focus study time on what actually moves the needle.
+
+### 3. Roadmap → execution
+Generate a personalized career roadmap with milestones across:
+- **0–3 months** (short-term wins)
+- **3–6 months** (skill building)
+- **6–12+ months** (long-term growth)
+
+Task progress is stored server-side so you can pick up where you left off.
+
+**Outcome:** Turn vague goals into a plan you can follow week by week.
+
+### 4. Interview & coding practice
+- **Mock interviews:** Technical, behavioral, mixed, system design, and leadership modes with adaptive follow-ups and strict rubric scoring (0–10).
+- **Coding practice:** LeetCode/GeeksforGeeks-style problems in an in-browser editor with test execution and AI hints.
+
+**Outcome:** Practice under realistic conditions and track improvement over time.
+
+### 5. Dashboard as your career command center
+After sign-in, the dashboard surfaces:
+- Resume ATS and career readiness scores
+- Skill completion and roadmap progress
+- Interview stats and streaks
+- A **next best action** (e.g. upload resume → run skill gap → start mock interview)
+
+**Outcome:** One place to see where you stand and what to do next.
+
+---
+
 ## ✨ Overview
 
-CareerPilot is an AI-powered Career Operating System that helps professionals prepare for interviews, analyze their skills, and build personalized career roadmaps. Built with a modern tech stack and agentic AI architecture, it provides:
+CareerPilot combines a modern web app with an **agentic AI backend**. Specialized agents handle resume analysis, skill gaps, roadmaps, and interviews — orchestrated so outputs from one step inform the next.
 
-- **Resume Intelligence** with ATS scoring
+**Core capabilities:**
+- **Resume Intelligence** with ATS scoring and keyword analysis
 - **Skill Gap Analysis** with personalized recommendations
 - **Career Roadmaps** with step-by-step milestones
 - **AI Mock Interviews** with rubric-based evaluation
-- **Coding Practice** with problems from LeetCode & GeeksforGeeks
+- **Coding Practice** with an integrated editor and AI hints
+
+**Built with:** React 19, Node.js/Express, MySQL, and OpenAI/Gemini for AI agents.
+
+---
 
 ## 🎯 Features
 
@@ -73,25 +154,25 @@ CareerPilot is an AI-powered Career Operating System that helps professionals pr
 ## 🧱 Tech Stack
 
 ### Frontend
-- **React 18.2.0** - UI framework
-- **Tailwind CSS** - Utility-first CSS framework
+- **React 19** - UI framework
+- **Tailwind CSS** - Utility-first styling
 - **Vite** - Build tool and dev server
-- **Monaco Editor** - Code editor component
+- **React Router** - Client-side routing with protected routes
+- **Monaco Editor** - In-browser code editor
 - **Lucide React** - Icon library
 
 ### Backend
 - **Node.js** - Runtime environment
 - **Express** - Web framework
 - **MySQL 8.0+** - Relational database
+- **JWT Auth** - Sign up, login, and protected API routes
 - **Multer** - File upload handling
-- **PDF-Parse** - Resume parsing
+- **PDF-Parse** - Resume text extraction
 
 ### AI & Services
-- **Google Gemini 2.0 Flash Lite** - AI engine for all agents
-- **Antigravity Orchestrator** - Custom agent orchestration layer
+- **OpenAI / Google Gemini** - AI engine for all agents (configurable via `AI_PROVIDER`)
+- **Antigravity Orchestrator** - Custom agent orchestration and chaining layer
 - **Judge0/Piston API** - Code execution service (optional)
-
-- 
 ### Infrastructure
 - **Vercel** - Frontend hosting
 - **Render/Cloud Run** - Backend hosting
@@ -103,7 +184,7 @@ CareerPilot is an AI-powered Career Operating System that helps professionals pr
 
 - **Node.js** 18+ and npm
 - **MySQL** 8.0+
-- **Google Gemini API Key** ([Get one here](https://makersuite.google.com/app/apikey))
+- **OpenAI API Key** and/or **Google Gemini API Key** (at least one for full AI analysis; fallback scoring works without keys)
 
 ### Installation
 
@@ -208,11 +289,12 @@ CareerPilot uses a modular agent architecture where specialized AI agents handle
 
 ### Agent Flow
 
-1. **Resume Upload** → Resume Analyzer extracts skills and scores ATS
-2. **Skill Gap Analysis** → Compares current skills vs. target role
-3. **Career Roadmap** → Generates personalized roadmap based on gaps
-4. **Mock Interview** → Practices with AI, receives rubric-based feedback
-5. **Coding Practice** → Solves problems, gets AI-powered hints
+1. **Sign up / Log in** → Secure JWT session for your data
+2. **Resume Upload** → Resume Analyzer extracts skills and scores ATS
+3. **Skill Gap Analysis** → Compares current skills vs. target role
+4. **Career Roadmap** → Generates personalized roadmap based on gaps
+5. **Mock Interview** → Practices with AI, receives rubric-based feedback
+6. **Coding Practice** → Solves problems, gets AI-powered hints
 
 ### Database Schema
 
@@ -229,35 +311,45 @@ Key tables:
 
 ## 📡 API Endpoints
 
+Most routes require authentication (`Authorization: Bearer <token>`).
+
+### Auth
+- `POST /api/auth/signup` - Create account
+- `POST /api/auth/login` - Sign in
+- `GET /api/auth/me` - Get current user
+
 ### Resume
 - `POST /api/resume/analyze` - Analyze uploaded resume
-- `GET /api/resume/:userId` - Get user's resume analysis
+- `GET /api/resume` - Get current user's latest resume analysis
 
 ### Skills
 - `POST /api/skills/analyze` - Analyze skill gap
-- `GET /api/skills/:userId` - Get user's skill gap analysis
+- `GET /api/skills` - Get user's skills
+- `GET /api/skills/gap-analyses` - Skill gap analysis history
 
 ### Roadmap
-- `GET /api/roadmap/:userId` - Get user's career roadmap
+- `GET /api/roadmap` - Get user's career roadmap
 - `POST /api/roadmap/generate` - Generate new roadmap
+- `GET /api/roadmap/tasks/progress` - Task completion state
 
 ### Interview
 - `POST /api/interview/start` - Start new interview session
 - `POST /api/interview/continue` - Continue interview with answer
-- `GET /api/interview/sessions/:userId` - Get interview history
+- `GET /api/interview/sessions` - Get interview history
 
 ### Practice
 - `GET /api/practice/questions` - Get coding questions (with filters)
 - `GET /api/practice/questions/:id` - Get specific question
 - `POST /api/practice/execute` - Execute code against test cases
 - `POST /api/practice/submit` - Submit solution
-- `GET /api/practice/progress/:userId` - Get user progress
+- `GET /api/practice/progress` - Get user progress
 - `POST /api/practice/hint` - Get AI-powered hint
 
 ### User
-- `POST /api/user/create` - Create new user
-- `POST /api/user/goal` - Set career goal
-- `GET /api/user/:userId` - Get user profile
+- `GET /api/user/me` - Get authenticated user profile
+- `PUT /api/user/profile` - Update profile
+- `GET /api/user/stats` - XP, level, streaks
+- `GET /api/user/achievements` - Unlocked achievements
 
 ## 🚀 Deployment
 
@@ -363,13 +455,13 @@ cd client && npm test
 
 ## 🎨 UI Design
 
-CareerPilot features a clean, modern SaaS design inspired by professional career platforms:
+CareerPilot uses a **premium dark SaaS UI** built for focus and clarity:
 
-- **Clean Light Theme**: White/gray backgrounds with subtle shadows
-- **Professional Typography**: Inter font family throughout
-- **Responsive Design**: Mobile-first approach with breakpoints
-- **Consistent Components**: Reusable card components with hover states
-- **Modern Buttons**: Dark gray primary buttons with smooth transitions
+- **Layered dark theme** with subtle glass surfaces and depth
+- **Responsive layout** from mobile to desktop
+- **Dashboard-first experience** with progress rings, stats, and next-action guidance
+- **Consistent motion system** with accessible reduced-motion support
+- **Reusable component library** (cards, buttons, skeletons, empty states)
 
 ## 📊 Interview Evaluation
 
