@@ -1,6 +1,14 @@
-import { CheckCircle, XCircle, Lightbulb, BookOpen, AlertCircle } from 'lucide-react';
+import { Lightbulb, BookOpen } from 'lucide-react';
 import { Card, CardContent } from './ui/Card';
 import Badge from './ui/Badge';
+
+function formatSourceLabel(source) {
+  const value = String(source || '').toLowerCase();
+  if (value === 'leetcode') return 'LeetCode';
+  if (value === 'geeksforgeeks' || value === 'gfg') return 'GeeksforGeeks';
+  if (!value) return null;
+  return source;
+}
 
 export default function QuestionPanel({ question, hint, explanation }) {
   if (!question) {
@@ -22,6 +30,8 @@ export default function QuestionPanel({ question, hint, explanation }) {
     }
   };
 
+  const sourceLabel = formatSourceLabel(question.source);
+
   return (
     <Card>
       <CardContent className="pt-6">
@@ -34,19 +44,23 @@ export default function QuestionPanel({ question, hint, explanation }) {
           </Badge>
         </div>
         <div className="flex flex-wrap gap-2">
+          {sourceLabel && <Badge variant="neutral">{sourceLabel}</Badge>}
+          {question.category && <Badge variant="neutral">{question.category}</Badge>}
           {question.topics?.map((topic, i) => (
             <Badge key={i} variant="info">{topic}</Badge>
           ))}
+          {question.acceptanceRate != null && (
+            <Badge variant="neutral">{Math.round(Number(question.acceptanceRate))}% acceptance</Badge>
+          )}
         </div>
       </div>
 
       {/* Description */}
       <div className="mb-6">
         <h3 className="text-base font-semibold text-white mb-3">Problem</h3>
-        <div
-          className="text-white/75 whitespace-pre-wrap leading-relaxed text-sm"
-          dangerouslySetInnerHTML={{ __html: (question.description || '').replace(/\n/g, '<br/>') }}
-        />
+        <div className="text-white/75 whitespace-pre-wrap leading-relaxed text-sm">
+          {question.description}
+        </div>
       </div>
 
       {/* Constraints */}
