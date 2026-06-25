@@ -46,6 +46,9 @@ export default function QuestionPanel({ question, hint, explanation }) {
         <div className="flex flex-wrap gap-2">
           {sourceLabel && <Badge variant="neutral">{sourceLabel}</Badge>}
           {question.category && <Badge variant="neutral">{question.category}</Badge>}
+          {question.companyTags?.map((company) => (
+            <Badge key={company} variant="neutral">{company}</Badge>
+          ))}
           {question.topics?.map((topic, i) => (
             <Badge key={i} variant="info">{topic}</Badge>
           ))}
@@ -74,7 +77,7 @@ export default function QuestionPanel({ question, hint, explanation }) {
       )}
 
       {/* Examples */}
-      {question.examples && question.examples.length > 0 && (
+      {question.examples && question.examples.length > 0 ? (
         <div className="mb-6">
           <h3 className="text-base font-semibold text-white mb-3">Examples</h3>
           <div className="space-y-4">
@@ -103,7 +106,25 @@ export default function QuestionPanel({ question, hint, explanation }) {
             ))}
           </div>
         </div>
-      )}
+      ) : (question.sampleInput || question.sampleOutput) ? (
+        <div className="mb-6">
+          <h3 className="text-base font-semibold text-white mb-3">Sample</h3>
+          <div className="bg-white/5 p-4 rounded-lg border border-white/10 space-y-2 text-sm">
+            {question.sampleInput && (
+              <div>
+                <span className="text-white/60">Input: </span>
+                <code className="text-white bg-black/20 px-2 py-1 rounded font-mono border border-white/10">{question.sampleInput}</code>
+              </div>
+            )}
+            {question.sampleOutput && (
+              <div>
+                <span className="text-white/60">Output: </span>
+                <code className="text-white bg-black/20 px-2 py-1 rounded font-mono border border-white/10">{question.sampleOutput}</code>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : null}
 
       {/* Expected Approach */}
       {question.expectedApproach && (
