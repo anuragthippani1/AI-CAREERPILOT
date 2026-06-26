@@ -509,6 +509,8 @@ This project is licensed under the MIT License.
 - **GitHub**: [@anuragthippani1](https://github.com/anuragthippani1)
 - **Project**: [AI-CAREERPILOT](https://github.com/anuragthippani1/AI-CAREERPILOT)
 
+**Last updated:** 26 June 2026
+
 ---
 
 <div align="center">
