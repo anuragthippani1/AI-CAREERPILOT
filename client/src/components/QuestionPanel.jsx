@@ -15,7 +15,7 @@ export default function QuestionPanel({ question, hint, explanation }) {
     return (
       <Card>
         <CardContent className="pt-6">
-          <p className="text-white/70 text-sm">No challenge selected</p>
+          <p className="text-white/70 text-sm">Select a challenge from the list to view the problem statement.</p>
         </CardContent>
       </Card>
     );
@@ -54,6 +54,9 @@ export default function QuestionPanel({ question, hint, explanation }) {
           ))}
           {question.acceptanceRate != null && (
             <Badge variant="neutral">{Math.round(Number(question.acceptanceRate))}% acceptance</Badge>
+          )}
+          {Array.isArray(question.hints) && question.hints.length > 0 && (
+            <Badge variant="neutral">{question.hints.length} hints available</Badge>
           )}
         </div>
       </div>
