@@ -58,6 +58,9 @@ export default function QuestionPanel({ question, hint, explanation }) {
           {Array.isArray(question.hints) && question.hints.length > 0 && (
             <Badge variant="neutral">{question.hints.length} hints available</Badge>
           )}
+          {Array.isArray(question.testCases) && question.testCases.length > 0 && (
+            <Badge variant="neutral">{question.testCases.length} test cases</Badge>
+          )}
         </div>
       </div>
 
@@ -183,6 +186,12 @@ export default function QuestionPanel({ question, hint, explanation }) {
                     ))}
                   </div>
                 </div>
+              )}
+              {explanation.timeComplexity && (
+                <p className="mt-3 text-white/60 text-xs">
+                  Time: {explanation.timeComplexity}
+                  {explanation.spaceComplexity ? ` · Space: ${explanation.spaceComplexity}` : ''}
+                </p>
               )}
               {explanation.improvements && explanation.improvements.length > 0 && (
                 <div className="mt-3">
