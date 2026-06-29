@@ -170,7 +170,9 @@ Response format:
   "explanation": "<detailed explanation>",
   "keyConcepts": ["<concept1>", "<concept2>"],
   "improvements": ["<improvement1>", "<improvement2>"],
-  "alternativeApproaches": ["<approach1>", "<approach2>"]
+  "alternativeApproaches": ["<approach1>", "<approach2>"],
+  "timeComplexity": "<e.g. O(n)>",
+  "spaceComplexity": "<e.g. O(1)>"
 }`;
 
       let explanationData;
@@ -184,7 +186,12 @@ Response format:
         explanationData = JSON.parse(explanationText);
       } catch (geminiError) {
         // Fallback explanation
-        explanationData = this.generateFallbackExplanation(question, executionResult);
+        explanationData = this.generateFallbackExplanation(question, executionResult, solutions[0]);
+      }
+
+      if (solutions.length > 0) {
+        explanationData.timeComplexity = explanationData.timeComplexity || solutions[0].time_complexity || null;
+        explanationData.spaceComplexity = explanationData.spaceComplexity || solutions[0].space_complexity || null;
       }
 
       const executionTime = Date.now() - startTime;
@@ -407,7 +414,7 @@ Response format:
   /**
    * Generate fallback explanation
    */
-  generateFallbackExplanation(question, executionResult) {
+  generateFallbackExplanation(question, executionResult, optimalSolution) {
     return {
       explanation: executionResult.success
         ? `Your solution correctly solves the problem! The code passes all test cases.`
@@ -418,7 +425,9 @@ Response format:
         'Check edge cases',
         'Verify your logic matches the problem requirements'
       ],
-      alternativeApproaches: []
+      alternativeApproaches: [],
+      timeComplexity: optimalSolution?.time_complexity || null,
+      spaceComplexity: optimalSolution?.space_complexity || null,
     };
   }
 }
