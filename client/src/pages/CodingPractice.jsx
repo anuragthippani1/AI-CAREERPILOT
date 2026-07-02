@@ -5,6 +5,7 @@ import QuestionPanel from '../components/QuestionPanel';
 import TestResults from '../components/TestResults';
 import XPNotification from '../components/XPNotification';
 import { practiceAPI, technicalChallengesAPI } from '../services/api';
+import { useToast } from '../contexts/ToastContext';
 import PageHeader from '../components/ui/PageHeader';
 import Button from '../components/ui/Button';
 import { Card, CardContent } from '../components/ui/Card';
@@ -13,7 +14,7 @@ import Badge from '../components/ui/Badge';
 import { Skeleton } from '../components/ui/Skeleton';
 
 export default function CodingPractice() {
-  const [userId] = useState(1); // Demo user
+  const { push: pushToast } = useToast();
   const [questions, setQuestions] = useState([]);
   const [selectedQuestion, setSelectedQuestion] = useState(null);
   const [code, setCode] = useState('');
@@ -76,7 +77,7 @@ export default function CodingPractice() {
 
   const loadUserCode = async (questionId) => {
     try {
-      const response = await practiceAPI.getUserCode(userId, questionId);
+      const response = await practiceAPI.getUserCode(questionId);
       if (response.data.success && response.data.data) {
         setCode(response.data.data.code || '');
         setLanguage(response.data.data.language || 'python');
@@ -96,7 +97,7 @@ export default function CodingPractice() {
 
   const loadProgress = async () => {
     try {
-      const response = await practiceAPI.getProgress(userId);
+      const response = await practiceAPI.getProgress();
       if (response.data.success) {
         setProgress(response.data.data);
       }
@@ -124,11 +125,22 @@ export default function CodingPractice() {
 
       if (response.data.success) {
         setTestResults(response.data.data);
+        pushToast({
+          variant: response.data.data?.success ? 'success' : 'info',
+          title: 'Tests finished',
+          message: response.data.data?.success
+            ? 'All tests passed.'
+            : `${response.data.data?.passedTests ?? 0}/${response.data.data?.totalTests ?? 0} tests passed.`,
+        });
       } else {
-        setError(response.data.error || 'Execution failed');
+        const msg = response.data.error || 'Execution failed';
+        setError(msg);
+        pushToast({ variant: 'error', title: 'Run failed', message: msg });
       }
     } catch (err) {
-      setError(err.response?.data?.error || err.message || 'Failed to execute code');
+      const msg = err.response?.data?.error || err.message || 'Failed to execute code';
+      setError(msg);
+      pushToast({ variant: 'error', title: 'Run failed', message: msg });
     } finally {
       setExecuting(false);
     }
@@ -147,7 +159,6 @@ export default function CodingPractice() {
 
     try {
       const response = await practiceAPI.submitSolution({
-        userId,
         questionId: selectedQuestion.id,
         code,
         language
@@ -159,6 +170,7 @@ export default function CodingPractice() {
         
         // Show XP and achievement notifications if problem was solved
         if (response.data.data.executionResult?.success) {
+          pushToast({ variant: 'success', title: 'Solution accepted', message: 'Great work — problem solved.' });
           if (response.data.data.xpGained || response.data.data.leveledUp || response.data.data.unlockedAchievements?.length > 0) {
             setXpNotification({
               xpGained: response.data.data.xpGained,
@@ -172,10 +184,14 @@ export default function CodingPractice() {
         await loadProgress();
         await loadQuestionDetails(selectedQuestion.id);
       } else {
-        setError(response.data.error || 'Submission failed');
+        const msg = response.data.error || 'Submission failed';
+        setError(msg);
+        pushToast({ variant: 'error', title: 'Submit failed', message: msg });
       }
     } catch (err) {
-      setError(err.response?.data?.error || err.message || 'Failed to submit solution');
+      const msg = err.response?.data?.error || err.message || 'Failed to submit solution';
+      setError(msg);
+      pushToast({ variant: 'error', title: 'Submit failed', message: msg });
     } finally {
       setExecuting(false);
     }
@@ -185,7 +201,7 @@ export default function CodingPractice() {
     if (!selectedQuestion) return;
 
     try {
-      const response = await practiceAPI.getHint(userId, selectedQuestion.id, code);
+      const response = await practiceAPI.getHint(selectedQuestion.id, code);
       if (response.data.success) {
         setHint(response.data.data);
       }
