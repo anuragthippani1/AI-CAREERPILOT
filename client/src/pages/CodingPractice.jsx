@@ -422,6 +422,13 @@ export default function CodingPractice() {
                         onChange={setCode}
                         language={language}
                         theme="vs-dark"
+                        onSave={() => {
+                          pushToast({
+                            variant: 'info',
+                            title: 'Editor shortcut',
+                            message: 'Use Run or Submit to test your solution.',
+                          });
+                        }}
                       />
                     </div>
 

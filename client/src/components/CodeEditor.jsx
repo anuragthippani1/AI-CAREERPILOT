@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import Editor from '@monaco-editor/react';
 
 const EDITOR_OPTIONS = {
@@ -26,15 +26,22 @@ export default function CodeEditor({
   theme = 'vs-dark',
   height = '100%',
   readOnly = false,
+  onSave,
 }) {
   const editorRef = useRef(null);
 
+  const tabSize = language === 'python' ? 4 : 2;
+
+  useEffect(() => {
+    editorRef.current?.updateOptions({ tabSize });
+  }, [tabSize]);
+
   const handleEditorDidMount = (editor, monaco) => {
     editorRef.current = editor;
-    editor.updateOptions({ ...EDITOR_OPTIONS, readOnly });
+    editor.updateOptions({ ...EDITOR_OPTIONS, readOnly, tabSize });
 
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
-      // Parent handles persistence; block browser save dialog.
+      onSave?.();
     });
   };
 
