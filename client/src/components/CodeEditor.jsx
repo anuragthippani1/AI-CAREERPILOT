@@ -29,19 +29,35 @@ export default function CodeEditor({
   onSave,
 }) {
   const editorRef = useRef(null);
+  const onSaveRef = useRef(onSave);
 
   const tabSize = language === 'python' ? 4 : 2;
+
+  useEffect(() => {
+    onSaveRef.current = onSave;
+  }, [onSave]);
 
   useEffect(() => {
     editorRef.current?.updateOptions({ tabSize });
   }, [tabSize]);
 
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 768px)');
+    const syncMinimap = () => {
+      editorRef.current?.updateOptions({ minimap: { enabled: !mq.matches } });
+    };
+    syncMinimap();
+    mq.addEventListener('change', syncMinimap);
+    return () => mq.removeEventListener('change', syncMinimap);
+  }, []);
+
   const handleEditorDidMount = (editor, monaco) => {
     editorRef.current = editor;
-    editor.updateOptions({ ...EDITOR_OPTIONS, readOnly, tabSize });
+    const minimapEnabled = !window.matchMedia('(max-width: 768px)').matches;
+    editor.updateOptions({ ...EDITOR_OPTIONS, readOnly, tabSize, minimap: { enabled: minimapEnabled } });
 
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
-      onSave?.();
+      onSaveRef.current?.();
     });
   };
 
@@ -66,7 +82,7 @@ export default function CodeEditor({
             Loading editor…
           </div>
         }
-        options={{ ...EDITOR_OPTIONS, readOnly }}
+        options={{ ...EDITOR_OPTIONS, readOnly, tabSize }}
       />
     </div>
   );
