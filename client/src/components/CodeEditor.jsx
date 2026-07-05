@@ -27,15 +27,21 @@ export default function CodeEditor({
   height = '100%',
   readOnly = false,
   onSave,
+  onRun,
 }) {
   const editorRef = useRef(null);
   const onSaveRef = useRef(onSave);
+  const onRunRef = useRef(onRun);
 
   const tabSize = language === 'python' ? 4 : 2;
 
   useEffect(() => {
     onSaveRef.current = onSave;
   }, [onSave]);
+
+  useEffect(() => {
+    onRunRef.current = onRun;
+  }, [onRun]);
 
   useEffect(() => {
     editorRef.current?.updateOptions({ tabSize });
@@ -58,6 +64,10 @@ export default function CodeEditor({
 
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
       onSaveRef.current?.();
+    });
+
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
+      onRunRef.current?.();
     });
   };
 

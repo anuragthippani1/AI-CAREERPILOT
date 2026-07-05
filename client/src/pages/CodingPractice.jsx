@@ -416,7 +416,7 @@ export default function CodingPractice() {
                       </select>
                     </div>
 
-                    <div className="flex-1 mb-4">
+                    <div className="flex-1 mb-4 min-h-[320px]">
                       <CodeEditor
                         value={code}
                         onChange={setCode}
@@ -429,8 +429,12 @@ export default function CodingPractice() {
                             message: 'Use Run or Submit to test your solution.',
                           });
                         }}
+                        onRun={handleRunCode}
                       />
                     </div>
+                    <p className="mb-4 text-xs text-white/45">
+                      Shortcuts: <span className="text-white/60">Ctrl/Cmd+Enter</span> run · <span className="text-white/60">Ctrl/Cmd+S</span> help
+                    </p>
 
                     {error && (
                       <div className="mb-4 p-3 bg-red-500/10 border border-red-500/25 rounded-lg text-red-200 text-sm">
