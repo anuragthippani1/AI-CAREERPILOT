@@ -430,10 +430,13 @@ export default function CodingPractice() {
                           });
                         }}
                         onRun={handleRunCode}
+                        onSubmit={handleSubmit}
                       />
                     </div>
                     <p className="mb-4 text-xs text-white/45">
-                      Shortcuts: <span className="text-white/60">Ctrl/Cmd+Enter</span> run · <span className="text-white/60">Ctrl/Cmd+S</span> help
+                      Shortcuts: <span className="text-white/60">Ctrl/Cmd+Enter</span> run ·{' '}
+                      <span className="text-white/60">Ctrl/Cmd+Shift+Enter</span> submit ·{' '}
+                      <span className="text-white/60">Ctrl/Cmd+S</span> help
                     </p>
 
                     {error && (

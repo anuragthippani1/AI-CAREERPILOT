@@ -17,6 +17,8 @@ const EDITOR_OPTIONS = {
   formatOnPaste: true,
   bracketPairColorization: { enabled: true },
   padding: { top: 12, bottom: 12 },
+  insertSpaces: true,
+  detectIndentation: true,
 };
 
 export default function CodeEditor({
@@ -28,10 +30,12 @@ export default function CodeEditor({
   readOnly = false,
   onSave,
   onRun,
+  onSubmit,
 }) {
   const editorRef = useRef(null);
   const onSaveRef = useRef(onSave);
   const onRunRef = useRef(onRun);
+  const onSubmitRef = useRef(onSubmit);
 
   const tabSize = language === 'python' ? 4 : 2;
 
@@ -42,6 +46,10 @@ export default function CodeEditor({
   useEffect(() => {
     onRunRef.current = onRun;
   }, [onRun]);
+
+  useEffect(() => {
+    onSubmitRef.current = onSubmit;
+  }, [onSubmit]);
 
   useEffect(() => {
     editorRef.current?.updateOptions({ tabSize });
@@ -69,6 +77,13 @@ export default function CodeEditor({
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
       onRunRef.current?.();
     });
+
+    editor.addCommand(
+      monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.Enter,
+      () => {
+        onSubmitRef.current?.();
+      }
+    );
   };
 
   const handleEditorChange = (newValue) => {
