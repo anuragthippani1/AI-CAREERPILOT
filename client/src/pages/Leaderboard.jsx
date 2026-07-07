@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Trophy, Medal, Award, Flame, MessageSquare, Star, Crown, Info, Search, X } from 'lucide-react';
+import { Trophy, Medal, Award, Flame, MessageSquare, Star, Crown, Info, Search, X, RefreshCw } from 'lucide-react';
 import { leaderboardAPI } from '../services/api';
 import PageHeader from '../components/ui/PageHeader';
 import Button from '../components/ui/Button';
@@ -282,7 +282,20 @@ export default function Leaderboard() {
         <PageHeader
           title="Leaderboard"
           description="A snapshot of consistent practice — and where you stand."
-          actions={isDemo ? <Badge variant="neutral">Preview data</Badge> : null}
+          actions={
+            <div className="flex items-center gap-2">
+              {isDemo ? <Badge variant="neutral">Preview data</Badge> : null}
+              <Button
+                variant="secondary"
+                onClick={() => loadLeaderboard()}
+                disabled={loading}
+                aria-label="Refresh leaderboard"
+              >
+                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} aria-hidden="true" />
+                Refresh
+              </Button>
+            </div>
+          }
         />
 
         {/* Tabs */}
