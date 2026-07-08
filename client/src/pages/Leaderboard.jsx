@@ -347,9 +347,12 @@ export default function Leaderboard() {
               ref={searchInputRef}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search by name or title..."
+              placeholder="Search by name or title… (press /)"
               className="flex-1 bg-transparent outline-none text-sm text-white placeholder:text-white/40"
             />
+            <span className="hidden sm:inline-flex items-center rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[11px] text-white/55">
+              /
+            </span>
             {query ? (
               <button
                 type="button"
