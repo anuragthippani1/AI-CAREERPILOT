@@ -1,7 +1,8 @@
 import { useMemo, useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Trophy, Medal, Award, Flame, MessageSquare, Star, Crown, Info, Search, X, RefreshCw } from 'lucide-react';
+import { Trophy, Medal, Award, Flame, MessageSquare, Star, Crown, Info, Search, X, RefreshCw, Copy } from 'lucide-react';
 import { leaderboardAPI } from '../services/api';
+import { useToast } from '../contexts/ToastContext';
 import PageHeader from '../components/ui/PageHeader';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
@@ -84,6 +85,7 @@ function XPInfoTooltip() {
 
 export default function Leaderboard() {
   const navigate = useNavigate();
+  const { push: pushToast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const searchInputRef = useRef(null);
   const [userId] = useState(() => getUserIdFromStorageOrUrl());
@@ -269,6 +271,32 @@ export default function Leaderboard() {
 
   const isUnranked = !userRank || userRank.total === 0 || (userRank.xp || 0) <= 0;
 
+  const copyLeaderboardLink = async () => {
+    const url = window.location.href;
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+        pushToast({
+          variant: 'success',
+          title: 'Link copied',
+          message: 'Share this leaderboard view with your current tab and search.',
+        });
+        return;
+      }
+      pushToast({
+        variant: 'info',
+        title: 'Copy unavailable',
+        message: 'Your browser blocked clipboard access for this page.',
+      });
+    } catch {
+      pushToast({
+        variant: 'error',
+        title: 'Copy failed',
+        message: 'Could not copy the leaderboard link.',
+      });
+    }
+  };
+
   const getRankIcon = (rank) => {
     if (rank === 1) return <Trophy className="w-6 h-6 text-yellow-400" />;
     if (rank === 2) return <Medal className="w-6 h-6 text-white/70" />;
@@ -285,6 +313,14 @@ export default function Leaderboard() {
           actions={
             <div className="flex items-center gap-2">
               {isDemo ? <Badge variant="neutral">Preview data</Badge> : null}
+              <Button
+                variant="secondary"
+                onClick={copyLeaderboardLink}
+                aria-label="Copy leaderboard link"
+              >
+                <Copy className="w-4 h-4" aria-hidden="true" />
+                Copy link
+              </Button>
               <Button
                 variant="secondary"
                 onClick={() => loadLeaderboard()}
