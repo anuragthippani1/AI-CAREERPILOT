@@ -99,6 +99,7 @@ export default function Leaderboard() {
   const [error, setError] = useState(null);
   const [isDemo, setIsDemo] = useState(false);
   const [query, setQuery] = useState(() => String(searchParams.get('q') || ''));
+  const [lastRefreshedAt, setLastRefreshedAt] = useState(null);
 
   // Keep UI in sync when user navigates via back/forward (URL -> state).
   useEffect(() => {
@@ -183,12 +184,22 @@ export default function Leaderboard() {
         event.preventDefault();
         if (query) setQuery('');
         searchInputRef.current?.blur?.();
+        return;
+      }
+
+      // "r" refreshes rankings when not typing in an input.
+      if (event.key === 'r' || event.key === 'R') {
+        const tag = event.target?.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || event.target?.isContentEditable) return;
+        if (event.metaKey || event.ctrlKey || event.altKey) return;
+        event.preventDefault();
+        loadLeaderboard();
       }
     };
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [query]);
+  }, [query, activeTab]);
 
   useEffect(() => {
     let cancelled = false;
@@ -237,6 +248,7 @@ export default function Leaderboard() {
           setLeaderboard(makeDemoUsers(activeTab));
           setIsDemo(true);
         }
+        if (!isCancelled()) setLastRefreshedAt(Date.now());
       } else {
         setLeaderboard([]);
         setError('Failed to load leaderboard');
@@ -250,6 +262,15 @@ export default function Leaderboard() {
       if (!isCancelled()) setLoading(false);
     }
   };
+
+  const formattedLastRefreshed = useMemo(() => {
+    if (!lastRefreshedAt) return null;
+    try {
+      return new Date(lastRefreshedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } catch {
+      return null;
+    }
+  }, [lastRefreshedAt]);
 
   const filteredLeaderboard = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -309,7 +330,11 @@ export default function Leaderboard() {
       <main className="cp-page-inner max-w-6xl space-y-6">
         <PageHeader
           title="Leaderboard"
-          description="A snapshot of consistent practice — and where you stand."
+          description={
+            formattedLastRefreshed
+              ? `A snapshot of consistent practice — and where you stand. Updated ${formattedLastRefreshed}.`
+              : 'A snapshot of consistent practice — and where you stand.'
+          }
           actions={
             <div className="flex items-center gap-2">
               {isDemo ? <Badge variant="neutral">Preview data</Badge> : null}
@@ -326,6 +351,7 @@ export default function Leaderboard() {
                 onClick={() => loadLeaderboard()}
                 disabled={loading}
                 aria-label="Refresh leaderboard"
+                title="Refresh (press R)"
               >
                 <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} aria-hidden="true" />
                 Refresh
