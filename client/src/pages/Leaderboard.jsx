@@ -193,7 +193,7 @@ export default function Leaderboard() {
         if (tag === 'INPUT' || tag === 'TEXTAREA' || event.target?.isContentEditable) return;
         if (event.metaKey || event.ctrlKey || event.altKey) return;
         event.preventDefault();
-        loadLeaderboard();
+        loadLeaderboard(() => false, { notify: true });
       }
     };
 
@@ -224,7 +224,7 @@ export default function Leaderboard() {
     };
   }, [userId]);
 
-  const loadLeaderboard = async (isCancelled = () => false) => {
+  const loadLeaderboard = async (isCancelled = () => false, { notify = false } = {}) => {
     try {
       setLoading(true);
       setError(null);
@@ -249,15 +249,29 @@ export default function Leaderboard() {
           setIsDemo(true);
         }
         if (!isCancelled()) setLastRefreshedAt(Date.now());
+        if (notify) {
+          pushToast({
+            variant: 'success',
+            title: 'Leaderboard refreshed',
+            message: rows.length > 0 ? 'Rankings are up to date.' : 'Showing preview data until real rankings exist.',
+          });
+        }
       } else {
         setLeaderboard([]);
         setError('Failed to load leaderboard');
+        if (notify) {
+          pushToast({ variant: 'error', title: 'Refresh failed', message: 'Failed to load leaderboard' });
+        }
       }
     } catch (err) {
       console.error('Error loading leaderboard:', err);
       if (isCancelled()) return;
+      const msg = err?.response?.data?.error || 'Failed to load leaderboard';
       setLeaderboard([]);
-      setError(err?.response?.data?.error || 'Failed to load leaderboard');
+      setError(msg);
+      if (notify) {
+        pushToast({ variant: 'error', title: 'Refresh failed', message: msg });
+      }
     } finally {
       if (!isCancelled()) setLoading(false);
     }
@@ -348,7 +362,7 @@ export default function Leaderboard() {
               </Button>
               <Button
                 variant="secondary"
-                onClick={() => loadLeaderboard()}
+                onClick={() => loadLeaderboard(() => false, { notify: true })}
                 disabled={loading}
                 aria-label="Refresh leaderboard"
                 title="Refresh (press R)"
@@ -451,7 +465,7 @@ export default function Leaderboard() {
             <p className="text-white font-semibold">Leaderboard temporarily unavailable</p>
             <p className="text-white/70 text-sm mt-1">{error}</p>
             <div className="mt-5 flex items-center justify-center gap-2">
-              <Button variant="secondary" onClick={loadLeaderboard}>Retry</Button>
+              <Button variant="secondary" onClick={() => loadLeaderboard(() => false, { notify: true })}>Retry</Button>
               <Button onClick={() => navigate('/practice')}>Practice challenges</Button>
             </div>
           </div>
@@ -671,7 +685,7 @@ export default function Leaderboard() {
                   Practice challenges
                 </button>
                 <button
-                  onClick={loadLeaderboard}
+                  onClick={() => loadLeaderboard(() => false, { notify: true })}
                   className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/15 text-white text-sm font-semibold border border-white/10"
                 >
                   Refresh
