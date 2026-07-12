@@ -194,6 +194,17 @@ export default function Leaderboard() {
         if (event.metaKey || event.ctrlKey || event.altKey) return;
         event.preventDefault();
         loadLeaderboard(() => false, { notify: true });
+        return;
+      }
+
+      // "1" / "2" / "3" switch leaderboard tabs.
+      if (event.key === '1' || event.key === '2' || event.key === '3') {
+        const tag = event.target?.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || event.target?.isContentEditable) return;
+        if (event.metaKey || event.ctrlKey || event.altKey) return;
+        event.preventDefault();
+        const nextTab = event.key === '1' ? 'xp' : event.key === '2' ? 'interviews' : 'streaks';
+        setActiveTab(nextTab);
       }
     };
 
@@ -385,6 +396,7 @@ export default function Leaderboard() {
             <div className="flex items-center justify-center gap-2">
               <Star className="w-4 h-4" />
               XP
+              <span className="hidden md:inline text-[10px] text-white/40 font-normal">1</span>
             </div>
           </button>
           <button
@@ -396,6 +408,7 @@ export default function Leaderboard() {
             <div className="flex items-center justify-center gap-2">
               <MessageSquare className="w-4 h-4" />
               Interviews
+              <span className="hidden md:inline text-[10px] text-white/40 font-normal">2</span>
             </div>
           </button>
           <button
@@ -407,6 +420,7 @@ export default function Leaderboard() {
             <div className="flex items-center justify-center gap-2">
               <Flame className="w-4 h-4" />
               Streaks
+              <span className="hidden md:inline text-[10px] text-white/40 font-normal">3</span>
             </div>
           </button>
         </div>
