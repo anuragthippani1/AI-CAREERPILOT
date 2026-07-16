@@ -386,8 +386,15 @@ export default function Leaderboard() {
         />
 
         {/* Tabs */}
-        <div className="glass-card rounded-xl p-1 mb-6 flex gap-1 cp-fade-in">
+        <div
+          className="glass-card rounded-xl p-1 mb-6 flex gap-1 cp-fade-in"
+          role="tablist"
+          aria-label="Leaderboard ranking type"
+        >
           <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'xp'}
             onClick={() => setActiveTab('xp')}
             className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-colors ${
               activeTab === 'xp' ? 'bg-white/10 text-white' : 'text-white/70 hover:bg-white/5'
@@ -400,6 +407,9 @@ export default function Leaderboard() {
             </div>
           </button>
           <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'interviews'}
             onClick={() => setActiveTab('interviews')}
             className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-colors ${
               activeTab === 'interviews' ? 'bg-white/10 text-white' : 'text-white/70 hover:bg-white/5'
@@ -412,6 +422,9 @@ export default function Leaderboard() {
             </div>
           </button>
           <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'streaks'}
             onClick={() => setActiveTab('streaks')}
             className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-colors ${
               activeTab === 'streaks' ? 'bg-white/10 text-white' : 'text-white/70 hover:bg-white/5'
@@ -424,6 +437,10 @@ export default function Leaderboard() {
             </div>
           </button>
         </div>
+        <p className="hidden sm:block -mt-4 mb-4 text-[11px] text-white/40">
+          Shortcuts: <span className="text-white/55">/</span> search · <span className="text-white/55">1–3</span> tabs ·{' '}
+          <span className="text-white/55">R</span> refresh · <span className="text-white/55">Esc</span> clear search
+        </p>
 
         {/* Search */}
         {leaderboard.length > 0 ? (
