@@ -709,18 +709,29 @@ export default function Leaderboard() {
               </div>
 
               <div className="flex items-center gap-2 flex-shrink-0">
-                <button
-                  onClick={() => navigate('/practice')}
-                  className="px-4 py-2 rounded-lg bg-blue-500/80 hover:bg-blue-500 text-white text-sm font-semibold"
-                >
-                  Practice challenges
-                </button>
-                <button
+                {isUnranked || !userId ? (
+                  <>
+                    <Button onClick={() => navigate('/practice')}>
+                      Practice challenges
+                    </Button>
+                    <Button variant="secondary" onClick={() => navigate('/interview')}>
+                      Mock interview
+                    </Button>
+                  </>
+                ) : (
+                  <Button onClick={() => navigate('/practice')}>
+                    Practice challenges
+                  </Button>
+                )}
+                <Button
+                  variant="secondary"
                   onClick={() => loadLeaderboard(() => false, { notify: true })}
-                  className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/15 text-white text-sm font-semibold border border-white/10"
+                  disabled={loading}
+                  aria-label="Refresh leaderboard"
                 >
+                  <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} aria-hidden="true" />
                   Refresh
-                </button>
+                </Button>
               </div>
             </div>
             {isDemo && (
