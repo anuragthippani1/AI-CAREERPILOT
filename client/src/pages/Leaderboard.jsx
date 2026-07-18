@@ -516,7 +516,7 @@ export default function Leaderboard() {
         )}
 
         {/* Top 3 */}
-        {leaderboard.length > 0 && (
+        {filteredLeaderboard.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 cp-fade-in-delay-1">
             {top3.map((u, idx) => {
               const place = idx + 1;
@@ -584,14 +584,19 @@ export default function Leaderboard() {
         )}
 
         {/* Ranked list (4-50) */}
-        {leaderboard.length > 0 && (
+        {filteredLeaderboard.length > 0 && (
           <div className="glass-card rounded-xl border border-white/10 overflow-hidden">
             <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <p className="text-sm font-semibold text-white">Ranks 4–50</p>
+                <p className="text-sm font-semibold text-white">
+                  {query.trim() ? 'Matching ranks' : 'Ranks 4–50'}
+                </p>
                 {activeTab === 'xp' && <XPInfoTooltip />}
               </div>
-              <p className="text-xs text-white/60">Showing top {Math.min(50, leaderboard.length)}</p>
+              <p className="text-xs text-white/60">
+                Showing {Math.min(50, filteredLeaderboard.length)}
+                {query.trim() ? ` match${filteredLeaderboard.length === 1 ? '' : 'es'}` : ''}
+              </p>
             </div>
             {rest.length === 0 ? (
               <div className="p-8 text-center">
