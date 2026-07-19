@@ -205,6 +205,16 @@ export default function Leaderboard() {
         event.preventDefault();
         const nextTab = event.key === '1' ? 'xp' : event.key === '2' ? 'interviews' : 'streaks';
         setActiveTab(nextTab);
+        return;
+      }
+
+      // "c" copies the current shareable leaderboard URL.
+      if (event.key === 'c' || event.key === 'C') {
+        const tag = event.target?.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || event.target?.isContentEditable) return;
+        if (event.metaKey || event.ctrlKey || event.altKey) return;
+        event.preventDefault();
+        copyLeaderboardLink();
       }
     };
 
@@ -367,6 +377,7 @@ export default function Leaderboard() {
                 variant="secondary"
                 onClick={copyLeaderboardLink}
                 aria-label="Copy leaderboard link"
+                title="Copy link (press C)"
               >
                 <Copy className="w-4 h-4" aria-hidden="true" />
                 Copy link
@@ -439,7 +450,8 @@ export default function Leaderboard() {
         </div>
         <p className="hidden sm:block -mt-4 mb-4 text-[11px] text-white/40">
           Shortcuts: <span className="text-white/55">/</span> search · <span className="text-white/55">1–3</span> tabs ·{' '}
-          <span className="text-white/55">R</span> refresh · <span className="text-white/55">Esc</span> clear search
+          <span className="text-white/55">R</span> refresh · <span className="text-white/55">C</span> copy link ·{' '}
+          <span className="text-white/55">Esc</span> clear search
         </p>
 
         {/* Search */}
