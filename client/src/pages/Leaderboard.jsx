@@ -325,7 +325,44 @@ export default function Leaderboard() {
     return leaderboard.find((u) => parseInt(u.id, 10) === userId) || null;
   }, [leaderboard, userId]);
 
+  const youInFiltered = useMemo(() => {
+    if (!userId) return null;
+    return filteredLeaderboard.find((u) => parseInt(u.id, 10) === userId) || null;
+  }, [filteredLeaderboard, userId]);
+
   const isUnranked = !userRank || userRank.total === 0 || (userRank.xp || 0) <= 0;
+
+  const findMeOnLeaderboard = () => {
+    if (!userId || !youInList) {
+      pushToast({
+        variant: 'info',
+        title: 'Not in top 50',
+        message: 'Keep practicing to appear on this board.',
+      });
+      return;
+    }
+
+    if (query.trim() && !youInFiltered) {
+      setQuery('');
+    }
+
+    window.setTimeout(() => {
+      const el = document.querySelector(`[data-leaderboard-user="${userId}"]`);
+      if (!el) {
+        pushToast({
+          variant: 'info',
+          title: 'Could not locate you',
+          message: 'Try clearing search or refreshing the board.',
+        });
+        return;
+      }
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.classList.add('ring-2', 'ring-blue-400/60');
+      window.setTimeout(() => {
+        el.classList.remove('ring-2', 'ring-blue-400/60');
+      }, 1600);
+    }, query.trim() && !youInFiltered ? 50 : 0);
+  };
 
   const copyLeaderboardLink = async () => {
     const url = window.location.href;
@@ -555,7 +592,11 @@ export default function Leaderboard() {
                     : { label: 'Longest', value: `${u.longestStreak || 0}d` };
 
               return (
-                <div key={u.id} className={`glass-card rounded-xl p-5 border ${ring}`}>
+                <div
+                  key={u.id}
+                  data-leaderboard-user={u.id}
+                  className={`glass-card rounded-xl p-5 border ${ring}`}
+                >
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-11 h-11 rounded-full bg-white/10 border border-white/10 flex items-center justify-center text-white font-bold">
@@ -621,7 +662,11 @@ export default function Leaderboard() {
                   const rowStyle = isYou ? 'bg-blue-500/10' : 'hover:bg-white/5';
 
                   return (
-                    <div key={u.id} className={`px-5 py-4 flex items-center justify-between gap-4 ${rowStyle}`}>
+                    <div
+                      key={u.id}
+                      data-leaderboard-user={u.id}
+                      className={`px-5 py-4 flex items-center justify-between gap-4 ${rowStyle}`}
+                    >
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="w-10 flex items-center justify-start">{getRankIcon(u.rank)}</div>
                         <div className="w-9 h-9 rounded-full bg-white/10 border border-white/10 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
@@ -713,7 +758,13 @@ export default function Leaderboard() {
                     <div className="flex items-center gap-3">
                       <p className="text-2xl font-bold text-white">#{userRank.rank}</p>
                       {youInList ? (
-                        <span className="text-xs text-white/60">You’re in the top list.</span>
+                        <button
+                          type="button"
+                          onClick={findMeOnLeaderboard}
+                          className="text-xs text-blue-200 hover:text-blue-100 underline-offset-2 hover:underline"
+                        >
+                          You’re in the top list — find me
+                        </button>
                       ) : (
                         <span className="text-xs text-white/60">Not in top 50 yet — keep going.</span>
                       )}
@@ -736,9 +787,16 @@ export default function Leaderboard() {
                     </Button>
                   </>
                 ) : (
-                  <Button onClick={() => navigate('/practice')}>
-                    Practice challenges
-                  </Button>
+                  <>
+                    {youInList ? (
+                      <Button variant="secondary" onClick={findMeOnLeaderboard}>
+                        Find me
+                      </Button>
+                    ) : null}
+                    <Button onClick={() => navigate('/practice')}>
+                      Practice challenges
+                    </Button>
+                  </>
                 )}
                 <Button
                   variant="secondary"
