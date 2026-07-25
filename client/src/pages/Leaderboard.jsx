@@ -215,6 +215,16 @@ export default function Leaderboard() {
         if (event.metaKey || event.ctrlKey || event.altKey) return;
         event.preventDefault();
         copyLeaderboardLink();
+        return;
+      }
+
+      // "f" scrolls to and highlights your row.
+      if (event.key === 'f' || event.key === 'F') {
+        const tag = event.target?.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || event.target?.isContentEditable) return;
+        if (event.metaKey || event.ctrlKey || event.altKey) return;
+        event.preventDefault();
+        findMeOnLeaderboard();
       }
     };
 
@@ -488,7 +498,7 @@ export default function Leaderboard() {
         <p className="hidden sm:block -mt-4 mb-4 text-[11px] text-white/40">
           Shortcuts: <span className="text-white/55">/</span> search · <span className="text-white/55">1–3</span> tabs ·{' '}
           <span className="text-white/55">R</span> refresh · <span className="text-white/55">C</span> copy link ·{' '}
-          <span className="text-white/55">Esc</span> clear search
+          <span className="text-white/55">F</span> find me · <span className="text-white/55">Esc</span> clear search
         </p>
 
         {/* Search */}
@@ -789,7 +799,7 @@ export default function Leaderboard() {
                 ) : (
                   <>
                     {youInList ? (
-                      <Button variant="secondary" onClick={findMeOnLeaderboard}>
+                      <Button variant="secondary" onClick={findMeOnLeaderboard} title="Find me (press F)">
                         Find me
                       </Button>
                     ) : null}
