@@ -100,6 +100,13 @@ export default function Leaderboard() {
   const [isDemo, setIsDemo] = useState(false);
   const [query, setQuery] = useState(() => String(searchParams.get('q') || ''));
   const [lastRefreshedAt, setLastRefreshedAt] = useState(null);
+  const [nowTick, setNowTick] = useState(Date.now());
+
+  useEffect(() => {
+    if (!lastRefreshedAt) return undefined;
+    const id = window.setInterval(() => setNowTick(Date.now()), 15000);
+    return () => window.clearInterval(id);
+  }, [lastRefreshedAt]);
 
   // Keep UI in sync when user navigates via back/forward (URL -> state).
   useEffect(() => {
@@ -279,7 +286,10 @@ export default function Leaderboard() {
           setLeaderboard(makeDemoUsers(activeTab));
           setIsDemo(true);
         }
-        if (!isCancelled()) setLastRefreshedAt(Date.now());
+        if (!isCancelled()) {
+          setLastRefreshedAt(Date.now());
+          setNowTick(Date.now());
+        }
         if (notify) {
           pushToast({
             variant: 'success',
@@ -311,11 +321,16 @@ export default function Leaderboard() {
   const formattedLastRefreshed = useMemo(() => {
     if (!lastRefreshedAt) return null;
     try {
+      const secs = Math.max(0, Math.floor((nowTick - lastRefreshedAt) / 1000));
+      if (secs < 15) return 'just now';
+      if (secs < 60) return `${secs}s ago`;
+      const mins = Math.floor(secs / 60);
+      if (mins < 60) return `${mins}m ago`;
       return new Date(lastRefreshedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     } catch {
       return null;
     }
-  }, [lastRefreshedAt]);
+  }, [lastRefreshedAt, nowTick]);
 
   const filteredLeaderboard = useMemo(() => {
     const q = query.trim().toLowerCase();
