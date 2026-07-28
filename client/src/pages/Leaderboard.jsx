@@ -332,6 +332,12 @@ export default function Leaderboard() {
     }
   }, [lastRefreshedAt, nowTick]);
 
+  const activeTabLabel = useMemo(() => {
+    if (activeTab === 'interviews') return 'Interviews';
+    if (activeTab === 'streaks') return 'Streaks';
+    return 'XP';
+  }, [activeTab]);
+
   const filteredLeaderboard = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return leaderboard;
@@ -426,7 +432,7 @@ export default function Leaderboard() {
     <div className="cp-page">
       <main className="cp-page-inner max-w-6xl space-y-6">
         <PageHeader
-          title="Leaderboard"
+          title={`${activeTabLabel} Leaderboard`}
           description={
             formattedLastRefreshed
               ? `A snapshot of consistent practice — and where you stand. Updated ${formattedLastRefreshed}.`
@@ -763,7 +769,7 @@ export default function Leaderboard() {
           <div className="glass-card rounded-xl border border-white/10 p-5">
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
-                <p className="text-xs text-white/60 mb-1">Your Rank</p>
+                <p className="text-xs text-white/60 mb-1">Your {activeTabLabel} Rank</p>
                 {!userId ? (
                   <>
                     <p className="text-white font-semibold">Connect your profile to compete</p>
