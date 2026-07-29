@@ -338,6 +338,16 @@ export default function Leaderboard() {
     return 'XP';
   }, [activeTab]);
 
+  const activeTabDescription = useMemo(() => {
+    if (activeTab === 'interviews') {
+      return 'Who’s putting in the most mock interview reps — and scoring strongest.';
+    }
+    if (activeTab === 'streaks') {
+      return 'Consistency wins. See who is showing up day after day.';
+    }
+    return 'A snapshot of consistent practice — and where you stand.';
+  }, [activeTab]);
+
   const filteredLeaderboard = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return leaderboard;
@@ -435,8 +445,8 @@ export default function Leaderboard() {
           title={`${activeTabLabel} Leaderboard`}
           description={
             formattedLastRefreshed
-              ? `A snapshot of consistent practice — and where you stand. Updated ${formattedLastRefreshed}.`
-              : 'A snapshot of consistent practice — and where you stand.'
+              ? `${activeTabDescription} Updated ${formattedLastRefreshed}.`
+              : activeTabDescription
           }
           actions={
             <div className="flex items-center gap-2">
