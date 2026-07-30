@@ -439,7 +439,7 @@ export default function Leaderboard() {
   };
 
   return (
-    <div className="cp-page">
+    <div className="cp-page" aria-busy={loading}>
       <main className="cp-page-inner max-w-6xl space-y-6">
         <PageHeader
           title={`${activeTabLabel} Leaderboard`}
@@ -473,6 +473,17 @@ export default function Leaderboard() {
             </div>
           }
         />
+
+        {loading && leaderboard.length > 0 ? (
+          <div
+            className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-xs text-white/65 cp-fade-in"
+            role="status"
+            aria-live="polite"
+          >
+            <RefreshCw className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
+            Refreshing {activeTabLabel.toLowerCase()} rankings…
+          </div>
+        ) : null}
 
         {/* Tabs */}
         <div
