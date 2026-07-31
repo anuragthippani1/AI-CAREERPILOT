@@ -101,6 +101,20 @@ export default function Leaderboard() {
   const [query, setQuery] = useState(() => String(searchParams.get('q') || ''));
   const [lastRefreshedAt, setLastRefreshedAt] = useState(null);
   const [nowTick, setNowTick] = useState(Date.now());
+  const previousTabRef = useRef(activeTab);
+
+  // Clear search when the user switches ranking tabs (keeps shared ?q= on first load).
+  useEffect(() => {
+    if (previousTabRef.current === activeTab) return;
+    previousTabRef.current = activeTab;
+    setQuery('');
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set('tab', activeTab);
+      next.delete('q');
+      return next;
+    }, { replace: true });
+  }, [activeTab, setSearchParams]);
 
   useEffect(() => {
     if (!lastRefreshedAt) return undefined;
