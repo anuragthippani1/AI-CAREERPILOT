@@ -591,6 +591,22 @@ export default function Leaderboard() {
           </div>
         ) : null}
 
+        {query.trim() && youInList && !youInFiltered ? (
+          <div className="rounded-xl border border-blue-400/20 bg-blue-500/10 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 cp-fade-in">
+            <p className="text-sm text-blue-100">
+              Your rank is hidden by the current search.
+            </p>
+            <div className="flex items-center gap-2">
+              <Button variant="secondary" size="sm" onClick={() => setQuery('')}>
+                Clear search
+              </Button>
+              <Button size="sm" onClick={findMeOnLeaderboard} title="Find me (press F)">
+                Find me
+              </Button>
+            </div>
+          </div>
+        ) : null}
+
         {/* Loading / Error / Empty */}
         {loading && leaderboard.length === 0 && (
           <Card>
