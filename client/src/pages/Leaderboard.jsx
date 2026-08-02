@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Trophy, Medal, Award, Flame, MessageSquare, Star, Crown, Info, Search, X, RefreshCw, Copy } from 'lucide-react';
+import { Trophy, Medal, Award, Flame, MessageSquare, Star, Crown, Info, Search, X, RefreshCw, Copy, ArrowUp } from 'lucide-react';
 import { leaderboardAPI } from '../services/api';
 import { useToast } from '../contexts/ToastContext';
 import PageHeader from '../components/ui/PageHeader';
@@ -246,6 +246,16 @@ export default function Leaderboard() {
         if (event.metaKey || event.ctrlKey || event.altKey) return;
         event.preventDefault();
         findMeOnLeaderboard();
+        return;
+      }
+
+      // "t" scrolls back to the top of the page.
+      if (event.key === 't' || event.key === 'T') {
+        const tag = event.target?.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || event.target?.isContentEditable) return;
+        if (event.metaKey || event.ctrlKey || event.altKey) return;
+        event.preventDefault();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     };
 
@@ -554,7 +564,8 @@ export default function Leaderboard() {
         <p className="hidden sm:block -mt-4 mb-4 text-[11px] text-white/40">
           Shortcuts: <span className="text-white/55">/</span> search · <span className="text-white/55">1–3</span> tabs ·{' '}
           <span className="text-white/55">R</span> refresh · <span className="text-white/55">C</span> copy link ·{' '}
-          <span className="text-white/55">F</span> find me · <span className="text-white/55">Esc</span> clear search
+          <span className="text-white/55">F</span> find me · <span className="text-white/55">T</span> top ·{' '}
+          <span className="text-white/55">Esc</span> clear search
         </p>
 
         {/* Search */}
@@ -888,6 +899,15 @@ export default function Leaderboard() {
                 >
                   <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} aria-hidden="true" />
                   Refresh
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                  aria-label="Back to top"
+                  title="Back to top (press T)"
+                >
+                  <ArrowUp className="w-4 h-4" aria-hidden="true" />
+                  Top
                 </Button>
               </div>
             </div>
