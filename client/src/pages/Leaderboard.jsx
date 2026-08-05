@@ -185,6 +185,19 @@ export default function Leaderboard() {
     };
   }, []);
 
+  // Soft-refresh when returning to the tab if rankings are older than 90s.
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.visibilityState !== 'visible') return;
+      if (!lastRefreshedAt) return;
+      if (Date.now() - lastRefreshedAt < 90_000) return;
+      loadLeaderboard(() => false, { notify: false });
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lastRefreshedAt, activeTab]);
+
   useEffect(() => {
     const onKeyDown = (event) => {
       if (event.defaultPrevented) return;
@@ -198,12 +211,17 @@ export default function Leaderboard() {
         return;
       }
 
-      // "Escape" clears search if focused, otherwise just blurs.
+      // "Escape" clears search from anywhere when a filter is active.
       if (event.key === 'Escape') {
-        const isFocused = document.activeElement === searchInputRef.current;
-        if (!isFocused) return;
+        if (!query) {
+          if (document.activeElement === searchInputRef.current) {
+            event.preventDefault();
+            searchInputRef.current?.blur?.();
+          }
+          return;
+        }
         event.preventDefault();
-        if (query) setQuery('');
+        setQuery('');
         searchInputRef.current?.blur?.();
         return;
       }
