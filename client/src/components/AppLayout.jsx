@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Outlet, Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Sparkles, LayoutDashboard, FileText, Map as MapIcon, MessageSquare, Terminal, Trophy, Target, User, ChevronDown, LogOut } from 'lucide-react';
+import { Sparkles, LayoutDashboard, FileText, Map as MapIcon, MessageSquare, Terminal, Trophy, Target, User, ChevronDown, LogOut, BriefcaseBusiness } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { cn } from '../utils/cn';
 import Button from './ui/Button';
@@ -16,6 +16,7 @@ const primaryNav = [
 ];
 
 const moreNav = [
+  { to: '/careers', label: 'Career Matches', icon: BriefcaseBusiness },
   { to: '/roadmap-generator', label: 'AI Roadmap', icon: Sparkles },
   { to: '/skills', label: 'Skill Gap', icon: Target },
   { to: '/leaderboard', label: 'Leaderboard', icon: Trophy },
@@ -253,7 +254,6 @@ export default function AppLayout() {
     </div>
   );
 }
-
 
 
 

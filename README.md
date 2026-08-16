@@ -65,6 +65,15 @@ Compare your current skills against a dream role. CareerPilot highlights:
 
 **Outcome:** Focus study time on what actually moves the needle.
 
+### 2.5 Career match → best-fit path selection
+Generate a ranked career-fit report based on your latest resume analysis, extracted skills, and optional interests. CareerPilot highlights:
+- **Top 5 recommended careers**
+- Confidence scores for each path
+- Why each role fits your current profile
+- Missing skills and suggested portfolio projects
+
+**Outcome:** Choose the most plausible target path before committing to a roadmap.
+
 ### 3. Roadmap → execution
 Generate a personalized career roadmap with milestones across:
 - **0–3 months** (short-term wins)
@@ -124,6 +133,13 @@ CareerPilot combines a modern web app with an **agentic AI backend**. Specialize
 - Provides learning resources and estimated time to acquire skills
 - Tracks existing strengths
 - **Persists analysis history** so you can see trends in your match score over time
+
+### 🧭 Career Match Engine
+- Predicts the **top 5 best-fit career paths** from resume and skill signals
+- Assigns confidence percentages to each recommendation
+- Explains why a path is a fit right now
+- Suggests missing skills and portfolio projects for each path
+- Saves the latest career match report for dashboard reuse
 
 ### 🗺️ Career Roadmaps
 - Personalized step-by-step career roadmaps

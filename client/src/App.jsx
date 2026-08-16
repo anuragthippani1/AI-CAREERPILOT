@@ -4,6 +4,7 @@ import LandingPage from './pages/LandingPage';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
+import CareerMatches from './pages/CareerMatches';
 import SharedSkillGapSnapshot from './pages/SharedSkillGapSnapshot';
 import ResumeUpload from './pages/ResumeUpload';
 import SkillGap from './pages/SkillGap';
@@ -75,6 +76,7 @@ function App() {
         }
       >
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/careers" element={<CareerMatches />} />
         <Route path="/resume" element={<ResumeUpload />} />
         <Route path="/skills" element={<SkillGap />} />
         <Route path="/roadmap" element={<CareerRoadmap />} />

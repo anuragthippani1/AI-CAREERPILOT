@@ -54,6 +54,12 @@ export const roadmapAPI = {
   startTask: (data) => api.post('/roadmap/tasks/start', data),
 };
 
+// Career API
+export const careerAPI = {
+  getLatestMatch: () => api.get('/career/match'),
+  generateMatches: (data) => api.post('/career/match', data),
+};
+
 // Interview API
 export const interviewAPI = {
   start: (data) => api.post('/interview/start', data),

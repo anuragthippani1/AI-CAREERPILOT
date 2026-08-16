@@ -4,6 +4,7 @@
  */
 
 const ResumeAnalyzerAgent = require('./resumeAnalyzer');
+const CareerAdvisorAgent = require('./careerAdvisor');
 const SkillGapAgent = require('./skillGap');
 const CareerRoadmapAgent = require('./careerRoadmap');
 const InterviewAgent = require('./interview');
@@ -14,6 +15,7 @@ class AgentOrchestrator {
   constructor() {
     this.agents = {
       resumeAnalyzer: new ResumeAnalyzerAgent(),
+      careerAdvisor: new CareerAdvisorAgent(),
       skillGap: new SkillGapAgent(),
       careerRoadmap: new CareerRoadmapAgent(),
       interview: new InterviewAgent()
@@ -108,6 +110,10 @@ class AgentOrchestrator {
               input: { skillGap: result.data }
             });
           }
+          break;
+
+        case 'match_careers':
+          result = await this.agents.careerAdvisor.match(context, inputData);
           break;
 
         case 'generate_roadmap':
@@ -227,4 +233,3 @@ class AgentOrchestrator {
 const orchestrator = new AgentOrchestrator();
 
 module.exports = orchestrator;
-

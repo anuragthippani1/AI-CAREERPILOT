@@ -1,8 +1,8 @@
 import { useMemo, useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { FileText, Target, Map as MapIcon, MessageSquare, Calendar, Terminal, ArrowRight, Star, Flame, Award, Trophy, User, AlertCircle, Sparkles } from 'lucide-react';
+import { FileText, Target, Map as MapIcon, MessageSquare, Calendar, Terminal, ArrowRight, Star, Flame, Award, Trophy, User, AlertCircle, Sparkles, BriefcaseBusiness } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { userAPI, resumeAPI, roadmapAPI, interviewAPI, skillsAPI } from '../services/api';
+import { userAPI, resumeAPI, roadmapAPI, interviewAPI, skillsAPI, careerAPI } from '../services/api';
 import PageHeader from '../components/ui/PageHeader';
 import Button from '../components/ui/Button';
 import { Card, CardContent } from '../components/ui/Card';
@@ -96,6 +96,7 @@ export default function Dashboard() {
   const [skills, setSkills] = useState([]);
   const [roadmap, setRoadmap] = useState(null);
   const [interviewStats, setInterviewStats] = useState({ completed: 0, averageScore: 0, streak: 0 });
+  const [careerMatch, setCareerMatch] = useState(null);
   const [userStats, setUserStats] = useState(null);
   const [taskProgress, setTaskProgress] = useState({});
   const [recentAchievements, setRecentAchievements] = useState([]);
@@ -119,7 +120,7 @@ export default function Dashboard() {
     try {
       setLoading(true);
       setError(null);
-      const [userRes, resumeRes, roadmapRes, interviewRes, statsRes, achievementsRes, skillsRes, taskRes] = await Promise.allSettled([
+      const [userRes, resumeRes, roadmapRes, interviewRes, statsRes, achievementsRes, skillsRes, taskRes, careerRes] = await Promise.allSettled([
         userAPI.getMe(),
         resumeAPI.get(),
         roadmapAPI.get(),
@@ -128,6 +129,7 @@ export default function Dashboard() {
         userAPI.getAchievements(),
         skillsAPI.get(),
         roadmapAPI.getTaskProgress(),
+        careerAPI.getLatestMatch(),
       ]);
 
       if (userRes.status === 'fulfilled') setUser(userRes.value.data.data);
@@ -136,6 +138,7 @@ export default function Dashboard() {
       if (statsRes.status === 'fulfilled') setUserStats(statsRes.value.data.data);
       if (skillsRes.status === 'fulfilled') setSkills(skillsRes.value.data.data || []);
       if (taskRes.status === 'fulfilled') setTaskProgress(taskRes.value.data.data || {});
+      if (careerRes.status === 'fulfilled') setCareerMatch(careerRes.value.data.data || null);
       if (achievementsRes.status === 'fulfilled') {
         const achievements = achievementsRes.value.data.data || [];
         // Get 3 most recent achievements
@@ -304,6 +307,16 @@ export default function Dashboard() {
                       right={readinessScore != null ? <ProgressRing value={readinessScore} size={56} stroke={7} /> : null}
                     />
                     <DashboardStatsCard
+                      title="Top career path"
+                      value={careerMatch?.topCareerTitle || '—'}
+                      icon={BriefcaseBusiness}
+                      hint={
+                        careerMatch?.topCareerConfidence != null
+                          ? `${Math.round(careerMatch.topCareerConfidence)}% confidence on your latest report.`
+                          : 'Generate a career match report to rank target paths.'
+                      }
+                    />
+                    <DashboardStatsCard
                       title="Skill completion"
                       value={`${skillCompletionPct}%`}
                       icon={Target}
@@ -369,6 +382,18 @@ export default function Dashboard() {
                         <div>
                           <div className="font-semibold text-white text-sm">Roadmap</div>
                           <div className="text-xs text-white/60">Mark tasks complete</div>
+                        </div>
+                      </div>
+                      <ArrowRight className="w-4 h-4 text-white/40" aria-hidden="true" />
+                    </div>
+                  </Link>
+                  <Link to="/careers" className="glass-card rounded-xl p-4 border border-white/10 hover:border-white/15 transition-colors">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <BriefcaseBusiness className="w-5 h-5 text-primary-200" aria-hidden="true" />
+                        <div>
+                          <div className="font-semibold text-white text-sm">Career matches</div>
+                          <div className="text-xs text-white/60">Rank your best-fit paths</div>
                         </div>
                       </div>
                       <ArrowRight className="w-4 h-4 text-white/40" aria-hidden="true" />
@@ -482,6 +507,17 @@ export default function Dashboard() {
             description="Solve coding problems from GeeksforGeeks & LeetCode"
             link="/practice"
             hasData={true}
+          />
+          <ActionCard
+            icon={<BriefcaseBusiness className="w-6 h-6" />}
+            title="Career Matches"
+            description={
+              careerMatch?.topCareerTitle
+                ? `${careerMatch.topCareerTitle} leads your latest fit report`
+                : 'Predict the top 5 career paths for your profile'
+            }
+            link="/careers"
+            hasData={!!careerMatch?.topCareerTitle}
           />
           <ActionCard
             icon={<User className="w-6 h-6" />}

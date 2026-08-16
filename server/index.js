@@ -94,6 +94,7 @@ const authRoutes = require('./routes/auth');
 const resumeRoutes = require('./routes/resume');
 const skillsRoutes = require('./routes/skills');
 const roadmapRoutes = require('./routes/roadmap');
+const careerRoutes = require('./routes/career');
 const interviewRoutes = require('./routes/interview');
 const userRoutes = require('./routes/user');
 const practiceRoutes = require('./routes/practice');
@@ -108,6 +109,7 @@ app.use('/api/technical-challenges', technicalChallengesRoutes);
 app.use('/api/resume', resumeRoutes);
 app.use('/api/skills', skillsRoutes);
 app.use('/api/roadmap', roadmapRoutes);
+app.use('/api/career', careerRoutes);
 app.use('/api/interview', interviewRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/practice', practiceRoutes);
@@ -220,4 +222,3 @@ app.listen(PORT, () => {
   console.log(`🚀 CareerPilot API server running on port ${PORT}`);
   console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
 });
-
