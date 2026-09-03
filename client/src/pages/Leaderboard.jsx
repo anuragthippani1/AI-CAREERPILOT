@@ -274,6 +274,22 @@ export default function Leaderboard() {
         if (event.metaKey || event.ctrlKey || event.altKey) return;
         event.preventDefault();
         window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+
+      // ArrowLeft / ArrowRight cycle ranking tabs when not typing.
+      if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+        const tag = event.target?.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || event.target?.isContentEditable) return;
+        if (event.metaKey || event.ctrlKey || event.altKey) return;
+        event.preventDefault();
+        const order = ['xp', 'interviews', 'streaks'];
+        const idx = order.indexOf(activeTab);
+        const next =
+          event.key === 'ArrowRight'
+            ? order[(idx + 1) % order.length]
+            : order[(idx - 1 + order.length) % order.length];
+        setActiveTab(next);
       }
     };
 
@@ -580,10 +596,11 @@ export default function Leaderboard() {
           </button>
         </div>
         <p className="hidden sm:block -mt-4 mb-4 text-[11px] text-white/40">
-          Shortcuts: <span className="text-white/55">/</span> search · <span className="text-white/55">1–3</span> tabs ·{' '}
-          <span className="text-white/55">R</span> refresh · <span className="text-white/55">C</span> copy link ·{' '}
-          <span className="text-white/55">F</span> find me · <span className="text-white/55">T</span> top ·{' '}
-          <span className="text-white/55">Esc</span> clear search
+          Shortcuts: <span className="text-white/55">/</span> search · <span className="text-white/55">1–3</span> /{' '}
+          <span className="text-white/55">←→</span> tabs · <span className="text-white/55">R</span> refresh ·{' '}
+          <span className="text-white/55">C</span> copy link · <span className="text-white/55">F</span> find me ·{' '}
+          <span className="text-white/55">T</span> top · <span className="text-white/55">Esc</span> clear search ·{' '}
+          <span className="text-white/55">Enter</span> in search finds you
         </p>
 
         {/* Search */}
@@ -598,6 +615,11 @@ export default function Leaderboard() {
               ref={searchInputRef}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key !== 'Enter') return;
+                e.preventDefault();
+                findMeOnLeaderboard();
+              }}
               placeholder="Search by name or title… (press /)"
               className="flex-1 bg-transparent outline-none text-sm text-white placeholder:text-white/40"
             />
